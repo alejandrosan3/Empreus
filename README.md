@@ -9,11 +9,16 @@ Run the following commands to setup the project locally:
 ```
 $ cp .env.example .env
 $ ./docker/sail up -d
-$ docker-compose exec -it empreus.app composer install
+$ ./docker/sail composer install
 ```
 
-Run the following command if you want to add dummy data
+Run the following command thefirst time setting the project up to create the DB and populate it with dummy data
+
 ```
+# Create the DB
+$ ./docker/sail artisan migrate
+
+# Populate it with Dummy Data
 $ ./docker/sail db:seed
 ```
 
@@ -21,8 +26,8 @@ After running these commands the project should be running in: http://localhost
 
 After the first configuration, the only command needed to run the project is:
 
-``$ ./docker/sail up``
+`$ ./docker/sail up`
 
 To stop the project run:
 
-``$ ./docker/sail down``
+`$ ./docker/sail down`
