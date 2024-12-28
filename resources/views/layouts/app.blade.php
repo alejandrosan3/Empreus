@@ -29,7 +29,18 @@
 
             <flux:spacer />
 
-            <flux:menu.item>v.0.1</flux:menu.item>
+
+            <!-- Dark Mode Toggle -->
+            <flux:radio.group x-data variant="segmented" x-model="$flux.appearance">
+                <flux:radio value="light" icon="sun" />
+                <flux:radio value="dark" icon="moon" />
+                <flux:radio value="system" icon="computer-desktop" />
+            </flux:radio.group>
+
+            <flux:separator />
+
+            <!-- App Version -->
+            <flux:menu.item>v.{{ $appVersion }}</flux:menu.item>
         </flux:sidebar>
 
         <flux:header class="!block bg-white lg:bg-zinc-50 dark:bg-zinc-900 border-b border-zinc-200 dark:border-zinc-700">
@@ -38,12 +49,6 @@
         </flux:header>
 
         <flux:main>
-            <flux:heading size="xl" level="1">Good afternoon, Olivia</flux:heading>
-
-            <flux:subheading size="lg" class="mb-6">Here's what's new today</flux:subheading>
-
-            <flux:separator variant="subtle" />
-
              <!-- Page Content -->
              <main>
                 {{ $slot }}
