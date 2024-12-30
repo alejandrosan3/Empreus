@@ -1,21 +1,21 @@
 <flux:table :paginate="$this->builders">
-    <flux:columns>
-        <flux:column sortable :sorted="$sortBy === 'name'" :direction="$sortDirection" wire:click="sort('name')">Builder</flux:column>
-        <flux:column>Email</flux:column>
-        <flux:column sortable :sorted="$sortBy === 'address'" :direction="$sortDirection" wire:click="sort('status')">Address</flux:column>
-        <flux:column sortable :sorted="$sortBy === 'phone'" :direction="$sortDirection" wire:click="sort('amount')">Phone</flux:column>
-    </flux:columns>
+    @foreach ($this->columns as $column)
+        <flux:column 
+            sortable 
+            :sorted="$sortBy === '{{ $column }}'" 
+            :direction="$sortDirection" 
+            wire:click="sort('{{ $column }}')">
+            {{ ucfirst(str_replace('_', ' ', $column)) }}
+        </flux:column>
+    @endforeach
+    <flux:column>Actions</flux:column>
 
     <flux:rows>
         @foreach ($this->builders as $builder)
             <flux:row :key="$builder->id">
-                <flux:cell> {{ $builder->name }}</flux:cell>
-
-                <flux:cell>{{ $builder->email }}</flux:cell>
-
-                <flux:cell>{{ $builder->address }}</flux:cell>
-
-                <flux:cell>{{ $builder->phone }}</flux:cell>
+                @foreach ($this->columns as $column)
+                    <flux:cell>{{ $builder->{$column} }}</flux:cell>
+                @endforeach
 
                 <flux:cell>
                     <flux:button variant="ghost" size="sm" icon="ellipsis-horizontal" inset="top bottom"></flux:button>
