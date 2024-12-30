@@ -1,7 +1,10 @@
 <?php
 
-namespace App\Livewire;
+namespace App\Livewire\Lot;
+
 use Livewire\Component;
+use Livewire\WithPagination;
+use Illuminate\Support\Facades\Schema;
 
 class LotProgress extends Component
 {
@@ -25,7 +28,7 @@ class LotProgress extends Component
 
     public function render()
     {
-        return view('livewire.lot-progress', [
+        return view('livewire.lot.lot-progress', [
             'dummyData' => $this->dummyData,
             'tasks' => $this->tasks,
         ])->layout('layouts.app');

@@ -3,7 +3,7 @@
 use App\Http\Controllers\BuilderController;
 use App\Livewire\Builders\{CreateBuilder,ListBuilder};
 use Illuminate\Support\Facades\Route;
-use App\Livewire\LotProgress;
+use App\Livewire\Lot\LotProgress;
 
 
 Route::redirect('/', 'dashboard', 301)
