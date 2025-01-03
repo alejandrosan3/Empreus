@@ -13,4 +13,9 @@ class Builder extends Model
      * @var array
      */
     protected $guarded = [];
+
+    public function lots()
+    {
+        return $this->hasMany(Lot::class);
+    }
 }

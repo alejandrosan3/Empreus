@@ -2,6 +2,10 @@
 
 namespace Database\Seeders;
 
+use App\Models\Lot;
+use App\Models\Supervisor;
+use App\Models\Task;
+use App\Models\TaskNote;
 use App\Models\User;
 use App\Models\Builder;
 // use Illuminate\Database\Console\Seeds\WithoutModelEvents;
@@ -22,5 +26,13 @@ class DatabaseSeeder extends Seeder
         ]);
 
         Builder::factory(50)->create();
+
+        Supervisor::factory(50)->create();
+
+        Lot::factory(50)->create();
+
+        Task::factory(100)->create();
+
+        TaskNote::factory(10)->create();
     }
 }
