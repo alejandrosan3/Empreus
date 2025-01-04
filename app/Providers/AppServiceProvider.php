@@ -19,6 +19,6 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        //
+        view()->share('appVersion', json_decode(file_get_contents(base_path('composer.json')), true)['extra']['app-version'] ?? 'unknown');
     }
 }
