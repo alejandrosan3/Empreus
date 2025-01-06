@@ -26,6 +26,11 @@ class Task extends Model
         return $this->belongsTo(Lot::class);
     }
 
+    public function account()
+    {
+        return $this->belongsTo(Account::class);
+    }
+
     public function taskType()
     {
         return $this->belongsTo(TaskType::class);

@@ -5,6 +5,7 @@ namespace Database\Factories;
 use App\Models\Builder;
 use App\Models\StatusType;
 use App\Models\Supervisor;
+use App\Models\Account;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
@@ -22,6 +23,7 @@ class LotFactory extends Factory
         return [
             'builder_id' => Builder::factory(),
             'supervisor_id' => Supervisor::factory(),
+            'account_id' => Account::factory(),
             'lot_number' => $this->faker->unique()->numberBetween(1, 1000),
             'phase' => $this->faker->randomDigitNotZero() . $this->faker->randomLetter(),
             'status_type_id' => StatusType::query()->inRandomOrder()->value('id') ?? StatusType::factory(),

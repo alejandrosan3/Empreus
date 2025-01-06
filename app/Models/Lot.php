@@ -21,7 +21,7 @@ class Lot extends Model
         'address',
         'subdivision',
         'floor_area',
-        'num_of_florrs',
+        'num_of_floors',
     ];
 
     public function builder()
@@ -42,5 +42,10 @@ class Lot extends Model
     public function status()
     {
         return $this->belongsTo(StatusType::class);
+    }
+
+    public function account()
+    {
+        return $this->belongsTo(Account::class);
     }
 }

@@ -17,7 +17,7 @@ Run the following command thefirst time setting the project up to create the DB 
 
 ```
 # Create the DB
-$ ./docker/sail artisan migrate
+$ ./docker/sail artisan migrate (:fresh)
 
 # Seed mandatory tables (mandatory)
 $ ./docker/sail artisan db:seed TaskTypeSeeder

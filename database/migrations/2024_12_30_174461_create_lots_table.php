@@ -14,6 +14,7 @@ return new class extends Migration
         Schema::create('lots', function (Blueprint $table) {
             $table->id();
             $table->foreignId('builder_id')->constrained('builders')->cascadeOnDelete();
+            $table->foreignId('account_id')->constrained('accounts')->cascadeOnDelete();
             $table->foreignId('supervisor_id')->nullable()->constrained('supervisors')->cascadeOnDelete();
             $table->foreignId('status_type_id')->index()->constrained('status_types');
             $table->unsignedSmallInteger('lot_number')->index();

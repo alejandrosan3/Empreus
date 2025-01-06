@@ -5,6 +5,7 @@ namespace Database\Factories;
 use App\Models\Lot;
 use App\Models\StatusType;
 use App\Models\TaskType;
+use App\Models\Account;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
@@ -22,6 +23,7 @@ class TaskFactory extends Factory
         return [
             'lot_id' => Lot::factory(),
             'task_type_id' => TaskType::query()->inRandomOrder()->value('id') ?? TaskType::factory(),
+            'account_id' => Account::factory(),
             'price' => $this->faker->randomFloat(2, 10, 200),
             'status_type_id' => StatusType::query()->inRandomOrder()->value('id') ?? StatusType::factory(),
             'scheduled_start_date' => $this->faker->dateTimeBetween('-1 month'),

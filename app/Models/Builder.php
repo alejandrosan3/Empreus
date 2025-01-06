@@ -18,4 +18,10 @@ class Builder extends Model
     {
         return $this->hasMany(Lot::class);
     }
+
+    // we might not need this. we'll see.
+    public function account()
+    {
+        return $this->hasManyThrough(Account::class, Lot::class);
+    }
 }
