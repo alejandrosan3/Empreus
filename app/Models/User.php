@@ -45,4 +45,12 @@ class User extends Authenticatable
             'password' => 'hashed',
         ];
     }
+
+    /**
+     * Define the relationship: A user can have many accounts.
+     */
+    public function accounts()
+    {
+        return $this->hasMany(Account::class);
+    }    
 }

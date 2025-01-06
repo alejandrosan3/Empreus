@@ -13,9 +13,13 @@ return new class extends Migration
     {
         Schema::create('accounts', function (Blueprint $table) {
             $table->id();
+            $table->unsignedBigInteger('user_id');
             $table->string('name')->unique();
             $table->text('description')->nullable(); // Optional
             $table->timestamps();
+
+            // Define foreign key relationship
+            $table->foreign('user_id')->references('id')->on('users')->onDelete('cascade');
         });
     }
 

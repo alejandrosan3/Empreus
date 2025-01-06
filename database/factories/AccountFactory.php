@@ -3,6 +3,7 @@
 namespace Database\Factories;
 
 use App\Models\Account;
+use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
@@ -23,6 +24,9 @@ class AccountFactory extends Factory
         return [
             'name' => $this->faker->unique()->city,
             'description' => $this->faker->optional()->sentence,
+            'user_id' => User::inRandomOrder()->first()->id ?? User::factory(),
+            'created_at' => now(),
+            'updated_at' => now(),
         ];
     }
 }
