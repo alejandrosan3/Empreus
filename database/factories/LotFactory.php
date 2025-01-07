@@ -23,7 +23,7 @@ class LotFactory extends Factory
         return [
             'builder_id' => Builder::factory(),
             'supervisor_id' => Supervisor::factory(),
-            'account_id' => Account::factory(),
+            'account_id' => Account::query()->inRandomOrder()->value('id') ?? Account::factory(),
             'lot_number' => $this->faker->unique()->numberBetween(1, 1000),
             'phase' => $this->faker->randomDigitNotZero() . $this->faker->randomLetter(),
             'status_type_id' => StatusType::query()->inRandomOrder()->value('id') ?? StatusType::factory(),
