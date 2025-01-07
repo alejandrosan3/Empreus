@@ -11,6 +11,7 @@ use App\Models\Builder;
 // use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\DB;
 
 class DatabaseSeeder extends Seeder
 {
@@ -19,11 +20,37 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        User::factory()->create([
-            'name' => 'Demo User',
-            'email' => 'demo@demo.com',
-            'password' => Hash::make('demo'),
-        ]);
+        /**
+         * Populate status types if empty
+         */
+        if (DB::table('status_types')->count() === 0) {
+            $this->call(StatusTypeSeeder::class);
+        }
+
+        /**
+         * Populate task types if empty
+         */
+        if (DB::table('task_types')->count() === 0) {
+            $this->call(TaskTypeSeeder::class);
+        }
+
+        /**
+         * Populate accounts table if empty
+         */
+        if (DB::table('accounts')->count() === 0) {
+            $this->call(AccountSeeder::class);
+        }
+
+        /**
+         * Populate users table if empty
+         */
+        if (DB::table('users')->count() === 0) {
+            User::factory()->create([
+                'name' => 'Demo User',
+                'email' => 'demo@demo.com',
+                'password' => Hash::make('demo'),
+            ]);
+        }
 
         Builder::factory(50)->create();
 
