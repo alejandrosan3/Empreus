@@ -7,7 +7,4 @@
             </flux:option>
         @endforeach
     </flux:select>
-
-<p wire:key={{ $selectedAccountId }}>Selected Account ID: {{ $selectedAccountId }} </p>
-
 </div>

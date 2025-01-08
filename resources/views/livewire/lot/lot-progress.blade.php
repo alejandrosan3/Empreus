@@ -1,14 +1,14 @@
-<flux:table>
+<flux:table :paginate="$lots">
     <flux:columns>
-        <flux:column>Builder</flux:column>
-        <flux:column>Subdivision</flux:column>
-        <flux:column>LOT</flux:column>
+        <flux:column sortable :sorted="$sortBy === 'builder'" wire:click="sort('builder')">Builder</flux:column>
+        <flux:column sortable :sorted="$sortBy === 'subdivision'" wire:click="sort('subdivision')">Subdivision</flux:column>
+        <flux:column sortable :sorted="$sortBy === 'lot'" wire:click="sort('lot_number')">Lot</flux:column>
         @foreach ($taskTypes as $taskType)
             <flux:column>{{ $taskType }}</flux:column>
         @endforeach
         <flux:column>Floor</flux:column>
         <flux:column>EPOs</flux:column>
-        <flux:column>Progress</flux:column>
+        <flux:column sortable :sorted="$sortBy === 'status'" wire:click="sort('status')">Progress</flux:column>
         <flux:column>Actions</flux:column>
     </flux:columns>
 
@@ -28,7 +28,7 @@
                             @endif
                         </flux:cell>
                     @else
-                        <flux:cell> N/A </flux:cell>
+                        <flux:cell> - </flux:cell>
                     @endif
                 @endforeach
                 <flux:cell>{{ $lot->num_of_floors }}</flux:cell>

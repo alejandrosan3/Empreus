@@ -36,9 +36,26 @@ new class extends Component
                     <flux:subheading>Set the desired filter. Leave blank to ignore.</flux:subheading>
                 </div>
 
-                <flux:input label="Name" placeholder="Your name" />
+                <!-- Builders Select -->
+                <flux:select label="Builders" variant="listbox" searchable indicator="checkbox" multiple placeholder="Select the Builders">
+                    <flux:option>DRH</flux:option>
+                    <flux:option>Lennar</flux:option>
+                    <flux:option>David Weekley</flux:option>
+                    <flux:option>DreamFinders</flux:option>
+                    <flux:option>Landsea Homes</flux:option>
+                </flux:select>
 
-                <flux:input label="Date of birth" type="date" />
+                <!-- Subdivision's Select -->
+                <flux:select label="Subdivisions" variant="listbox" searchable indicator="checkbox" multiple placeholder="Select the Subdivisions">
+                    <flux:option>Coral Gables</flux:option>
+                    <flux:option>Caricuao</flux:option>
+                    <flux:option>Ccs</flux:option>
+                    <flux:option>ShearWater</flux:option>
+                    <flux:option>Malibu</flux:option>
+                </flux:select>
+                
+                <!-- Lot Number Input -->
+                <flux:input label="Lot #" placeholder="Write the Lot Number here" />
 
                 <div class="flex">
                     <flux:spacer />

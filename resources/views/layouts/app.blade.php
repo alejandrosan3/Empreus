@@ -25,7 +25,6 @@
 
             <flux:sidebar.toggle class="lg:hidden" icon="x-mark" />
 
-            <flux:input as="button" variant="filled" placeholder="Search..." icon="magnifying-glass" />
 
             <!-- horizonal toolbar + profile -->
             <livewire:layout.sidebar-navigation/>

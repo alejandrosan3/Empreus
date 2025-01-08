@@ -70,7 +70,7 @@
                 const targetGroup = event.to.id.includes('active') ? 'active' : 'fixed';
                 const sourceGroup = event.from.id.includes('active') ? 'active' : 'fixed';
 
-                // Dispatch a Livewire event with ordered parameters
+                // Add Livewire dispatch content here.
                
             },
         });
