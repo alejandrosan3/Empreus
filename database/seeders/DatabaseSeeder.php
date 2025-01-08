@@ -37,8 +37,8 @@ class DatabaseSeeder extends Seeder
         /**
          * Populate accounts table if empty
          */
-        if (DB::table('accounts')->count() === 0) {
-            $this->call(AccountSeeder::class);
+        if (DB::table('companies')->count() === 0) {
+            $this->call(CompanySeeder::class);
         }
 
         /**
@@ -50,6 +50,10 @@ class DatabaseSeeder extends Seeder
                 'email' => 'demo@demo.com',
                 'password' => Hash::make('demo'),
             ]);
+        }
+
+        if (DB::table('company_users')->count() === 0) {
+            $this->call(CompanyUserSeeder::class);
         }
 
         Builder::factory(50)->create();

@@ -16,7 +16,7 @@ return new class extends Migration
             $table->foreignId('lot_id')->index()->constrained('lots')->cascadeOnDelete();
             $table->foreignId('task_type_id')->index()->constrained('task_types')->cascadeOnDelete();
             $table->foreignId('status_type_id')->index()->constrained('status_types');
-            $table->foreignId('account_id')->constrained('accounts')->cascadeOnDelete()->after('builder_id');
+            $table->foreignId('company_id')->constrained('companies')->cascadeOnDelete();
             $table->boolean('is_extra')->default(false);
             $table->decimal('price', 10, 2)->unsigned();
             $table->dateTime('scheduled_start_date')->nullable()->comment('Scheduled start date');

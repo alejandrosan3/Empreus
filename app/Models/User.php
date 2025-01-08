@@ -4,6 +4,8 @@ namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasManyThrough;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 
@@ -47,10 +49,23 @@ class User extends Authenticatable
     }
 
     /**
-     * Define the relationship: A user can have many accounts.
+     * Define the relationship: A user can have many companies.
      */
-    public function accounts()
+    public function companies()
     {
-        return $this->hasMany(Account::class);
-    }    
+        return $this->belongsToMany(Company::class, 'company_users', 'user_id', 'company_id');
+    }
+
+    public function lotsForCurrentCompany()
+    {
+        $companyId = session('company_id');
+
+        return Lot::where('company_id', $companyId)
+            ->whereHas('company', function ($query) use ($companyId) {
+                $query->where('companies.id', $companyId)
+                    ->whereHas('users', function ($query) {
+                        $query->where('users.id', $this->id);
+                    });
+            });
+    }
 }

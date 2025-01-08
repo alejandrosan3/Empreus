@@ -4,6 +4,8 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Task extends Model
 {
@@ -26,23 +28,28 @@ class Task extends Model
         return $this->belongsTo(Lot::class);
     }
 
-    public function account()
+    public function company(): BelongsTo
     {
-        return $this->belongsTo(Account::class);
+        return $this->belongsTo(Company::class);
     }
 
-    public function taskType()
+    public function taskType(): BelongsTo
     {
         return $this->belongsTo(TaskType::class);
     }
 
-    public function taskNotes()
+    public function taskNotes(): HasMany
     {
         return $this->hasMany(TaskNote::class);
     }
 
-    public function status()
+    public function statusType(): BelongsTo
     {
         return $this->belongsTo(StatusType::class);
+    }
+
+    public function status(): BelongsTo
+    {
+        return $this->statusType();
     }
 }
