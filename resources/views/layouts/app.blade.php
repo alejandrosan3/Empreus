@@ -14,6 +14,7 @@
         <!-- Scripts -->
         @vite(['resources/css/app.css', 'resources/js/app.js'])
         @fluxStyles
+        @livewireStyles
     </head>
     <body class="min-h-screen bg-white dark:bg-zinc-800">
 
@@ -26,6 +27,7 @@
 
             <flux:input as="button" variant="filled" placeholder="Search..." icon="magnifying-glass" />
 
+            <!-- horizonal toolbar + profile -->
             <livewire:layout.sidebar-navigation/>
 
             <flux:spacer />
@@ -57,5 +59,6 @@
         </flux:main>
 
         @fluxScripts
+        @livewireScripts
     </body>
 </html>
