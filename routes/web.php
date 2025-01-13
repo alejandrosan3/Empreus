@@ -4,6 +4,9 @@ use App\Http\Middleware\SetCurrentCompany;
 use App\Livewire\Builders\{CreateBuilder, ListBuilder};
 use Illuminate\Support\Facades\Route;
 use App\Livewire\Lot\LotProgress;
+use App\Livewire\Pages\ContentDetails;
+
+
 
 Route::get('/', function () {
     return redirect()->route('login'); // Redirect to login or a public landing page
@@ -36,6 +39,11 @@ Route::middleware(['auth', 'verified', SetCurrentCompany::class])
         Route::get('lot-progress', LotProgress::class)
             ->name('lot-progress')
             ->defaults('label', 'Lots Progress')
+            ->defaults('icon', 'clipboard-document-check');
+
+        Route::get('content-details', ContentDetails::class)
+            ->name('content-details')
+            ->defaults('label', 'Details view example')
             ->defaults('icon', 'clipboard-document-check');
 });
 

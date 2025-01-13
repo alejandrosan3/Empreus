@@ -5,7 +5,6 @@ namespace App\Livewire\Lot;
 use Illuminate\Support\Facades\Auth;
 use Livewire\Component;
 use Livewire\WithPagination;
-use App\Models\Lot;
 
 class LotProgress extends Component
 {
