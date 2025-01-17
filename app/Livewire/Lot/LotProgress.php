@@ -164,8 +164,8 @@
             ])->layout('layouts.app',[
                 'showFilters' => true,
                 'showSearch'  => true,
-                'showColumns' => true,
-                'showAddNew' => true,]);
+                'showColumns' => false,
+                'showAddNew' => false,]);
         }
 
     }
