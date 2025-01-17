@@ -26,18 +26,32 @@
             <flux:sidebar.toggle class="lg:hidden" icon="x-mark" />
 
 
-            <!-- horizonal toolbar + profile -->
+            <!-- Navigation Menu -->
             <livewire:layout.sidebar-navigation/>
 
             <flux:spacer />
 
+            <div class="flex items-center justify-between w-full p-2">
+                
+                <!-- Settings Button -->
+                
+                <!-- Dark Mode Toggle -->
+                <flux:switch x-data x-model="$flux.dark" label="Dark mode"  />
+                
+                <!-- Profile section -->
+                <flux:dropdown position="top" align="start">
+                    <flux:profile avatar="https://fluxui.dev/img/demo/user.png" />
 
-            <!-- Dark Mode Toggle -->
-            <flux:radio.group x-data variant="segmented" x-model="$flux.appearance">
-                <flux:radio value="light" icon="sun" />
-                <flux:radio value="dark" icon="moon" />
-                <flux:radio value="system" icon="computer-desktop" />
-            </flux:radio.group>
+                    <flux:menu>
+                        <flux:menu.item icon="user-circle" :href="route('profile')">Profile</flux:menu.item>
+                        <flux:menu.item icon="cog-8-tooth" :href="route('profile')">settings</flux:menu.item>
+
+                        <flux:menu.separator />
+
+                        <flux:menu.item wire:click="logout" icon="arrow-right-start-on-rectangle">Logout</flux:menu.item>
+                    </flux:menu>
+                </flux:dropdown>
+            </div>
 
             <flux:separator />
 
@@ -45,9 +59,22 @@
             <flux:menu.item>v.{{ $appVersion }}</flux:menu.item>
         </flux:sidebar>
 
+        
+        @php
+            $showFilters = $showFilters ?? false;
+            $showSearch  = $showSearch  ?? false;
+            $showColumns  = $showColumns  ?? false;
+            $showAddNew = $showAddNew ?? false;
+        @endphp
+
+        <!--  Horizontal Navbar -->
         <flux:header class="!block bg-white lg:bg-zinc-50 dark:bg-zinc-900 border-b border-zinc-200 dark:border-zinc-700">
-            
-            <livewire:layout.navigation />
+            <livewire:layout.navigation
+                :showFilters="$showFilters"
+                :showSearch="$showSearch"
+                :showAddNew="$showAddNew"
+                :showColumns="$showColumns"
+            />
         </flux:header>
 
         <flux:main>

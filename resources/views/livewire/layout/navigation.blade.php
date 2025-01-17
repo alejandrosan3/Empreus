@@ -1,94 +1,63 @@
-<?php
-
-use App\Livewire\Actions\Logout;
-use Livewire\Volt\Component;
-
-new class extends Component
-{
-    /**
-     * Log the current user out of the application.
-     */
-    public function logout(Logout $logout): void
-    {
-        $logout();
-
-        $this->redirect('/', navigate: true);
-    }
-}; ?>
-
-<div> 
-
+<div x-on:filters-updated.window="$wire.filtersUpdated($event.detail)">
     <flux:navbar class="flex justify-between">
+
+        @if($showAddNew)
         <!-- "Add new element" button -->
         <flux:tooltip content="Add new X">
             <flux:button icon="plus"></flux:button>
         </flux:tooltip>
+        @endif
 
+        @if($showFilters)
         <!-- "Filters" button -->
-        <flux:tooltip content="Filters">
-            <flux:modal.trigger name="filters">
-                <flux:button  icon="adjustments-horizontal"></flux:button>
-            </flux:modal.trigger>
+        <flux:modal.trigger name="filters">
+            <flux:tooltip content="Filters">
+                <flux:button icon="adjustments-horizontal"></flux:button>
+            </flux:tooltip>
+        </flux:modal.trigger>
 
-            <flux:modal name="filters" class="md:w-96 space-y-6">
-                <div>
-                    <flux:heading size="lg">Filters</flux:heading>
-                    <flux:subheading>Set the desired filter. Leave blank to ignore.</flux:subheading>
-                </div>
+        <flux:modal name="filters" class="md:w-96 space-y-6">
+            <div>
+                <flux:heading size="lg">Filters</flux:heading>
+                <flux:subheading>Set the desired filter. Leave blank to ignore.</flux:subheading>
+            </div>
 
-                <!-- Builders Select -->
-                <flux:select label="Builders" variant="listbox" searchable indicator="checkbox" multiple placeholder="Select the Builders">
-                    <flux:option>DRH</flux:option>
-                    <flux:option>Lennar</flux:option>
-                    <flux:option>David Weekley</flux:option>
-                    <flux:option>DreamFinders</flux:option>
-                    <flux:option>Landsea Homes</flux:option>
-                </flux:select>
+            <!-- Builders Select -->
+            <flux:select label="Builders" variant="listbox" searchable indicator="checkbox" multiple placeholder="Select the Builders" wire:model="selectedBuilders">
+                @foreach($filters['builders'] ?? [] as $builder)
+                    <flux:option>{{ $builder }}</flux:option>
+                @endforeach
+            </flux:select>
 
-                <!-- Subdivision's Select -->
-                <flux:select label="Subdivisions" variant="listbox" searchable indicator="checkbox" multiple placeholder="Select the Subdivisions">
-                    <flux:option>Coral Gables</flux:option>
-                    <flux:option>Caricuao</flux:option>
-                    <flux:option>Ccs</flux:option>
-                    <flux:option>ShearWater</flux:option>
-                    <flux:option>Malibu</flux:option>
-                </flux:select>
-                
-                <!-- Lot Number Input -->
-                <flux:input label="Lot #" placeholder="Write the Lot Number here" />
+            <!-- Subdivision's Select -->
+            <flux:select label="Subdivisions" variant="listbox" searchable indicator="checkbox" multiple placeholder="Select the Subdivisions" wire:model="selectedSubdivisions" >
+                @foreach($filters['subdivisions'] ?? [] as $subdivision)
+                    <flux:option>{{ $subdivision }}</flux:option>
+                @endforeach
+            </flux:select>
 
-                <div class="flex">
-                    <flux:spacer />
+            <!-- Lot Number Input -->
+            <flux:select label="Lot #" variant="listbox" searchable indicator="checkbox" multiple placeholder="Select the Lot(s)" wire:model="selectedLots" >
+                @foreach($filters['lots'] ?? [] as $lot)
+                    <flux:option>{{ $lot }}</flux:option>
+                @endforeach
+            </flux:select>
 
-                    <flux:button type="submit" variant="primary">Save changes</flux:button>
-                </div>
-            </flux:modal>
-        </flux:tooltip>
+            <div class="flex">
+                <flux:spacer />
+                <flux:button type="submit" variant="primary" wire:click="applyGlobalFilters">Save changes</flux:button>
+            </div>
+        </flux:modal>
+        @endif
 
+        @if($showSearch)
         <!-- "Search" Input -->
         <flux:input placeholder="Search..." icon="magnifying-glass" class="mx-8" />
+        @endif
 
+        @if($showColumns)
         <!-- "Rearrange, Edit and Freeze columns" button -->
         <livewire:layout.edit-columns-dropdown />
-
-        
-        <!-- Profile section -->
-        <div class="flex ml-auto">
-            <flux:separator vertical class="mr-6" />
-            <flux:dropdown position="top" align="start">
-                <flux:profile avatar="https://fluxui.dev/img/demo/user.png" />
-
-                <flux:menu>
-                    <flux:menu.item icon="user-circle" :href="route('profile')">Profile</flux:menu.item>
-
-                    <flux:menu.separator />
-
-                    <flux:menu.item wire:click="logout" icon="arrow-right-start-on-rectangle">Logout</flux:menu.item>
-                </flux:menu>
-            </flux:dropdown>
-        </div>
-        
+        @endif
     </flux:navbar>
-
-
 </div>
