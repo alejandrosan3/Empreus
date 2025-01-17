@@ -41,7 +41,7 @@ Route::middleware(['auth', 'verified', SetCurrentCompany::class])
             ->defaults('label', 'Lots Progress')
             ->defaults('icon', 'clipboard-document-check');
 
-        Route::get('content-details', ContentDetails::class)
+        Route::get('/lots/{lot_id}/details', ContentDetails::class)
             ->name('content-details')
             ->defaults('label', 'Details view example')
             ->defaults('icon', 'clipboard-document-check');

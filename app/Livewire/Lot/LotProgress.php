@@ -25,6 +25,9 @@
         public $selectedSubdivisions = [];
         public $selectedLots = [];
 
+        // This is a flag used to show either lotprogress or the contentdetails
+        public $selectedLot = null;
+
 
         /**
          * Sort the table by a given column, toggling sort direction if needed,
@@ -147,6 +150,61 @@
         }
 
         /**
+         * Load lot details dynamically or redirect to the URL-based route.
+         *
+         * @param int $lotId
+         * @return void
+         */
+        public function loadDetails($lotId)
+        {
+            /* Dynamic loading
+            if ($this->isRouteRequest()) {
+                return request()->routeIs('content-details');
+            } *
+        
+            // Dynamically load the lot
+            $this->selectedLot = Lot::findOrFail($lotId); 
+            */
+
+            // Dynamic loading
+            if (!$this->isRouteRequest()) {
+                $this->selectedLot = Lot::findOrFail($lotId);
+            } else {
+                // URL-based navigation
+                return redirect()->route('content-details', ['lot_id' => $lotId]);
+            }
+        }
+
+        /**
+         * Check if the current request is route-based (manual URL entry).
+         *
+         * @return bool
+         */
+        private function isRouteRequest()
+        {
+            logger()->info('Route Name:', ['route' => optional(request()->route())->getName()]);
+            logger()->info('Headers:', ['headers' => request()->headers->all()]);
+        
+            // If it's a Livewire request, return false.
+            if (request()->header('X-Livewire')) {
+                return false;
+            }
+
+            // For normal HTTP requests, check the route.
+            return request()->routeIs('content-details') || request()->routeIs('lot-progress');
+        }
+
+        /**
+         * Reset the selected lot and return to the table view.
+         *
+         * @return void
+         */
+        public function resetSelectedLot()
+        {
+            $this->selectedLot = null;
+        }
+
+        /**
          * On component mount, dispatch initial filter data so the user sees
          * all possible builders/subdivisions/lots in the UI.
          */
@@ -164,8 +222,8 @@
             ])->layout('layouts.app',[
                 'showFilters' => true,
                 'showSearch'  => true,
-                'showColumns' => false,
-                'showAddNew' => false,]);
+                'showColumns' => true,
+                'showAddNew' => true,]);
         }
 
     }
