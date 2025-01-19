@@ -48,6 +48,27 @@
             ]);
         }
 
+        public function resetFilters($choice="all")
+        {
+            switch ($choice) {
+                case "subdivisions":
+                    $this->selectedSubdivisions = [];
+                    break;
+                case "builders":
+                    $this->selectedBuilders = [];
+                    break;
+                case "lots":
+                    $this->selectedLots = [];
+                    break;
+                default:
+                    $this->selectedSubdivisions = [];
+                    $this->selectedBuilders = [];
+                    $this->selectedLots = [];
+                    break;
+            }
+            $this->applyGlobalFilters();
+        }
+
         public function mount($showAddNew=false, $showFilters=false, $showSearch=false, $showColumns=false)
         {
             $this->showAddNew = $showAddNew;

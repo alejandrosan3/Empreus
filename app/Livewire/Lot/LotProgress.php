@@ -122,11 +122,21 @@
             }
         
             // For re-populating select options
-            $builders = $query->clone()->join('builders', 'lots.builder_id', '=', 'builders.id')
-                            ->distinct()
-                            ->pluck('builders.name');
-            $subdivisions = $query->clone()->distinct()->pluck('subdivision');
-            $lots = $query->clone()->distinct()->pluck('lot_number');
+            $builders = $query->clone()
+                ->join('builders', 'lots.builder_id', '=', 'builders.id')
+                ->distinct()
+                ->orderby('builders.name', 'asc')
+                ->pluck('builders.name');
+            
+            $subdivisions = $query->clone()
+                ->distinct()
+                ->orderby('subdivision', 'asc')
+                ->pluck('subdivision');
+            
+            $lots = $query->clone()
+                ->distinct()
+                ->orderby('lot_number', 'asc')
+                ->pluck('lot_number');
         
             // Dispatch the filter data as a browser event (for the dropdowns):
             $this->dispatch('filters-updated', 
