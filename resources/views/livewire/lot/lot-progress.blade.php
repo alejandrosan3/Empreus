@@ -60,7 +60,7 @@
     @else
         <!-- Render the ContentDetails component dynamically -->
         <div>
-            @livewire('pages.content-details', ['lot' => $selectedLot])
+            @livewire('pages.lot-details', ['lot' => $selectedLot])
         </div>
     @endif
 

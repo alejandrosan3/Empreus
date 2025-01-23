@@ -4,7 +4,8 @@ use App\Http\Middleware\SetCurrentCompany;
 use App\Livewire\Builders\{CreateBuilder, ListBuilder};
 use Illuminate\Support\Facades\Route;
 use App\Livewire\Lot\LotProgress;
-use App\Livewire\Pages\ContentDetails;
+use App\Livewire\Pages\LotDetails;
+use App\Livewire\Pages\TaskDetails;
 
 
 
@@ -41,9 +42,14 @@ Route::middleware(['auth', 'verified', SetCurrentCompany::class])
             ->defaults('label', 'Lots Progress')
             ->defaults('icon', 'clipboard-document-check');
 
-        Route::get('/lots/{lot_id}/details', ContentDetails::class)
-            ->name('content-details')
-            ->defaults('label', 'Details view example')
+        Route::get('/lots/{lot_id}/details', LotDetails::class)
+            ->name('lot-details')
+            ->defaults('label', 'Lot Details view example')
+            ->defaults('icon', 'clipboard-document-check');
+
+        Route::get('/tasks/{task_id}/details', TaskDetails::class)
+            ->name('task-details')
+            ->defaults('label', 'Task Details view example')
             ->defaults('icon', 'clipboard-document-check');
 });
 

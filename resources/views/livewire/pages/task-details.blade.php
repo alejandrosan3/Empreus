@@ -9,13 +9,14 @@
     <flux:heading size="xl" class="mb-4">Name of the content detail page view <flux:badge color="yellow" inset="top bottom">Tag?</flux:badge> </flux:heading>
     <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
         <!-- Builder Details -->
-        <div>
-            <flux:card class="space-y-6 bg-gray-500/10">
-                <flux:heading size="lg" level="2">Builder: {{ $lot->builder->name }}</flux:heading>
-                <flux:heading size="lg" level="3">Subdivision:  {{ $lot->subdivision }}</flux:heading>
-                <flux:heading size="lg" level="3"> Lot: {{ $lot->lot_number }} </flux:heading>
-            </flux:card>
-        </div>
+        @livewire('partials.card', [
+            'items' => [
+                ['label' => 'Builder', 'value' => $lot->builder->name, 'level' => 2],
+                ['label' => 'Subdivision', 'value' => $lot->subdivision],
+                ['label' => 'Lot', 'value' => $lot->lot_number],
+            ]
+        ])
+
 
         <!-- Invoice and pricing -->
         <div>

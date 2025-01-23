@@ -6,11 +6,12 @@ use Livewire\Component;
 use App\Models\Lot;
 
 
-class ContentDetails extends Component
+class LotDetails extends Component
 {
     public $tasks = [];
-
     public $lot;
+    public $viaLiveWire;
+
 
     public function mount($lot_id = null, $lot = null)
     {
@@ -19,11 +20,12 @@ class ContentDetails extends Component
             $this->lot = $lot;
         } elseif ($lot_id) {
             // Fetch the lot using the ID from the route
-            $this->lot = Lot::with(['builder', 'supervisor', 'tasks.taskType', 'tasks.statusType'])->findOrFail($lot_id);
+            $this->lot = Lot::with(['builder', 'supervisor', 'tasks.taskType', 'tasks.statusType','tasks.taskNotes'])->findOrFail($lot_id);
         } else {
             // Throw an exception if neither parameter is provided
             throw new \Exception('No lot provided');
         }
+
     
         // Group tasks by type dynamically
         $this->tasks = [
@@ -35,7 +37,7 @@ class ContentDetails extends Component
     public function render()
     {
         //dd($this->tasks);
-        return view('livewire.pages.content-details', [
+        return view('livewire.pages.lot-details', [
             'lot' => $this->lot,
             'tasks' => $this->tasks,
             
