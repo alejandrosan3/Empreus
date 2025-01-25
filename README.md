@@ -26,7 +26,7 @@ $ ./docker/sail artisan db:seed StatusTypeSeeder
 # Populate database with Dummy Data (for local/testing)
 $ ./docker/sail artisan db:seed
 ```
-
+You may also need to run `php artisan key:generate`
 Lastly run `./docker/sail npm run dev`. The project should be running in: http://localhost
 
 After the first configuration, the only command needed to run the project is:
