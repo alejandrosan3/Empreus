@@ -12,16 +12,15 @@
         <flux:rows>
             @forelse ($taskGroup as $task)
                 <flux:row class="{{ ($task->statusType->name ?? '') === 'Completed' ? 'opacity-50' : '' }}">
-                    <flux:cell>{{ $task->lot->builder->name ?? 'N/A' }}</flux:cell>
-                    <flux:cell>{{ $task->lot->subdivision ?? 'N/A' }}</flux:cell>
-                    <flux:cell>{{ $task->lot->lot_number ?? 'N/A' }}</flux:cell>
+                    <flux:cell>{{ $task->taskType->name ?? 'Unknown' }}</flux:cell>
                     <flux:cell>
                         <flux:badge color="{{ $task->statusType->color ?? 'gray' }}">
                             {{ $task->statusType->name ?? 'Unknown' }}
                         </flux:badge>
                     </flux:cell>
-                    <flux:cell>{{ $task->started_at ?? 'N/A' }}</flux:cell>
-                    <flux:cell>{{ $task->ended_at ?? 'N/A' }}</flux:cell>
+                    <flux:cell>{{ $task->scheduled_start_date ?? '-' }}</flux:cell>
+                    <flux:cell>{{ $task->started_at ?? '-' }}</flux:cell>
+                    <flux:cell>{{ $task->ended_at ?? '-' }}</flux:cell>
                 </flux:row>
             @empty
                 <flux:row>

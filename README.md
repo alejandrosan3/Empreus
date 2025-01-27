@@ -22,7 +22,7 @@ $ ./docker/sail artisan migrate (:fresh)
 # Populate database with Dummy Data (for local/testing)
 $ ./docker/sail artisan db:seed
 ```
-
+You may have to run `./docker/sail artisan key:generate`  
 Lastly run `./docker/sail npm run dev`. The project should be running in: http://localhost
 
 After the first configuration, the only command needed to run the project is:

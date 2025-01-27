@@ -77,6 +77,16 @@
                 $query
                     ->join('status_types', 'lots.status_type_id', '=', 'status_types.id')
                     ->orderBy('status_types.name', $this->sortDirection);
+            } elseif ($this->sortBy === 'last_completed_date') {
+
+                $query
+                    ->select('lots.*')
+                    ->selectRaw('(SELECT MAX(t.ended_at)
+                                  FROM tasks t
+                                  WHERE t.lot_id = lots.id
+                                 ) as last_completed_date')
+                    ->groupBy('lots.id')
+                    ->orderBy('last_completed_date', $this->sortDirection);
             } else {
                 $query->orderBy($this->sortBy, $this->sortDirection);
             }
@@ -91,15 +101,15 @@
          */
         #[On('global-filters-updated')]
         public function handleGlobalFilters(array $data)
-        { 
+        {
             $this->selectedBuilders    = $data['builders']      ?? [];
             $this->selectedSubdivisions = $data['subdivisions'] ?? [];
             $this->selectedLots       = $data['lots']          ?? [];
-    
-            
+
+
             $this->dispatchFilters();
         }
-            
+
 
         /**
          * Builds a separate query that grabs the possible Builders/Subdivisions/Lots
@@ -108,7 +118,7 @@
         protected function dispatchFilters()
         {
             $query = Auth::user()->lotsForCurrentCompany();
-        
+
             if (!empty($this->selectedBuilders)) {
                 $query->whereHas('builder', function ($q) {
                     $q->whereIn('name', $this->selectedBuilders);
@@ -120,32 +130,32 @@
             if (!empty($this->selectedLots)) {
                 $query->whereIn('lot_number', $this->selectedLots);
             }
-        
+
             // For re-populating select options
             $builders = $query->clone()
                 ->join('builders', 'lots.builder_id', '=', 'builders.id')
                 ->distinct()
                 ->orderby('builders.name', 'asc')
                 ->pluck('builders.name');
-            
+
             $subdivisions = $query->clone()
                 ->distinct()
                 ->orderby('subdivision', 'asc')
                 ->pluck('subdivision');
-            
+
             $lots = $query->clone()
                 ->distinct()
                 ->orderby('lot_number', 'asc')
                 ->pluck('lot_number');
-        
+
             // Dispatch the filter data as a browser event (for the dropdowns):
-            $this->dispatch('filters-updated', 
-                builders: $builders, 
-                subdivisions: $subdivisions, 
+            $this->dispatch('filters-updated',
+                builders: $builders,
+                subdivisions: $subdivisions,
                 lots: $lots
             );
         }
-        
+
 
         /**
          * Re-dispatch filter data if sorting changes.
@@ -171,9 +181,9 @@
             if ($this->isRouteRequest()) {
                 return request()->routeIs('content-details');
             } *
-        
+
             // Dynamically load the lot
-            $this->selectedLot = Lot::findOrFail($lotId); 
+            $this->selectedLot = Lot::findOrFail($lotId);
             */
 
             // Dynamic loading
@@ -194,7 +204,7 @@
         {
             logger()->info('Route Name:', ['route' => optional(request()->route())->getName()]);
             logger()->info('Headers:', ['headers' => request()->headers->all()]);
-        
+
             // If it's a Livewire request, return false.
             if (request()->header('X-Livewire')) {
                 return false;
@@ -223,7 +233,7 @@
             // Dispatch initial filters when the component loads
             $this->dispatchFilters();
         }
-        
+
         public function render()
         {
 

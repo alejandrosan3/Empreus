@@ -71,4 +71,13 @@ class Lot extends Model
         }) ?: false;
     }
 
+    public function getLastCompletedTask()
+    {
+        // "last" means the largest ended_at value
+        return $this->tasks()
+            ->whereNotNull('ended_at')       // only completed tasks
+            ->orderByDesc('ended_at')        // sort by ended_at descending
+            ->first();                       // return the first (i.e. newest)
+    }
+
 }

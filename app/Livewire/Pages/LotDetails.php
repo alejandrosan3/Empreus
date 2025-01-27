@@ -20,13 +20,13 @@ class LotDetails extends Component
             $this->lot = $lot;
         } elseif ($lot_id) {
             // Fetch the lot using the ID from the route
-            $this->lot = Lot::with(['builder', 'supervisor', 'tasks.taskType', 'tasks.statusType','tasks.taskNotes'])->findOrFail($lot_id);
+            $this->lot = Lot::with(['builder', 'supervisor', 'tasks.taskType', 'tasks.statusType','tasks.taskNotes', 'companies.name'])->findOrFail($lot_id);
         } else {
             // Throw an exception if neither parameter is provided
             throw new \Exception('No lot provided');
         }
 
-    
+
         // Group tasks by type dynamically
         $this->tasks = [
             'standard' => $this->lot->tasks->where('is_extra', false),
@@ -40,7 +40,7 @@ class LotDetails extends Component
         return view('livewire.pages.lot-details', [
             'lot' => $this->lot,
             'tasks' => $this->tasks,
-            
+
         ])->layout('layouts.app');
     }
 }
