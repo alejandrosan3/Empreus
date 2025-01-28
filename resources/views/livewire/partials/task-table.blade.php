@@ -6,11 +6,11 @@
     <flux:table>
         <flux:columns>
             @foreach ($headers as $header)
-                <flux:column>{{ $header }}</flux:column>
+                <flux:column sortable :sorted="$sortBy === $header['column']" wire:click="sort( '{{ $header['column'] }}' )" >{{ $header['label'] }}</flux:column>
             @endforeach
         </flux:columns>
         <flux:rows>
-            @forelse ($taskGroup as $task)
+            @forelse ($sortedGroup as $task)
                 <flux:row class="{{ ($task->statusType->name ?? '') === 'Completed' ? 'opacity-50' : '' }}">
                     <flux:cell>{{ $task->taskType->name ?? 'Unknown' }}</flux:cell>
                     <flux:cell>

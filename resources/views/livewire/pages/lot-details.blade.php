@@ -41,7 +41,13 @@
                 'title' => ucfirst($type) . ' Tasks',
                 'badgeColor' => $type === 'standard' ? 'lime' : 'blue',
                 'badgeLabel' => $type === 'standard' ? 'PO' : 'EPO',
-                'headers' => ['Name', 'Status', 'Scheduled For', 'Start Date', 'Completed Date'],
+                'headers' => [
+                    ['label'=>'Name', 'column'=>'task_type.name'],
+                    ['label'=>'Status', 'column'=> 'status_type.name'],
+                    ['label'=>'Scheduled For', 'column'=>'scheduled_start_date'],
+                    ['label'=>'Start Date', 'column'=>'started_at'],
+                    ['label'=>'Completed Date', 'column'=>'ended_at']
+                ],
                 'taskGroup' => $taskGroup,
             ])
             @endforeach

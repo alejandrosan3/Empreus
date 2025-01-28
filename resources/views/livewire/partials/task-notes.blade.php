@@ -6,15 +6,11 @@
         </flux:heading>
         <flux:table>
             <flux:columns>
-                <flux:column>Created At</flux:column>
-                <flux:column>Task</flux:column>
+                <flux:column sortable :sorted="$sortBy === 'task_notes.created_at' " wire:click="sort( 'task_notes.created_at' )">Created At</flux:column>
+                <flux:column sortable :sorted="$sortBy === 'task_type.name' " wire:click="sort( 'task_type.name' )">Task</flux:column>
                 <flux:column>Note</flux:column>
             </flux:columns>
             <flux:rows>
-                @php
-                    $allNotes = $tasks->flatMap->taskNotes->filter(fn($note) => !empty($note->description));
-                @endphp
-
                 @forelse ($allNotes as $note)
                     <flux:row>
                         <flux:cell>{{ $note->created_at->format('Y-m-d') ?? 'N/A' }}</flux:cell>
