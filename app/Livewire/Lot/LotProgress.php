@@ -236,14 +236,13 @@
 
         public function render()
         {
-
             return view('livewire.lot.lot-progress', [
                 'lots' => $this->lots,
             ])->layout('layouts.app',[
                 'showFilters' => true,
-                'showSearch'  => true,
-                'showColumns' => true,
-                'showAddNew' => true,]);
+                'showSearch'  => false,
+                'showColumns' => false,
+                'showAddNew' => false,]);
         }
 
     }

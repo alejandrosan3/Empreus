@@ -14,7 +14,7 @@
                     <flux:column>{{ $taskType }}</flux:column>
                 @endforeach
                 <flux:column>EPOs</flux:column>
-                <flux:column sortable :sorted="$sortBy === 'status'" wire:click="sort('status')">Progress</flux:column>
+                {{-- <flux:column sortable :sorted="$sortBy === 'status'" wire:click="sort('status')">Progress</flux:column> --}}
                 <flux:column>Actions</flux:column>
             </flux:columns>
 
@@ -74,11 +74,11 @@
                         </flux:cell>
 
 
-                        <flux:cell>
+                       <!-- <flux:cell>
                             <flux:badge :color="$lot->status->color" variant="pill" size="lg">
-                                {{ $lot->status->name }}
+                                {{-- {{ $lot->status->name }} --}}
                             </flux:badge>
-                        </flux:cell>
+                        </flux:cell> -->
                         <!-- Action Items -->
                         <flux:cell>
                             <flux:dropdown>
