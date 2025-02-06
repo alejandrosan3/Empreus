@@ -86,6 +86,7 @@ class TaskTypeSeeder extends Seeder
             'Pw Parking Lot',
             'Warranty Clean',
             'QA Clean',
+            'Reclean Modelo',
         ];
 
         foreach ($task_types as $task_type) {
