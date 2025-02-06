@@ -15,6 +15,7 @@ class Lot extends Model
      * @var array
      */
     protected $fillable = [
+        'company_id',
         'builder_id',
         'supervisor_id',
         'lot_number',

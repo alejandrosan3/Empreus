@@ -23,3 +23,5 @@ yarn-error.log
 /.zed
 docker-compose.yml
 /.qodo/indexes.sqlite
+
+.qodo
