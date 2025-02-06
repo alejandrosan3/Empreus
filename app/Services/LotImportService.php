@@ -80,7 +80,7 @@ class LotImportService
             'builder' => 'required|string|max:255',
             'lot_number' => 'required|integer',
             'task_name' => 'required|string|exists:task_types,name',
-            'supervisor_name' => 'required|string|max:255',
+            'supervisor_name' => 'nullable|string|max:255',
             'subdivision' => 'nullable|string|max:255',
             'status' => 'required|string|exists:status_types,identifier',
             'floor_area' => 'nullable|numeric|min:0',
@@ -145,8 +145,9 @@ class LotImportService
         /**
          * Find or create Supervisor
          */
+        $supervisorName = !empty($item['supervisor_name']) ? $item['supervisor_name'] : 'N/A';
         $supervisor = Supervisor::firstOrCreate(
-            ['name' => $item['supervisor_name']]
+            ['name' => $supervisorName]
         );
 
         /**
@@ -166,7 +167,7 @@ class LotImportService
                 'phase' => $item['phase'],
                 'address' => $item['address'],
                 'subdivision' => $item['subdivision'] ?? null,
-                'floor_area' => $item['floor_area'] ?? 0,
+                'floor_area' => !empty($item['floor_area']) ? $item['floor_area'] : 0,
                 'num_of_floors' => $item['num_of_floors'] ?? 1,
             ]
         );
