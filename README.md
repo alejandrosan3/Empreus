@@ -13,7 +13,7 @@ $ ./docker/sail composer install
 $ ./docker/sail npm install
 ```
 
-Run the following command thefirst time setting the project up to create the DB and populate it with dummy data
+Run the following command the first time setting the project up to create the DB and populate it with dummy data
 
 ```
 # Create the DB
@@ -32,3 +32,13 @@ After the first configuration, the only command needed to run the project is:
 To stop the project run:
 
 `$ ./docker/sail down`
+
+### Queues via Laravel Horizon
+Running queue workers via Laravel Horizon is optional but recommended.
+
+If you want to use Laravel Horizon you only need to:
+
+1. Make sure you are using Redis for queue connections
+Set `QUEUE_CONNECTION=redis` in your .env file
+2. Run `$ ./docker/sail artisan horizon`
+

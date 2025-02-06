@@ -13,6 +13,7 @@ class Task extends Model
 
     protected $fillable = [
         'lot_id',
+        'company_id',
         'task_type_id',
         'price',
         'status_type_id',
