@@ -21,8 +21,8 @@ return new class extends Migration
             $table->string('phase')->nullable();
             $table->string('address')->nullable();
             $table->string('subdivision')->nullable();
-            $table->decimal('floor_area', 10, 2)->comment('Total floor area in square foot')->unsigned();
-            $table->unsignedTinyInteger('num_of_floors')->comment('Number of floors');
+            $table->decimal('floor_area', 10, 2)->comment('Total floor area in square foot')->unsigned()->nullable();
+            $table->unsignedTinyInteger('num_of_floors')->comment('Number of floors')->nullable();
             $table->timestamps();
         });
     }
