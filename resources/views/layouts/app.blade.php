@@ -32,12 +32,12 @@
             <flux:spacer />
 
             <div class="flex items-center justify-between w-full p-2">
-                
+
                 <!-- Settings Button -->
-                
+
                 <!-- Dark Mode Toggle -->
                 <flux:switch x-data x-model="$flux.dark" label="Dark mode"  />
-                
+
                 <!-- Profile section -->
                 <flux:dropdown position="top" align="start">
                     <flux:profile avatar="https://fluxui.dev/img/demo/user.png" />
@@ -47,8 +47,10 @@
                         <flux:menu.item icon="cog-8-tooth" :href="route('profile')">settings</flux:menu.item>
 
                         <flux:menu.separator />
-
-                        <flux:menu.item wire:click="logout" icon="arrow-right-start-on-rectangle">Logout</flux:menu.item>
+                        <form method="POST" action="{{ route('logout') }}">
+                            @csrf
+                            <flux:menu.item as="button" type="submit" icon="arrow-right-start-on-rectangle">Logout</flux:menu.item>
+                        </form>
                     </flux:menu>
                 </flux:dropdown>
             </div>
@@ -59,7 +61,7 @@
             <flux:menu.item>v.{{ $appVersion }}</flux:menu.item>
         </flux:sidebar>
 
-        
+
         @php
             $showFilters = $showFilters ?? false;
             $showSearch  = $showSearch  ?? false;
