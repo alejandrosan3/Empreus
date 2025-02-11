@@ -55,7 +55,7 @@ class DatabaseSeeder extends Seeder
         if (DB::table('company_users')->count() === 0) {
             $this->call(CompanyUserSeeder::class);
         }
-
+        /*
         Builder::factory(50)->create();
 
         Supervisor::factory(50)->create();
@@ -64,6 +64,6 @@ class DatabaseSeeder extends Seeder
 
         Task::factory(100)->create();
 
-        TaskNote::factory(10)->create();
+        TaskNote::factory(10)->create(); */
     }
 }

@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Casts\Attribute;
 
 class Task extends Model
 {
@@ -52,5 +53,25 @@ class Task extends Model
     public function status(): BelongsTo
     {
         return $this->statusType();
+    }
+
+    public function endedAt(): Attribute
+    {
+        return Attribute::make(
+            get: fn ($value) => $value ? \Carbon\Carbon::parse($value)->format('M d, Y') : null,
+        );
+    }
+
+    public function startedAt(): Attribute
+    {    return Attribute::make(
+            get: fn ($value) => $value ? \Carbon\Carbon::parse($value)->format('M d, Y') : null,    );
+    }
+    public function scheduledStartDate(): Attribute
+    {
+        return Attribute::make(get: fn ($value) => $value ? \Carbon\Carbon::parse($value)->format('M d, Y') : null,);
+    }
+    public function scheduledEndDate(): Attribute
+    {    return Attribute::make(
+            get: fn ($value) => $value ? \Carbon\Carbon::parse($value)->format('M d, Y') : null,    );
     }
 }
