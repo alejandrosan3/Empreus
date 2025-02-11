@@ -23,16 +23,16 @@
                 </div>
 
                 <!-- Reset all filters section -->
-                
+
                 @if ( !empty( $selectedBuilders ) || !empty( $selectedSubdivisions ) || !empty( $selectedLots ) )
                     <div class="filter-alert bg-slate-100 w-full">
                     <flux:button variant="ghost" icon="x-mark" wire:click="resetFilters('all')">Remove All Filters</flux:button>
-                    </div>    
+                    </div>
                 @endif
-                
+
                 <!-- Builders Select -->
 
-                <flux:select multiple searchable clearable  label="Builders" variant="listbox" indicator="checkbox" placeholder="Select the Builders" wire:model="selectedBuilders" :filter="false" clear="close">
+                <flux:select multiple searchable clearable  label="Builders" variant="listbox" indicator="checkbox" placeholder="Select the Builders" wire:model="selectedBuilders" clear="close">
                     @if ( !empty( $selectedBuilders ) ) <flux:button variant="ghost" icon="x-mark"  wire:click="resetFilters('builders')">Remove Filter</flux:button> @endif
                     @foreach($filters['builders'] ?? [] as $builder)
                         <flux:option>{{ $builder }}</flux:option>
@@ -40,7 +40,7 @@
                 </flux:select>
 
                 <!-- Subdivision's Select -->
-                <flux:select multiple searchable clearable label="Subdivisions" variant="listbox" indicator="checkbox" placeholder="Select the Subdivisions" wire:model="selectedSubdivisions" :filter="false" clear="close">
+                <flux:select multiple searchable clearable label="Subdivisions" variant="listbox" indicator="checkbox" placeholder="Select the Subdivisions" wire:model="selectedSubdivisions" clear="close">
                     @if ( !empty( $selectedSubdivisions ) ) <flux:button variant="ghost" icon="x-mark" wire:click="resetFilters('subdivisions')">Remove Filter</flux:button> @endif
                     @foreach($filters['subdivisions'] ?? [] as $subdivision)
                         <flux:option>{{ $subdivision }}</flux:option>
@@ -48,7 +48,7 @@
                 </flux:select>
 
                 <!-- Lot Number Input -->
-                <flux:select multiple searchable clearable label="Lot #" variant="listbox" indicator="checkbox" placeholder="Select the Lot(s)" wire:model="selectedLots" :filter="false" clear="close">
+                <flux:select multiple searchable clearable label="Lot #" variant="listbox" indicator="checkbox" placeholder="Select the Lot(s)" wire:model="selectedLots" clear="close">
                     @if ( !empty( $selectedLots ) ) <flux:button variant="ghost" icon="x-mark" wire:click="resetFilters('lots')">Remove Filter</flux:button> @endif
                     @foreach($filters['lots'] ?? [] as $lot)
                         <flux:option>{{ $lot }}</flux:option>

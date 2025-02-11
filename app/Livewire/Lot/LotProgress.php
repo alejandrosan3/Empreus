@@ -18,7 +18,7 @@
 
         // Extra config for the view's table
         public $columns = [];
-        public $taskTypes = ['Clean Rough', 'Pressure Wash', 'Floor Machine', 'Reclean #1', 'Reclean #2'];
+        public $taskTypes = ['Clean Rough', 'Rough Windows', 'Pressure Wash', 'Floor Machine', 'Reclean #1', 'Reclean #2', 'Final Clean', 'Final Windows'];
 
         // These store the user's chosen filters
         public $selectedBuilders = [];
@@ -27,6 +27,12 @@
 
         // This is a flag used to show either lotprogress or the contentdetails
         public $selectedLot = null;
+
+        // EPO Handling variables
+        public $epoOverview = "";
+        public $epoCount = "";
+
+
 
 
         /**
@@ -91,7 +97,7 @@
                 $query->orderBy($this->sortBy, $this->sortDirection);
             }
 
-            return $query->paginate(10);
+            return $query->paginate(20);
         }
 
 
@@ -233,6 +239,19 @@
             // Dispatch initial filters when the component loads
             $this->dispatchFilters();
         }
+
+        public function epoCount(Lot $lot): array
+        {
+            $epoTasks = $lot->tasks->where('is_extra', 1);
+            $completedCount = $epoTasks->whereNotNull('ended_at')->count();
+            $totalCount = $epoTasks->count();
+
+            return [
+                'completed' => $completedCount,
+                'total'     => $totalCount,
+            ];
+        }
+
 
         public function render()
         {
