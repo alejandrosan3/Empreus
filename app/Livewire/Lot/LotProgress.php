@@ -67,7 +67,15 @@
             }
 
             if (!empty($this->selectedSubdivisions)) {
-                $query->whereIn('subdivision', $this->selectedSubdivisions);
+                $query->where(function($q) {
+                    foreach ($this->selectedSubdivisions as $filter) {
+                        [$subdivision, $phase] = explode('|', $filter);
+                        $q->orWhere(function($q2) use ($subdivision, $phase) {
+                            $q2->where('subdivision', $subdivision)
+                               ->where('phase', $phase);
+                        });
+                    }
+                });
             }
 
             if (!empty($this->selectedLots)) {
@@ -131,7 +139,16 @@
                 });
             }
             if (!empty($this->selectedSubdivisions)) {
-                $query->whereIn('subdivision', $this->selectedSubdivisions);
+                $query->where(function($q) {
+                    foreach ($this->selectedSubdivisions as $filter) {
+                        // split the composite value
+                        [$subdivision, $phase] = explode('|', $filter);
+                        $q->orWhere(function($q2) use ($subdivision, $phase) {
+                            $q2->where('subdivision', $subdivision)
+                               ->where('phase', $phase);
+                        });
+                    }
+                });
             }
             if (!empty($this->selectedLots)) {
                 $query->whereIn('lot_number', $this->selectedLots);
@@ -145,9 +162,17 @@
                 ->pluck('builders.name');
 
             $subdivisions = $query->clone()
-                ->distinct()
+                ->select('subdivision', 'phase')
+                ->groupBy('subdivision', 'phase')
                 ->orderby('subdivision', 'asc')
-                ->pluck('subdivision');
+                ->get()
+                ->map(function ($item) {
+                    return [
+                        'value' => $item['subdivision'] . '|' . $item['phase'],
+                        'label' => $item['subdivision'] . ($item['phase'] ? " ({$item['phase']})" : ""),
+                    ];
+                })
+                ->toArray();
 
             $lots = $query->clone()
                 ->distinct()

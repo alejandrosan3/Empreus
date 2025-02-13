@@ -42,8 +42,8 @@
                 <!-- Subdivision's Select -->
                 <flux:select multiple searchable clearable label="Subdivisions" variant="listbox" indicator="checkbox" placeholder="Select the Subdivisions" wire:model="selectedSubdivisions" clear="close">
                     @if ( !empty( $selectedSubdivisions ) ) <flux:button variant="ghost" icon="x-mark" wire:click="resetFilters('subdivisions')">Remove Filter</flux:button> @endif
-                    @foreach($filters['subdivisions'] ?? [] as $subdivision)
-                        <flux:option>{{ $subdivision }}</flux:option>
+                    @foreach($filters['subdivisions'] ?? [] as $subd)
+                        <flux:option value="{{ $subd['value'] }}">{{ $subd['label'] }}</flux:option>
                     @endforeach
                 </flux:select>
 
