@@ -91,6 +91,8 @@
                 $query
                     ->join('status_types', 'lots.status_type_id', '=', 'status_types.id')
                     ->orderBy('status_types.name', $this->sortDirection);
+            }elseif ($this->sortBy === 'lot_number') {
+                $query->orderByRaw("CAST(lot_number AS UNSIGNED) {$this->sortDirection}, lot_number ASC");
             } elseif ($this->sortBy === 'last_completed_date') {
 
                 $query
