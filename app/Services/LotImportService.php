@@ -78,7 +78,7 @@ class LotImportService
         $validator = Validator::make($item, [
             'company_id' => 'required|exists:companies,id',
             'builder' => 'required|string|max:255',
-            'lot_number' => 'required|integer',
+            'lot_number' => 'required|string|max:255',
             'task_name' => 'required|string|exists:task_types,name',
             'supervisor_name' => 'nullable|string|max:255',
             'subdivision' => 'nullable|string|max:255',

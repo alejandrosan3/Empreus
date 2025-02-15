@@ -17,7 +17,7 @@ return new class extends Migration
             $table->foreignId('company_id')->constrained('companies')->cascadeOnDelete();
             $table->foreignId('supervisor_id')->nullable()->constrained('supervisors')->cascadeOnDelete();
             $table->foreignId('status_type_id')->index()->constrained('status_types');
-            $table->unsignedSmallInteger('lot_number')->index();
+            $table->string('lot_number')->index();
             $table->string('phase')->nullable();
             $table->string('address')->nullable();
             $table->string('subdivision')->nullable();
