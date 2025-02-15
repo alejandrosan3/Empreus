@@ -252,9 +252,10 @@
          *
          * @return void
          */
-        public function resetSelectedLot()
+        #[On('back-button-press')]
+        public function resetSelectedLot($selectedLot = null)
         {
-            $this->selectedLot = null;
+            $this->selectedLot = $selectedLot;
         }
 
         /**

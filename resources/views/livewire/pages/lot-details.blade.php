@@ -2,7 +2,7 @@
     <flux:button
     icon="arrow-left"
     variant="ghost"
-    onclick="window.history.length > 1 ? history.back() : window.location = '{{ route('lot-progress') }}'">
+    wire:click="goBack">
     Back
 </flux:button>
     <flux:heading size="xl" class="mb-4">Lot Details <flux:badge color="yellow" inset="top bottom">{{ $lot->company->name }}</flux:badge> </flux:heading>
@@ -24,17 +24,8 @@
         ])
     </div>
 
-
     <div class="grid grid-cols-1 gap-4 mt-4">
-        <!-- Notes Section -->
-        @livewire('partials.task-notes', [
-            'tasks' => $lot->tasks,
-        ])
-
-    </div>
-
-    <div class="grid grid-cols-1 gap-4 mt-4">
-        <!-- Standard Task Tables -->
+        <!-- Task Tables -->
         <div>
             @foreach ($tasks as $type => $taskGroup)
             @livewire('partials.task-table', [
@@ -52,5 +43,13 @@
             ])
             @endforeach
         </div>
+    </div>
+
+    <div class="grid grid-cols-1 gap-4 mt-4">
+        <!-- Notes Section -->
+        @livewire('partials.task-notes', [
+            'tasks' => $lot->tasks,
+        ])
+
     </div>
 </div>

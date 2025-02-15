@@ -9,12 +9,15 @@ use App\Models\Lot;
 class LotDetails extends Component
 {
     public $tasks = [];
-    public $lot;
-    public $viaLiveWire;
+    public $lot=null;
+    public $comingFromURL=false;
+
+
 
 
     public function mount($lot_id = null, $lot = null)
     {
+        $this->comingFromURL= $lot_id? true : false;
         if ($lot) {
             // Use the passed lot object directly
             $this->lot = $lot;
@@ -32,6 +35,14 @@ class LotDetails extends Component
             'standard' => $this->lot->tasks->where('is_extra', false),
             'extra' => $this->lot->tasks->where('is_extra', true),
         ];
+    }
+
+    public function goBack(){
+        if($this->comingFromURL){
+            return redirect()->route('lot-progress');
+        }else{
+            $this->dispatch('back-button-press',selectedLot: null);
+        }
     }
 
     public function render()

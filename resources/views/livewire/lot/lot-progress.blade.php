@@ -63,6 +63,7 @@
                             @endphp
                             <flux:heading class="flex items-center gap-2">
                                 {{ $epoCount['completed'] }}/{{ $epoCount['total'] }}
+                                @if ($epoCount['total'])
                                 <flux:tooltip toggleable>
                                     <flux:button icon="information-circle" size="sm" variant="ghost" />
 
@@ -81,6 +82,7 @@
                                         </div>
                                     </flux:tooltip.content>
                                 </flux:tooltip>
+                                @endif
                             </flux:heading>
                         </flux:cell>
 
