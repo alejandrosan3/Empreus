@@ -2,18 +2,30 @@
     @if (!$selectedLot)
 
         <flux:table :paginate="$lots">
-            <!-- Table Header -->
+            <!-- Dynamic Table Header -->
             <flux:columns>
-                <flux:column sortable :sorted="$sortBy === 'builder'" wire:click="sort('builder')">Builder</flux:column>
-                <flux:column sortable :sorted="$sortBy === 'subdivision'" wire:click="sort('subdivision')">Subdivision</flux:column>
-                <flux:column sortable :sorted="$sortBy === 'lot'" wire:click="sort('lot_number')">Lot</flux:column>
-                <flux:column>Stories</flux:column>
-                <flux:column sortable :sorted="$sortBy === 'last_completed_date'" wire:click="sort('last_completed_date')">Last Completed Task</flux:column>
-                @foreach ($taskTypes as $taskType)
-                    <flux:column>{{ $taskType }}</flux:column>
+                @foreach($columns as $column)
+                    @if($column['selected'])
+                        @if($column['value'] === 'standard_po')
+                            {{-- When the column is "standard_po", we output the dynamic task columns --}}
+                            @foreach($taskTypes as $taskType)
+                                <flux:column>{{ $taskType }}</flux:column>
+                            @endforeach
+                        @else
+                            {{-- Output a sortable column if needed --}}
+                            <flux:column :sortable="$column['sortable']"
+                            :sorted="$column['sortable'] ? $sortBy === $column['value'] : false "
+                            wire:click="{{ $column['sortable'] ? 'sort(\'' . $column['value'] . '\')' : '' }}"
+                            class="bg-white {{ $column['group'] == 'fixed' ? 'sticky' : '' }}"
+                            data-fixed-index=" {{ $column['group'] == 'fixed' ? $loop->index : '' }}">
+                                {{ $column['label'] }}
+                            </flux:column>
+                        @endif
+                    @endif
+
+
                 @endforeach
-                <flux:column>EPOs</flux:column>
-                {{-- <flux:column sortable :sorted="$sortBy === 'status'" wire:click="sort('status')">Progress</flux:column> --}}
+                <!-- Static Actions Column -->
                 <flux:column>Actions</flux:column>
             </flux:columns>
 
@@ -21,92 +33,131 @@
             <flux:rows>
                 @foreach ($lots as $lot)
                     <flux:row :key="$lot->id">
-                        <flux:cell>{{ $lot->builder->name }}</flux:cell>
-                        <flux:cell>{{ $lot->subdivision . ($lot->phase ? " ({$lot->phase})" : "") }}</flux:cell>
-                        <flux:cell>{{ $lot->lot_number }}</flux:cell>
-                        <flux:cell>{{ $lot->num_of_floors ?? '-' }}</flux:cell>
-                        <!-- Last completed task section -->
-                        <flux:cell>
-                            @php
-                                $lastCompleted = $lot->getLastCompletedTask();
+                        @foreach($columns as $column)
+                            @if($column['selected'])
+                                @switch($column['value'])
+                                    @case('builder')
+                                        <flux:cell
+                                        class="bg-white {{ $column['group'] == 'fixed' ? 'sticky' : '' }}"
+                                        data-fixed-index=" {{ $column['group'] == 'fixed' ? $loop->index : '' }}" >
+                                            {{ $lot->builder->name }}
+                                        </flux:cell>
+                                        @break
 
-                            @endphp
+                                    @case('subdivision')
+                                        <flux:cell
+                                        class="bg-white {{ $column['group'] == 'fixed' ? 'sticky' : '' }}"
+                                        data-fixed-index=" {{ $column['group'] == 'fixed' ? $loop->index : '' }}">
+                                            {{ $lot->subdivision . ($lot->phase ? " ({$lot->phase})" : "") }}
+                                        </flux:cell>
+                                        @break
 
-                            @if($lastCompleted)
-                                <!-- we have a task, show the task's name and date -->
-                                {{ $lastCompleted->taskType->name }} ({{ $lastCompleted->ended_at }})
-                            @else
-                                <!-- no tasks completed yet -->
-                                <em>No tasks completed yet</em>
-                            @endif
-                        </flux:cell>
+                                    @case('lot_number')
+                                        <flux:cell
+                                        class="bg-white {{ $column['group'] == 'fixed' ? 'sticky' : '' }}"
+                                        data-fixed-index=" {{ $column['group'] == 'fixed' ? $loop->index : '' }}">
+                                            {{ $lot->lot_number }}
+                                        </flux:cell>
+                                        @break
 
-                        @foreach ($taskTypes as $taskType)
-                            @if($task = $lot->getTaskByTypeName($taskType))
-                                <flux:cell>
-                                    @if($task->status->isCompleted())
-                                        <flux:tooltip content="Completed on: {{ $task->ended_at }} ">
-                                            <flux:checkbox checked disabled />
-                                        </flux:tooltip>
-                                    @else
-                                        <flux:checkbox disabled />
-                                    @endif
-                                </flux:cell>
-                            @else
-                                <flux:cell> - </flux:cell>
-                            @endif
-                        @endforeach
-                        <!-- EPO count section -->
-                        <flux:cell>
-                            @php
-                                $epoCount = $this->epoCount($lot);
-                            @endphp
-                            <flux:heading class="flex items-center gap-2">
-                                {{ $epoCount['completed'] }}/{{ $epoCount['total'] }}
-                                @if ($epoCount['total'])
-                                <flux:tooltip toggleable>
-                                    <flux:button icon="information-circle" size="sm" variant="ghost" />
+                                    @case('stories')
+                                        <flux:cell
+                                        class="bg-white {{ $column['group'] == 'fixed' ? 'sticky' : '' }}"
+                                        data-fixed-index=" {{ $column['group'] == 'fixed' ? $loop->index : '' }}">
+                                            {{ $lot->num_of_floors ?? '-' }}
+                                        </flux:cell>
+                                        @break
 
-                                    <flux:tooltip.content class="max-w-[20rem] space-y-2">
-                                        <div class="flex flex-col space-y-1">
-                                            @foreach($lot->tasks->where('is_extra', 1) as $task)
-                                                <div class="flex items-center space-x-2">
-                                                    @if($task->ended_at)
-                                                        <flux:icon.check variant="micro" class="text-green-500 dark:text-green-300" />
+                                    @case('last_completed_date')
+                                        <flux:cell
+                                        class="bg-white {{ $column['group'] == 'fixed' ? 'sticky' : '' }}"
+                                        data-fixed-index=" {{ $column['group'] == 'fixed' ? $loop->index : '' }}">
+                                            @php
+                                                $lastCompleted = $lot->getLastCompletedTask();
+                                            @endphp
+                                            @if($lastCompleted)
+                                                {{ $lastCompleted->taskType->name }} ({{ $lastCompleted->ended_at }})
+                                            @else
+                                                <em>No tasks completed yet</em>
+                                            @endif
+                                        </flux:cell>
+                                        @break
+
+                                    @case('epo')
+                                        <flux:cell
+                                        class="bg-white {{ $column['group'] == 'fixed' ? 'sticky' : '' }}"
+                                        data-fixed-index=" {{ $column['group'] == 'fixed' ? $loop->index : '' }}">
+                                            @php
+                                                $epoCount = $this->epoCount($lot);
+                                            @endphp
+                                            <flux:heading class="flex items-center gap-2">
+                                                {{ $epoCount['completed'] }}/{{ $epoCount['total'] }}
+                                                @if ($epoCount['total'])
+                                                    <flux:tooltip toggleable>
+                                                        <flux:button icon="information-circle" size="sm" variant="ghost" />
+                                                        <flux:tooltip.content class="max-w-[20rem] space-y-2">
+                                                            <div class="flex flex-col space-y-2">
+                                                                @foreach($lot->tasks->where('is_extra', 1) as $task)
+                                                                    <div class="flex items-center space-x-2">
+                                                                        @if($task->ended_at)
+                                                                            @php $completed = "Completed= $task->ended_at" ; @endphp
+                                                                            <flux:icon.check variant="micro" class="text-green-500 dark:text-green-300" />
+                                                                        @else
+                                                                            @php $completed = ""; @endphp
+                                                                            <flux:icon.clock variant="micro" class="text-amber-500 dark:text-amber-300" />
+                                                                        @endif
+                                                                        <span>{{ $task->taskType->name }}. {{ $completed }}</span>
+                                                                    </div>
+                                                                @endforeach
+                                                            </div>
+                                                        </flux:tooltip.content>
+                                                    </flux:tooltip>
+                                                @endif
+                                            </flux:heading>
+                                        </flux:cell>
+                                        @break
+
+                                    @case('standard_po')
+                                        @foreach ($taskTypes as $taskType)
+                                            <flux:cell
+                                            class="bg-white {{ $column['group'] == 'fixed' ? 'sticky' : '' }}"
+                                            data-fixed-index=" {{ $column['group'] == 'fixed' ? $loop->index : '' }}">
+                                                @if($task = $lot->getTaskByTypeName($taskType))
+                                                    @if($task->status->isCompleted())
+                                                        <flux:tooltip content="Completed on: {{ $task->ended_at }}">
+                                                            <flux:checkbox checked disabled />
+                                                        </flux:tooltip>
                                                     @else
-                                                        <flux:icon.clock variant="micro" class="text-amber-500 dark:text-amber-300" />
+                                                        <flux:checkbox disabled />
                                                     @endif
-                                                    <span>{{ $task->taskType->name }}</span>
-                                                </div>
-                                            @endforeach
-                                        </div>
-                                    </flux:tooltip.content>
-                                </flux:tooltip>
-                                @endif
-                            </flux:heading>
-                        </flux:cell>
+                                                @else
+                                                    -
+                                                @endif
+                                            </flux:cell>
+                                        @endforeach
+                                        @break
+
+                                @endswitch
+                            @endif
 
 
-                       {{-- <flux:cell>
-                            <flux:badge :color="$lot->status->color" variant="pill" size="lg">
-                                {{ $lot->status->name }}
-                            </flux:badge>
-                        </flux:cell>
-                        --}}
+                        @endforeach
 
-                        <!-- Action Items -->
+                        <!-- Static Actions Cell -->
                         <flux:cell>
                             <flux:dropdown>
                                 <flux:button icon="ellipsis-horizontal" variant="ghost" size="sm" />
                                 <flux:menu>
-                                    <flux:menu.item icon="clipboard-document-check" wire:click="loadDetails( {{ $lot->id }} )" > Details</flux:menu.item>
-
+                                    <flux:menu.item icon="clipboard-document-check" wire:click="loadDetails({{ $lot->id }})">
+                                        Details
+                                    </flux:menu.item>
                                 </flux:menu>
                             </flux:dropdown>
                         </flux:cell>
                     </flux:row>
                 @endforeach
-            </flux:rows>
+        </flux:rows>
+
         </flux:table>
     @else
         <!-- Render the ContentDetails component dynamically -->
@@ -116,3 +167,58 @@
     @endif
 
 </div>
+
+
+<script>
+    let ticking = false;
+
+    function onScroll() {
+        if (!ticking) {
+            window.requestAnimationFrame(() => {
+            updateStickyOffsets();
+            ticking = false;
+            });
+            ticking = true;
+        }
+    }
+
+    function updateStickyOffsets() {
+        console.log('hey!');
+        let offset = 0;
+        const offsets = [];
+
+        // Get all fixed header columns (assuming they have both data-flux-column and sticky classes)
+        const headerFixedCols = document.querySelectorAll('[data-flux-column].sticky');
+
+        headerFixedCols.forEach(col => {
+            col.style.left = offset + 'px';
+            offsets.push(offset);
+            offset += col.offsetWidth;
+        });
+
+        // Update each row's fixed cells (assuming they have both data-flux-cell and sticky classes)
+        const rows = document.querySelectorAll('[data-flux-row]');
+        rows.forEach(row => {
+            let cellIndex = 0;
+            const fixedCells = row.querySelectorAll('[data-flux-cell].sticky');
+            fixedCells.forEach(cell => {
+            if (offsets[cellIndex] !== undefined) {
+                cell.style.left = offsets[cellIndex] + 'px';
+                cell.style.position = 'sticky';
+                cell.style.top = '0px';
+            }
+            cellIndex++;
+            });
+        });
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+        const tableContainer = document.querySelector('.overflow-x-auto');
+        if (tableContainer) {
+            tableContainer.addEventListener('scroll', onScroll);
+        }
+    });
+    window.addEventListener('resize', updateStickyOffsets);
+
+
+</script>

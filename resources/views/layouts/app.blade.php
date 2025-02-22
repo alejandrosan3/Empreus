@@ -87,6 +87,6 @@
         </flux:main>
 
         @fluxScripts
-        @livewireScripts
+        @livewireScriptConfig
     </body>
 </html>

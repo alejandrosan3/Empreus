@@ -33,8 +33,6 @@
         public $epoCount = "";
 
 
-
-
         /**
          * Sort the table by a given column, toggling sort direction if needed,
          * then recalc filter dropdowns so the user sees updated lists.
@@ -258,14 +256,37 @@
             $this->selectedLot = $selectedLot;
         }
 
+        #[On('column-list-updated')]
+        public function updateColumns($columns)
+        {
+            $this->columns = $columns;
+        }
+
+
         /**
          * On component mount, dispatch initial filter data so the user sees
          * all possible builders/subdivisions/lots in the UI.
          */
         public function mount()
         {
+
+            $this->columns = [
+                // Fixed columns (always selected)
+                ['id' => 1, 'label' => 'Builder', 'value' => 'builder', 'group' => 'fixed', 'selected' => true, 'sortable' => true],
+                ['id' => 2, 'label' => 'Subdivision', 'value' => 'subdivision', 'group' => 'fixed', 'selected' => true, 'sortable' => true],
+                ['id' => 3, 'label' => 'Lot', 'value' => 'lot_number', 'group' => 'fixed', 'selected' => true, 'sortable' => true],
+                // Active columns (user can toggle visibility)
+                ['id' => 4, 'label' => 'Stories', 'value' => 'stories', 'group' => 'active', 'selected' => false, 'sortable' => false],
+                ['id' => 5, 'label' => 'Last Completed Task', 'value' => 'last_completed_date', 'group' => 'active', 'selected' => true, 'sortable' => true],
+                ['id' => 6, 'label' => 'Standard Tasks', 'value' => 'standard_po', 'group' => 'active', 'selected' => true, 'sortable' => false],
+                ['id' => 7, 'label' => 'EPOs', 'value' => 'epo', 'group' => 'active', 'selected' => true, 'sortable' => false],
+            ];
+
             // Dispatch initial filters when the component loads
             $this->dispatchFilters();
+
+            // Dispatch columns to the sortable col dropdown
+            $this->dispatch('update-columns', columns: $this->columns);
         }
 
         public function epoCount(Lot $lot): array
@@ -288,7 +309,7 @@
             ])->layout('layouts.app',[
                 'showFilters' => true,
                 'showSearch'  => false,
-                'showColumns' => false,
+                'showColumns' => true,
                 'showAddNew' => false,]);
         }
 
