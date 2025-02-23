@@ -16,7 +16,7 @@
                             <flux:table.column :sortable="$column['sortable']"
                             :sorted="$column['sortable'] ? $sortBy === $column['value'] : false "
                             wire:click="{{ $column['sortable'] ? 'sort(\'' . $column['value'] . '\')' : '' }}"
-                            class="bg-white {{ $column['group'] == 'fixed' ? 'sticky' : '' }}"
+                            class="bg-white dark:bg-zinc-800 {{ $column['group'] == 'fixed' ? 'sticky' : '' }}"
                             data-fixed-index=" {{ $column['group'] == 'fixed' ? $loop->index : '' }}">
                                 {{ $column['label'] }}
                             </flux:table.column>
@@ -38,7 +38,7 @@
                                 @switch($column['value'])
                                     @case('builder')
                                         <flux:table.cell
-                                        class="bg-white {{ $column['group'] == 'fixed' ? 'sticky' : '' }}"
+                                        class="bg-white dark:bg-zinc-800 {{ $column['group'] == 'fixed' ? 'sticky' : '' }}"
                                         data-fixed-index=" {{ $column['group'] == 'fixed' ? $loop->index : '' }}" >
                                             {{ $lot->builder->name }}
                                         </flux:table.cell>
@@ -46,7 +46,7 @@
 
                                     @case('subdivision')
                                         <flux:table.cell
-                                        class="bg-white {{ $column['group'] == 'fixed' ? 'sticky' : '' }}"
+                                        class="bg-white dark:bg-zinc-800 {{ $column['group'] == 'fixed' ? 'sticky' : '' }}"
                                         data-fixed-index=" {{ $column['group'] == 'fixed' ? $loop->index : '' }}">
                                             {{ $lot->subdivision . ($lot->phase ? " ({$lot->phase})" : "") }}
                                         </flux:table.cell>
@@ -54,7 +54,7 @@
 
                                     @case('lot_number')
                                         <flux:table.cell
-                                        class="bg-white {{ $column['group'] == 'fixed' ? 'sticky' : '' }}"
+                                        class="bg-white dark:bg-zinc-800 {{ $column['group'] == 'fixed' ? 'sticky' : '' }}"
                                         data-fixed-index=" {{ $column['group'] == 'fixed' ? $loop->index : '' }}">
                                             {{ $lot->lot_number }}
                                         </flux:table.cell>
@@ -62,7 +62,7 @@
 
                                     @case('stories')
                                         <flux:table.cell
-                                        class="bg-white {{ $column['group'] == 'fixed' ? 'sticky' : '' }}"
+                                        class="bg-white dark:bg-zinc-800 {{ $column['group'] == 'fixed' ? 'sticky' : '' }}"
                                         data-fixed-index=" {{ $column['group'] == 'fixed' ? $loop->index : '' }}">
                                             {{ $lot->num_of_floors ?? '-' }}
                                         </flux:table.cell>
@@ -70,7 +70,7 @@
 
                                     @case('last_completed_date')
                                         <flux:table.cell
-                                        class="bg-white {{ $column['group'] == 'fixed' ? 'sticky' : '' }}"
+                                        class="bg-white dark:bg-zinc-800 {{ $column['group'] == 'fixed' ? 'sticky' : '' }}"
                                         data-fixed-index=" {{ $column['group'] == 'fixed' ? $loop->index : '' }}">
                                             @php
                                                 $lastCompleted = $lot->getLastCompletedTask();
@@ -85,7 +85,7 @@
 
                                     @case('epo')
                                         <flux:table.cell
-                                        class="bg-white {{ $column['group'] == 'fixed' ? 'sticky' : '' }}"
+                                        class="bg-white dark:bg-zinc-800{{ $column['group'] == 'fixed' ? 'sticky' : '' }}"
                                         data-fixed-index=" {{ $column['group'] == 'fixed' ? $loop->index : '' }}">
                                             @php
                                                 $epoCount = $this->epoCount($lot);
@@ -120,7 +120,7 @@
                                     @case('standard_po')
                                         @foreach ($taskTypes as $taskType)
                                             <flux:table.cell
-                                            class="bg-white {{ $column['group'] == 'fixed' ? 'sticky' : '' }}"
+                                            class="bg-white dark:bg-zinc-800{{ $column['group'] == 'fixed' ? 'sticky' : '' }}"
                                             data-fixed-index=" {{ $column['group'] == 'fixed' ? $loop->index : '' }}">
                                                 @if($task = $lot->getTaskByTypeName($taskType))
                                                     @if($task->status->isCompleted())

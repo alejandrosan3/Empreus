@@ -10,7 +10,7 @@
     </flux:tooltip>
 
     <!-- Dropdown Content -->
-    <div x-show="open" @click.outside="open = false" class="absolute right-0 mt-2 w-64 bg-white border rounded-sm shadow-lg z-50">
+    <div x-show="open" @click.outside="open = false" class="absolute right-0 mt-2 w-64 bg-white dark:bg-zinc-800 border rounded-sm shadow-lg z-50">
         <div class="p-4">
             <!-- Fixed Columns -->
             <h4 class="font-bold text-sm mb-2">Fixed columns</h4>
@@ -40,7 +40,7 @@
                             <div class="flex items-center space-x-2">
                                 <input type="checkbox"
                                     wire:model.defer="columns.{{ $index }}.selected"
-                                    class="form-checkbox w-5 h-5 rounded-sm border-gray-300 text-blue-600 focus:ring-blue-500"
+                                    class="form-checkbox w-5 h-5 rounded-sm border-gray-300 text-blue-600 focus:ring-blue-500 dark:border-white/10 dark:bg-white/10""
                                     @change="dispatchUpdatedColumns()">
                                 <span>{{ $column['label'] }}</span>
                             </div>
