@@ -53,8 +53,6 @@
         /**
          * Computed property for retrieving lots based on selected filters + sort.
          */
-
-
         public function getLotsProperty()
         {
             $query = Auth::user()->lotsForCurrentCompany();
@@ -122,7 +120,7 @@
             $this->selectedSubdivisions = $data['subdivisions'] ?? [];
             $this->selectedLots       = $data['lots']          ?? [];
 
-
+            $this->resetPage();
             $this->dispatchFilters();
         }
 
