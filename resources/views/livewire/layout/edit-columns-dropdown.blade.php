@@ -2,7 +2,7 @@
 
     <flux:tooltip content="Add/Edit Columns">
         <!-- Dropdown Button -->
-        <button @click="open = !open" class="relative items-center font-medium justify-center gap-2 whitespace-nowrap disabled:opacity-75 dark:disabled:opacity-75 disabled:cursor-default disabled:pointer-events-none h-10 text-sm rounded-lg w-10 inline-flex bg-white hover:bg-zinc-50 dark:bg-zinc-700 dark:hover:bg-zinc-600/75 text-zinc-800 dark:text-white border border-zinc-200 hover:border-zinc-200 border-b-zinc-300/80 dark:border-zinc-600 dark:hover:border-zinc-600 shadow-sm">
+        <button @click="open = !open" class="relative items-center font-medium justify-center gap-2 whitespace-nowrap disabled:opacity-75 dark:disabled:opacity-75 disabled:cursor-default disabled:pointer-events-none h-10 text-sm rounded-lg w-10 inline-flex bg-white hover:bg-zinc-50 dark:bg-zinc-700 dark:hover:bg-zinc-600/75 text-zinc-800 dark:text-white border border-zinc-200 hover:border-zinc-200 border-b-zinc-300/80 dark:border-zinc-600 dark:hover:border-zinc-600 shadow-xs">
             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M9 4.5v15m6-15v15m-10.875 0h15.75c.621 0 1.125-.504 1.125-1.125V5.625c0-.621-.504-1.125-1.125-1.125H4.125C3.504 4.5 3 5.004 3 5.625v12.75c0 .621.504 1.125 1.125 1.125Z" />
             </svg>
@@ -10,7 +10,7 @@
     </flux:tooltip>
 
     <!-- Dropdown Content -->
-    <div x-show="open" @click.outside="open = false" class="absolute right-0 mt-2 w-64 bg-white border rounded shadow-lg z-50">
+    <div x-show="open" @click.outside="open = false" class="absolute right-0 mt-2 w-64 bg-white border rounded-sm shadow-lg z-50">
         <div class="p-4">
             <!-- Fixed Columns -->
             <h4 class="font-bold text-sm mb-2">Fixed columns</h4>
@@ -19,7 +19,7 @@
                     @if($column['group'] === 'fixed')
                         <li class="flex justify-between items-center space-x-2" data-id="{{ $column['id'] }}">
                             <div class="flex items-center space-x-2">
-                                <input type="checkbox" checked disabled class="form-checkbox w-5 h-5 rounded border-gray-300 text-gray-600 focus:ring-gray-500 opacity-25">
+                                <input type="checkbox" checked disabled class="form-checkbox w-5 h-5 rounded-sm border-gray-300 text-gray-600 focus:ring-gray-500 opacity-25">
                                 <span>{{ $column['label'] }}</span>
                             </div>
                             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5">
@@ -40,7 +40,7 @@
                             <div class="flex items-center space-x-2">
                                 <input type="checkbox"
                                     wire:model.defer="columns.{{ $index }}.selected"
-                                    class="form-checkbox w-5 h-5 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                                    class="form-checkbox w-5 h-5 rounded-sm border-gray-300 text-blue-600 focus:ring-blue-500"
                                     @change="dispatchUpdatedColumns()">
                                 <span>{{ $column['label'] }}</span>
                             </div>
