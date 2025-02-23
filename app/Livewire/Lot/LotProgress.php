@@ -54,7 +54,7 @@
          * Computed property for retrieving lots based on selected filters + sort.
          */
 
-        #[On('company-updated')]
+
         public function getLotsProperty()
         {
             $query = Auth::user()->lotsForCurrentCompany();
@@ -131,7 +131,8 @@
          * Builds a separate query that grabs the possible Builders/Subdivisions/Lots
          * matching the current selection. Then dispatches them in an event for the UI dropdowns.
          */
-        protected function dispatchFilters()
+        #[On('company-updated')]
+        public function dispatchFilters()
         {
             $query = Auth::user()->lotsForCurrentCompany();
 

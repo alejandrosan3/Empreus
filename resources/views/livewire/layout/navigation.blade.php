@@ -17,7 +17,7 @@
             </flux:modal.trigger>
 
             <flux:modal name="filters" class="md:w-96 space-y-6">
-                <div>
+                <div class=>
                     <flux:heading size="lg">Filters</flux:heading>
                     <flux:subheading>Set the desired filter. Leave blank to ignore.</flux:subheading>
                 </div>
@@ -25,8 +25,8 @@
                 <!-- Reset all filters section -->
 
                 @if ( !empty( $selectedBuilders ) || !empty( $selectedSubdivisions ) || !empty( $selectedLots ) )
-                    <div class="filter-alert bg-slate-100 w-full">
-                    <flux:button variant="ghost" icon="x-mark" wire:click="resetFilters('all')">Remove All Filters</flux:button>
+                    <div class="filter-alert bg-slate-100 dark:bg-zinc-600 w-full">
+                    <flux:button variant="ghost" icon="x-mark" wire:click="resetFilters('all')" class="dark:text-black">Remove All Filters</flux:button>
                     </div>
                 @endif
 
