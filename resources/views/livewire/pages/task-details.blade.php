@@ -1,7 +1,7 @@
 <div class="p-4">
-    <flux:button 
-    icon="arrow-left" 
-    variant="ghost" 
+    <flux:button
+    icon="arrow-left"
+    variant="ghost"
     onclick="window.history.length > 1 ? history.back() : window.location = '{{ route('lot-progress') }}'">
     Back
 </flux:button>
@@ -67,28 +67,28 @@
             <flux:card class="space-y-6 mb-5">
                 <flux:heading size="lg">{{ ucfirst($type) }} Tasks <flux:badge color="lime" inset="top bottom">{{ $type === 'standard' ? 'PO' : 'EPO' }}</flux:badge></flux:heading>
                 <flux:table>
-                    <flux:columns>
-                        <flux:column>Builder</flux:column>
-                        <flux:column>Subdivision</flux:column>
-                        <flux:column>Lot</flux:column>
-                        <flux:column>Status</flux:column>
-                        <flux:column>Start Date</flux:column>
-                        <flux:column>Completed Date</flux:column>
-                    </flux:columns>
-                    <flux:rows>
+                    <flux:table.columns>
+                        <flux:table.column>Builder</flux:table.column>
+                        <flux:table.column>Subdivision</flux:table.column>
+                        <flux:table.column>Lot</flux:table.column>
+                        <flux:table.column>Status</flux:table.column>
+                        <flux:table.column>Start Date</flux:table.column>
+                        <flux:table.column>Completed Date</flux:table.column>
+                    </flux:table.columns>
+                    <flux:table.rows>
                         @foreach ($taskGroup as $task)
-                        <flux:row class="{{ $task->statusType->name === 'Completed' ? 'opacity-50' : '' }}">
-                            <flux:cell>{{ $task->lot->builder->name }}</flux:cell>
-                            <flux:cell>{{ $task->lot->subdivision }}</flux:cell>
-                            <flux:cell>{{ $task->lot->lot_number }}</flux:cell>
-                            <flux:cell>
+                        <flux:table.row class="{{ $task->statusType->name === 'Completed' ? 'opacity-50' : '' }}">
+                            <flux:table.cell>{{ $task->lot->builder->name }}</flux:table.cell>
+                            <flux:table.cell>{{ $task->lot->subdivision }}</flux:table.cell>
+                            <flux:table.cell>{{ $task->lot->lot_number }}</flux:table.cell>
+                            <flux:table.cell>
                                 <flux:badge color="{{ $task->statusType->color }}">{{ $task->statusType->name }}</flux:badge>
-                            </flux:cell>
-                            <flux:cell>{{ $task->started_at }}</flux:cell>
-                            <flux:cell>{{ $task->ended_at }}</flux:cell>
-                        </flux:row>
+                            </flux:table.cell>
+                            <flux:table.cell>{{ $task->started_at }}</flux:table.cell>
+                            <flux:table.cell>{{ $task->ended_at }}</flux:table.cell>
+                        </flux:table.row>
                         @endforeach
-                    </flux:rows>
+                    </flux:table.rows>
                 </flux:table>
             </flux:card>
             @endforeach

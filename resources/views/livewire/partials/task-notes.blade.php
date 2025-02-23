@@ -5,26 +5,26 @@
             <flux:badge color="purple" inset="top bottom">Notes</flux:badge>
         </flux:heading>
         <flux:table>
-            <flux:columns>
-                <flux:column sortable :sorted="$sortBy === 'task_notes.created_at' " wire:click="sort( 'task_notes.created_at' )">Created At</flux:column>
-                <flux:column sortable :sorted="$sortBy === 'task_type.name' " wire:click="sort( 'task_type.name' )">Task</flux:column>
-                <flux:column>Note</flux:column>
-            </flux:columns>
-            <flux:rows>
+            <flux:table.columns>
+                <flux:table.column sortable :sorted="$sortBy === 'task_notes.created_at' " wire:click="sort( 'task_notes.created_at' )">Created At</flux:table.column>
+                <flux:table.column sortable :sorted="$sortBy === 'task_type.name' " wire:click="sort( 'task_type.name' )">Task</flux:table.column>
+                <flux:table.column>Note</flux:table.column>
+            </flux:table.columns>
+            <flux:table.rows>
                 @forelse ($allNotes as $note)
-                    <flux:row>
-                        <flux:cell>{{ $note->created_at->format('Y-m-d') ?? 'N/A' }}</flux:cell>
-                        <flux:cell>{{ $note->task->taskType->name ?? 'N/A' }}</flux:cell>
-                        <flux:cell>{{ $note->description }}</flux:cell>
-                    </flux:row>
+                    <flux:table.row>
+                        <flux:table.cell>{{ $note->created_at->format('Y-m-d') ?? 'N/A' }}</flux:table.cell>
+                        <flux:table.cell>{{ $note->task->taskType->name ?? 'N/A' }}</flux:table.cell>
+                        <flux:table.cell>{{ $note->description }}</flux:table.cell>
+                    </flux:table.row>
                 @empty
-                    <flux:row>
-                        <flux:cell colspan="4" class="text-center">
+                    <flux:table.row>
+                        <flux:table.cell colspan="4" class="text-center">
                             No notes available.
-                        </flux:cell>
-                    </flux:row>
+                        </flux:table.cell>
+                    </flux:table.row>
                 @endforelse
-            </flux:rows>
+            </flux:table.rows>
         </flux:table>
     </flux:card>
 </div>

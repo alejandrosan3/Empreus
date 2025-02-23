@@ -35,7 +35,7 @@
                 <flux:select multiple searchable clearable  label="Builders" variant="listbox" indicator="checkbox" placeholder="Select the Builders" wire:model="selectedBuilders" clear="close">
                     @if ( !empty( $selectedBuilders ) ) <flux:button variant="ghost" icon="x-mark"  wire:click="resetFilters('builders')">Remove Filter</flux:button> @endif
                     @foreach($filters['builders'] ?? [] as $builder)
-                        <flux:option>{{ $builder }}</flux:option>
+                        <flux:select.option>{{ $builder }}</flux:select.option>
                     @endforeach
                 </flux:select>
 
@@ -43,7 +43,7 @@
                 <flux:select multiple searchable clearable label="Subdivisions" variant="listbox" indicator="checkbox" placeholder="Select the Subdivisions" wire:model="selectedSubdivisions" clear="close">
                     @if ( !empty( $selectedSubdivisions ) ) <flux:button variant="ghost" icon="x-mark" wire:click="resetFilters('subdivisions')">Remove Filter</flux:button> @endif
                     @foreach($filters['subdivisions'] ?? [] as $subd)
-                        <flux:option value="{{ $subd['value'] }}">{{ $subd['label'] }}</flux:option>
+                        <flux:select.option value="{{ $subd['value'] }}">{{ $subd['label'] }}</flux:select.option>
                     @endforeach
                 </flux:select>
 
@@ -51,7 +51,7 @@
                 <flux:select multiple searchable clearable label="Lot #" variant="listbox" indicator="checkbox" placeholder="Select the Lot(s)" wire:model="selectedLots" clear="close">
                     @if ( !empty( $selectedLots ) ) <flux:button variant="ghost" icon="x-mark" wire:click="resetFilters('lots')">Remove Filter</flux:button> @endif
                     @foreach($filters['lots'] ?? [] as $lot)
-                        <flux:option>{{ $lot }}</flux:option>
+                        <flux:select.option>{{ $lot }}</flux:select.option>
                     @endforeach
                 </flux:select>
 

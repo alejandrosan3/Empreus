@@ -4,31 +4,31 @@
         <flux:badge color="{{ $badgeColor }}" inset="top bottom">{{ $badgeLabel }}</flux:badge>
     </flux:heading>
     <flux:table>
-        <flux:columns>
+        <flux:table.columns>
             @foreach ($headers as $header)
-                <flux:column sortable :sorted="$sortBy === $header['column']" wire:click="sort( '{{ $header['column'] }}' )" >{{ $header['label'] }}</flux:column>
+                <flux:table.column sortable :sorted="$sortBy === $header['column']" wire:click="sort( '{{ $header['column'] }}' )" >{{ $header['label'] }}</flux:table.column>
             @endforeach
-        </flux:columns>
-        <flux:rows>
+        </flux:table.columns>
+        <flux:table.rows>
             @forelse ($sortedGroup as $task)
-                <flux:row class="{{ ($task->statusType->name ?? '') === 'Completed' ? 'opacity-50' : '' }}">
-                    <flux:cell>{{ $task->taskType->name ?? 'Unknown' }}</flux:cell>
-                    <flux:cell>
+                <flux:table.row class="{{ ($task->statusType->name ?? '') === 'Completed' ? 'opacity-50' : '' }}">
+                    <flux:table.cell>{{ $task->taskType->name ?? 'Unknown' }}</flux:table.cell>
+                    <flux:table.cell>
                         <flux:badge color="{{ $task->statusType->color ?? 'gray' }}">
                             {{ $task->statusType->name ?? 'Unknown' }}
                         </flux:badge>
-                    </flux:cell>
-                    <flux:cell>{{ $task->scheduled_start_date ?? '-' }}</flux:cell>
-                    <flux:cell>{{ $task->started_at ?? '-' }}</flux:cell>
-                    <flux:cell>{{ $task->ended_at ?? '-' }}</flux:cell>
-                </flux:row>
+                    </flux:table.cell>
+                    <flux:table.cell>{{ $task->scheduled_start_date ?? '-' }}</flux:table.cell>
+                    <flux:table.cell>{{ $task->started_at ?? '-' }}</flux:table.cell>
+                    <flux:table.cell>{{ $task->ended_at ?? '-' }}</flux:table.cell>
+                </flux:table.row>
             @empty
-                <flux:row>
-                    <flux:cell colspan="{{ count($headers) }}" class="text-center">
+                <flux:table.row>
+                    <flux:table.cell colspan="{{ count($headers) }}" class="text-center">
                         No tasks available.
-                    </flux:cell>
-                </flux:row>
+                    </flux:table.cell>
+                </flux:table.row>
             @endforelse
-        </flux:rows>
+        </flux:table.rows>
     </flux:table>
 </flux:card>

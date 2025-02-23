@@ -3,73 +3,73 @@
 
         <flux:table :paginate="$lots">
             <!-- Dynamic Table Header -->
-            <flux:columns>
+            <flux:table.columns>
                 @foreach($columns as $column)
                     @if($column['selected'])
                         @if($column['value'] === 'standard_po')
                             {{-- When the column is "standard_po", we output the dynamic task columns --}}
                             @foreach($taskTypes as $taskType)
-                                <flux:column>{{ $taskType }}</flux:column>
+                                <flux:table.column>{{ $taskType }}</flux:table.column>
                             @endforeach
                         @else
                             {{-- Output a sortable column if needed --}}
-                            <flux:column :sortable="$column['sortable']"
+                            <flux:table.column :sortable="$column['sortable']"
                             :sorted="$column['sortable'] ? $sortBy === $column['value'] : false "
                             wire:click="{{ $column['sortable'] ? 'sort(\'' . $column['value'] . '\')' : '' }}"
                             class="bg-white {{ $column['group'] == 'fixed' ? 'sticky' : '' }}"
                             data-fixed-index=" {{ $column['group'] == 'fixed' ? $loop->index : '' }}">
                                 {{ $column['label'] }}
-                            </flux:column>
+                            </flux:table.column>
                         @endif
                     @endif
 
 
                 @endforeach
                 <!-- Static Actions Column -->
-                <flux:column>Actions</flux:column>
-            </flux:columns>
+                <flux:table.column>Actions</flux:table.column>
+            </flux:table.columns>
 
             <!-- Table Content -->
-            <flux:rows>
+            <flux:table.rows>
                 @foreach ($lots as $lot)
-                    <flux:row :key="$lot->id">
+                    <flux:table.row :key="$lot->id">
                         @foreach($columns as $column)
                             @if($column['selected'])
                                 @switch($column['value'])
                                     @case('builder')
-                                        <flux:cell
+                                        <flux:table.cell
                                         class="bg-white {{ $column['group'] == 'fixed' ? 'sticky' : '' }}"
                                         data-fixed-index=" {{ $column['group'] == 'fixed' ? $loop->index : '' }}" >
                                             {{ $lot->builder->name }}
-                                        </flux:cell>
+                                        </flux:table.cell>
                                         @break
 
                                     @case('subdivision')
-                                        <flux:cell
+                                        <flux:table.cell
                                         class="bg-white {{ $column['group'] == 'fixed' ? 'sticky' : '' }}"
                                         data-fixed-index=" {{ $column['group'] == 'fixed' ? $loop->index : '' }}">
                                             {{ $lot->subdivision . ($lot->phase ? " ({$lot->phase})" : "") }}
-                                        </flux:cell>
+                                        </flux:table.cell>
                                         @break
 
                                     @case('lot_number')
-                                        <flux:cell
+                                        <flux:table.cell
                                         class="bg-white {{ $column['group'] == 'fixed' ? 'sticky' : '' }}"
                                         data-fixed-index=" {{ $column['group'] == 'fixed' ? $loop->index : '' }}">
                                             {{ $lot->lot_number }}
-                                        </flux:cell>
+                                        </flux:table.cell>
                                         @break
 
                                     @case('stories')
-                                        <flux:cell
+                                        <flux:table.cell
                                         class="bg-white {{ $column['group'] == 'fixed' ? 'sticky' : '' }}"
                                         data-fixed-index=" {{ $column['group'] == 'fixed' ? $loop->index : '' }}">
                                             {{ $lot->num_of_floors ?? '-' }}
-                                        </flux:cell>
+                                        </flux:table.cell>
                                         @break
 
                                     @case('last_completed_date')
-                                        <flux:cell
+                                        <flux:table.cell
                                         class="bg-white {{ $column['group'] == 'fixed' ? 'sticky' : '' }}"
                                         data-fixed-index=" {{ $column['group'] == 'fixed' ? $loop->index : '' }}">
                                             @php
@@ -80,11 +80,11 @@
                                             @else
                                                 <em>No tasks completed yet</em>
                                             @endif
-                                        </flux:cell>
+                                        </flux:table.cell>
                                         @break
 
                                     @case('epo')
-                                        <flux:cell
+                                        <flux:table.cell
                                         class="bg-white {{ $column['group'] == 'fixed' ? 'sticky' : '' }}"
                                         data-fixed-index=" {{ $column['group'] == 'fixed' ? $loop->index : '' }}">
                                             @php
@@ -114,12 +114,12 @@
                                                     </flux:tooltip>
                                                 @endif
                                             </flux:heading>
-                                        </flux:cell>
+                                        </flux:table.cell>
                                         @break
 
                                     @case('standard_po')
                                         @foreach ($taskTypes as $taskType)
-                                            <flux:cell
+                                            <flux:table.cell
                                             class="bg-white {{ $column['group'] == 'fixed' ? 'sticky' : '' }}"
                                             data-fixed-index=" {{ $column['group'] == 'fixed' ? $loop->index : '' }}">
                                                 @if($task = $lot->getTaskByTypeName($taskType))
@@ -133,7 +133,7 @@
                                                 @else
                                                     -
                                                 @endif
-                                            </flux:cell>
+                                            </flux:table.cell>
                                         @endforeach
                                         @break
 
@@ -144,7 +144,7 @@
                         @endforeach
 
                         <!-- Static Actions Cell -->
-                        <flux:cell>
+                        <flux:table.cell>
                             <flux:dropdown>
                                 <flux:button icon="ellipsis-horizontal" variant="ghost" size="sm" />
                                 <flux:menu>
@@ -153,10 +153,10 @@
                                     </flux:menu.item>
                                 </flux:menu>
                             </flux:dropdown>
-                        </flux:cell>
-                    </flux:row>
+                        </flux:table.cell>
+                    </flux:table.row>
                 @endforeach
-        </flux:rows>
+        </flux:table.rows>
 
         </flux:table>
     @else
