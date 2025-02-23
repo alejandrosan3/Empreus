@@ -22,4 +22,9 @@ class MultiaccountsDropdown extends Component
     {
         return view('livewire.layout.multiaccounts-dropdown');
     }
+
+    public function updatedSelectedAccountId($value)
+    {
+        $this->dispatch('company-updated', $value);
+    }
 }

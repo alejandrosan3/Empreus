@@ -7,6 +7,7 @@
     use Livewire\Component;
     use Livewire\WithPagination;
     use Livewire\Attributes\On;
+    use Livewire\Attributes\Computed;
 
     class LotProgress extends Component
     {
@@ -52,7 +53,8 @@
         /**
          * Computed property for retrieving lots based on selected filters + sort.
          */
-        #[\Livewire\Attributes\Computed]
+
+        #[On('company-updated')]
         public function getLotsProperty()
         {
             $query = Auth::user()->lotsForCurrentCompany();
