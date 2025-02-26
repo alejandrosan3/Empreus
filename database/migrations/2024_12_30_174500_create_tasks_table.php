@@ -17,8 +17,10 @@ return new class extends Migration
             $table->foreignId('task_type_id')->index()->constrained('task_types')->cascadeOnDelete();
             $table->foreignId('status_type_id')->index()->constrained('status_types');
             $table->foreignId('company_id')->constrained('companies')->cascadeOnDelete();
-            $table->boolean('is_extra')->default(false);
+            $table->boolean('is_extra')->index()->default(false);
             $table->decimal('price', 10, 2)->unsigned();
+            $table->string('order_number', 50)->nullable()->index();
+            $table->string('original_task_name')->nullable()->index();
             $table->dateTime('scheduled_start_date')->nullable()->comment('Scheduled start date');
             $table->dateTime('scheduled_end_date')->nullable()->comment('Scheduled end date');
             $table->dateTime('started_at')->nullable()->comment('Actual start date');

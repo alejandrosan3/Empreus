@@ -13,7 +13,7 @@ return new class extends Migration
     {
         Schema::create('task_types', function (Blueprint $table) {
             $table->id();
-            $table->string('name');
+            $table->string('name')->index();
             $table->text('description')->nullable();
             $table->timestamps();
         });

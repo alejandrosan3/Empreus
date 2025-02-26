@@ -23,6 +23,8 @@ class Task extends Model
         'started_at',
         'ended_at',
         'is_extra',
+        'order_number',
+        'original_task_name',
     ];
 
     public function lot()
