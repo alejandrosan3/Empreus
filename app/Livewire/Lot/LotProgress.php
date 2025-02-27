@@ -186,6 +186,7 @@
                 subdivisions: $subdivisions,
                 lots: $lots
             );
+            $this->resetPage();
         }
 
 

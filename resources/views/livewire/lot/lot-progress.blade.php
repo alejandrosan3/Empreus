@@ -183,7 +183,6 @@
     }
 
     function updateStickyOffsets() {
-        console.log('hey!');
         let offset = 0;
         const offsets = [];
 
