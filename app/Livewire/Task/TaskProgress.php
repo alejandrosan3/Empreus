@@ -290,7 +290,7 @@ class TaskProgress extends Component
             ['id' => 12, 'label' => 'Address',         'value' => 'address',         'group' => 'active', 'selected' => true,  'sortable' => true],
             ['id' => 13, 'label' => 'Price',           'value' => 'price',           'group' => 'active', 'selected' => true,  'sortable' => true],
             ['id' => 14, 'label' => 'Completion Date', 'value' => 'ended_at', 'group' => 'active', 'selected' => true,  'sortable' => true],
-            ['id' => 14, 'label' => 'Order Type', 'value' => 'is_extra', 'group' => 'active', 'selected' => true,  'sortable' => true],
+            ['id' => 15, 'label' => 'Order Type', 'value' => 'is_extra', 'group' => 'active', 'selected' => true,  'sortable' => true],
         ];
 
         $this->dispatchFilters();

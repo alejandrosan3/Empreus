@@ -3,42 +3,51 @@ namespace App\Livewire\Pages;
 
 
 use Livewire\Component;
-use App\Models\Lot;
+use App\Models\Task;
 
 
 class TaskDetails extends Component
 {
-    public $tasks = [];
+    public $task;
+    public $taskTypes=[];
+    public $comingFromURL=false;
 
-    public $lot;
 
-    public function mount($task_id = null, $lot = null)
+    public function goBack(){
+        if($this->comingFromURL){
+            return redirect()->route('task-progress');
+        }else{
+            $this->dispatch('back-button-press',selectedTask: null);
+        }
+    }
+    public function mount($task_id = null, $task = null)
     {
-        if ($lot) {
+        $this->comingFromURL= $task_id? true : false;
+        if ($task) {
             // Use the passed lot object directly
-            $this->lot = $lot;
+            $this->task = $task;
         } elseif ($task_id) {
             // Fetch the lot using the ID from the route
-            $this->lot = Lot::with(['builder', 'supervisor', 'tasks.taskType', 'tasks.statusType'])->findOrFail($lot_id);
+            $this->task = Task::with(['lot.builder', 'lot.supervisor', 'taskType', 'statusType'])->findOrFail($task_id);
         } else {
             // Throw an exception if neither parameter is provided
-            throw new \Exception('No lot provided');
+            throw new \Exception('No task provided');
         }
-    
+
         // Group tasks by type dynamically
-        $this->tasks = [
-            'standard' => $this->lot->tasks->where('is_extra', false),
-            'extra' => $this->lot->tasks->where('is_extra', true),
+        $this->taskTypes = [
+            'standard' => $this->task->lot->tasks->where('is_extra', false),
+            'extra' => $this->task->lot->tasks->where('is_extra', true),
         ];
+
     }
 
     public function render()
     {
         //dd($this->tasks);
         return view('livewire.pages.task-details', [
-            'lot' => $this->lot,
-            'tasks' => $this->tasks,
-            
+            'task' => $this->task,
+
         ])->layout('layouts.app');
     }
 }

@@ -3,6 +3,7 @@
         <flux:table :paginate="$tasks">
             <!-- Table Header -->
             <flux:table.columns>
+                <!-- Fixed Columns -->
                 @foreach($columns as $column)
                     @if($column['selected'])
                         <flux:table.column
@@ -51,19 +52,7 @@
                                             @break
 
                                         @case('status')
-                                            @php
-                                                $status = $task->statusType->name; // e.g. 'Completed', 'In Progress', etc.
-                                                // Use color-coded classes to match your screenshot style
-                                                $statusColor = match($status) {
-                                                    'Completed'   => 'bg-green-100 text-green-700',
-                                                    'In Progress' => 'bg-orange-100 text-orange-700',
-                                                    'Not Started' => 'bg-gray-100 text-gray-700',
-                                                    default       => 'bg-gray-100 text-gray-700',
-                                                };
-                                            @endphp
-                                            <span class="inline-flex items-center px-2 py-1 rounded-full text-sm font-medium {{ $task->statusType->color }}">
-                                                {{ $task->statusType->name }}
-                                            </span>
+                                            <flux:badge color="{{ $task->statusType->color }}">{{ $task->statusType->name }}</flux:badge>
                                             @break
 
                                         @case('num_of_floors')
@@ -71,7 +60,7 @@
                                             @break
 
                                         @case('notes')
-                                            {{ $task->taskNote->description ?? "-" }}
+                                        {{ optional($task->taskNotes->sortByDesc('created_at')->first())->description ?? '-' }}
                                             @break
 
                                         @case('floor_area')
@@ -102,7 +91,7 @@
                                 <flux:menu>
                                     <flux:menu.item
                                         icon="clipboard-document-check"
-                                        wire:click="showTaskDetails({{ $task->id }})"
+                                        wire:click="loadDetails({{ $task->id }})"
                                     >
                                         Details
                                     </flux:menu.item>
@@ -117,7 +106,7 @@
     @else
         <!-- If a task is selected, show its details. -->
         <div>
-            @livewire('task.task-details', ['task' => $selectedTask])
+            @livewire('pages.task-details', ['task' => $selectedTask])
         </div>
     @endif
 </div>

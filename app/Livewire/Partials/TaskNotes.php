@@ -62,7 +62,8 @@ class TaskNotes extends Component
     public function render()
     {
          // 1. Flatten & filter
-        $allNotes = $this->tasks
+         $tasks = collect([$this->tasks]); // Making sure we always have a collection even when it's just 1.
+        $allNotes = $tasks
         ->flatMap->taskNotes
         ->filter(fn($note) => !empty($note->description));
 
