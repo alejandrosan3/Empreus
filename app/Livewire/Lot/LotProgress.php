@@ -224,7 +224,7 @@
                 $this->selectedLot = Lot::findOrFail($lotId);
             } else {
                 // URL-based navigation
-                return redirect()->route('content-details', ['lot_id' => $lotId]);
+                return redirect()->route('lot-details', ['lot_id' => $lotId]);
             }
         }
 

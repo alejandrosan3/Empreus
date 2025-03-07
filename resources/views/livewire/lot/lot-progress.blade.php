@@ -120,7 +120,7 @@
                                     @case('standard_po')
                                         @foreach ($taskTypes as $taskType)
                                             <flux:table.cell
-                                            class="bg-white dark:bg-zinc-800{{ $column['group'] == 'fixed' ? 'sticky' : '' }}"
+                                            class="bg-white dark:bg-zinc-800 {{ $column['group'] == 'fixed' ? 'sticky' : '' }}"
                                             data-fixed-index=" {{ $column['group'] == 'fixed' ? $loop->index : '' }}">
                                                 @if($task = $lot->getTaskByTypeName($taskType))
                                                     @if($task->status->isCompleted())
