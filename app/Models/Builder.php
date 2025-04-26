@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Builder extends Model
 {
@@ -14,14 +15,8 @@ class Builder extends Model
      */
     protected $guarded = [];
 
-    public function lots()
+    public function lots(): HasMany
     {
         return $this->hasMany(Lot::class);
-    }
-
-    // we might not need this. we'll see.
-    public function account()
-    {
-        return $this->hasManyThrough(Account::class, Lot::class);
     }
 }

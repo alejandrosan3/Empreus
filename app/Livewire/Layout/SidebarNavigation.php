@@ -3,6 +3,7 @@
 namespace App\Livewire\Layout;
 
 use Livewire\Component;
+use Illuminate\Support\Facades\Auth;
 
 class SidebarNavigation extends Component
 {

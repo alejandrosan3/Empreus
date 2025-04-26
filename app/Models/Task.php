@@ -4,6 +4,9 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Casts\Attribute;
 
 class Task extends Model
 {
@@ -11,6 +14,7 @@ class Task extends Model
 
     protected $fillable = [
         'lot_id',
+        'company_id',
         'task_type_id',
         'price',
         'status_type_id',
@@ -19,6 +23,8 @@ class Task extends Model
         'started_at',
         'ended_at',
         'is_extra',
+        'order_number',
+        'original_task_name',
     ];
 
     public function lot()
@@ -26,23 +32,48 @@ class Task extends Model
         return $this->belongsTo(Lot::class);
     }
 
-    public function account()
+    public function company(): BelongsTo
     {
-        return $this->belongsTo(Account::class);
+        return $this->belongsTo(Company::class);
     }
 
-    public function taskType()
+    public function taskType(): BelongsTo
     {
         return $this->belongsTo(TaskType::class);
     }
 
-    public function taskNotes()
+    public function taskNotes(): HasMany
     {
         return $this->hasMany(TaskNote::class);
     }
 
-    public function status()
+    public function statusType(): BelongsTo
     {
         return $this->belongsTo(StatusType::class);
+    }
+
+    public function status(): BelongsTo
+    {
+        return $this->statusType();
+    }
+
+    public function endedAt(): Attribute
+    {
+        return Attribute::make(
+            get: fn ($value) => $value ? \Carbon\Carbon::parse($value)->format('M d, Y') : null,
+        );
+    }
+
+    public function startedAt(): Attribute
+    {    return Attribute::make(
+            get: fn ($value) => $value ? \Carbon\Carbon::parse($value)->format('M d, Y') : null,    );
+    }
+    public function scheduledStartDate(): Attribute
+    {
+        return Attribute::make(get: fn ($value) => $value ? \Carbon\Carbon::parse($value)->format('M d, Y') : null,);
+    }
+    public function scheduledEndDate(): Attribute
+    {    return Attribute::make(
+            get: fn ($value) => $value ? \Carbon\Carbon::parse($value)->format('M d, Y') : null,    );
     }
 }

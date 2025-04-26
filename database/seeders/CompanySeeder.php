@@ -4,9 +4,9 @@ namespace Database\Seeders;
 
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
-use App\Models\Account;
+use App\Models\Company;
 
-class AccountSeeder extends Seeder
+class CompanySeeder extends Seeder
 {
     /**
      * Run the database seeds.
@@ -21,7 +21,7 @@ class AccountSeeder extends Seeder
         ];
 
         foreach ($accounts as $account) {
-            Account::updateOrCreate(
+            Company::updateOrCreate(
                 ['name' => $account['name']],
                 $account
             );

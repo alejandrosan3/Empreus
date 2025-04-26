@@ -2,16 +2,17 @@
 
 namespace Database\Factories;
 
-use App\Models\Account;
+use App\Models\Company;
+use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
- * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Models\Account>
+ * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Models\Company>
  */
 class AccountFactory extends Factory
 {
 
-    protected $model = Account::class;
+    protected $model = Company::class;
 
     /**
      * Define the model's default state.
@@ -23,6 +24,9 @@ class AccountFactory extends Factory
         return [
             'name' => $this->faker->unique()->city,
             'description' => $this->faker->optional()->sentence,
+            'user_id' => User::inRandomOrder()->first()->id ?? User::factory(),
+            'created_at' => now(),
+            'updated_at' => now(),
         ];
     }
 }

@@ -45,4 +45,38 @@ class User extends Authenticatable
             'password' => 'hashed',
         ];
     }
+
+    /**
+     * Define the relationship: A user can have many companies.
+     */
+    public function companies()
+    {
+        return $this->belongsToMany(Company::class, 'company_users', 'user_id', 'company_id');
+    }
+
+    public function lotsForCurrentCompany()
+    {
+        $companyId = session('company_id');
+
+        return Lot::where('company_id', $companyId)
+            ->whereHas('company', function ($query) use ($companyId) {
+                $query->where('companies.id', $companyId)
+                    ->whereHas('users', function ($query) {
+                        $query->where('users.id', $this->id);
+                    });
+            });
+    }
+
+    public function tasksForCurrentCompany()
+    {
+        $companyId = session('company_id');
+
+        return Task::where('tasks.company_id', $companyId)
+            ->whereHas('company', function ($query) use ($companyId) {
+                $query->where('companies.id', $companyId)
+                    ->whereHas('users', function ($query) {
+                        $query->where('users.id', $this->id);
+                    });
+            });
+    }
 }

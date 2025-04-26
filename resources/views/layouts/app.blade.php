@@ -13,29 +13,52 @@
 
         <!-- Scripts -->
         @vite(['resources/css/app.css', 'resources/js/app.js'])
-        @fluxStyles
+
+        @fluxAppearance
+        @livewireStyles
     </head>
     <body class="min-h-screen bg-white dark:bg-zinc-800">
 
         <flux:sidebar sticky stashable class="bg-zinc-50 dark:bg-zinc-900 border-r border-zinc-200 dark:border-zinc-700">
+
+            <!-- Multi-Account Dropdown -->
+            <livewire:layout.multiaccounts-dropdown />
+
             <flux:sidebar.toggle class="lg:hidden" icon="x-mark" />
 
-            <flux:brand href="#" logo="https://fluxui.dev/img/demo/logo.png" name="Acme Inc." class="px-2 dark:hidden" />
-            <flux:brand href="#" logo="https://fluxui.dev/img/demo/dark-mode-logo.png" name="Acme Inc." class="px-2 hidden dark:flex" />
 
-            <flux:input as="button" variant="filled" placeholder="Search..." icon="magnifying-glass" />
-
+            <!-- Navigation Menu -->
             <livewire:layout.sidebar-navigation/>
 
             <flux:spacer />
 
+            <div class="flex items-center justify-between w-full p-2">
 
-            <!-- Dark Mode Toggle -->
-            <flux:radio.group x-data variant="segmented" x-model="$flux.appearance">
-                <flux:radio value="light" icon="sun" />
-                <flux:radio value="dark" icon="moon" />
-                <flux:radio value="system" icon="computer-desktop" />
-            </flux:radio.group>
+                <!-- Settings Button -->
+
+                <!-- Dark Mode Toggle -->
+                <flux:radio.group x-data variant="segmented" x-model="$flux.appearance">
+                    <flux:radio value="light" icon="sun" />
+                    <flux:radio value="dark" icon="moon" />
+                    <flux:radio value="system" icon="computer-desktop" />
+                </flux:radio.group>
+
+                <!-- Profile section -->
+                <flux:dropdown position="top" align="start">
+                    <flux:profile avatar="https://fluxui.dev/img/demo/user.png" />
+
+                    <flux:menu>
+                        <flux:menu.item icon="user-circle" :href="route('profile')">Profile</flux:menu.item>
+                        <flux:menu.item icon="cog-8-tooth" :href="route('profile')">settings</flux:menu.item>
+
+                        <flux:menu.separator />
+                        <form method="POST" action="{{ route('logout') }}">
+                            @csrf
+                            <flux:menu.item as="button" type="submit" icon="arrow-right-start-on-rectangle">Logout</flux:menu.item>
+                        </form>
+                    </flux:menu>
+                </flux:dropdown>
+            </div>
 
             <flux:separator />
 
@@ -43,9 +66,22 @@
             <flux:menu.item>v.{{ $appVersion }}</flux:menu.item>
         </flux:sidebar>
 
-        <flux:header class="!block bg-white lg:bg-zinc-50 dark:bg-zinc-900 border-b border-zinc-200 dark:border-zinc-700">
-            
-            <livewire:layout.navigation />
+
+        @php
+            $showFilters = $showFilters ?? false;
+            $showSearch  = $showSearch  ?? false;
+            $showColumns  = $showColumns  ?? false;
+            $showAddNew = $showAddNew ?? false;
+        @endphp
+
+        <!--  Horizontal Navbar -->
+        <flux:header class="block! bg-white lg:bg-zinc-50 dark:bg-zinc-900 border-b border-zinc-200 dark:border-zinc-700">
+            <livewire:layout.navigation
+                :showFilters="$showFilters"
+                :showSearch="$showSearch"
+                :showAddNew="$showAddNew"
+                :showColumns="$showColumns"
+            />
         </flux:header>
 
         <flux:main>
@@ -56,5 +92,6 @@
         </flux:main>
 
         @fluxScripts
+        @livewireScriptConfig
     </body>
 </html>

@@ -1,33 +1,75 @@
-<?php
+    <div x-on:filters-updated.window="$wire.filtersUpdated($event.detail)">
+        <flux:navbar class="flex justify-between">
 
-use App\Livewire\Actions\Logout;
-use Livewire\Volt\Component;
+            @if($showAddNew)
+            <!-- "Add new element" button -->
+            <flux:tooltip content="Add new X">
+                <flux:button icon="plus"></flux:button>
+            </flux:tooltip>
+            @endif
 
-new class extends Component
-{
-    /**
-     * Log the current user out of the application.
-     */
-    public function logout(Logout $logout): void
-    {
-        $logout();
+            @if($showFilters)
+            <!-- "Filters" button -->
+            <flux:modal.trigger name="filters">
+                <flux:tooltip content="Filters">
+                    <flux:button icon="adjustments-horizontal"></flux:button>
+                </flux:tooltip>
+            </flux:modal.trigger>
 
-        $this->redirect('/', navigate: true);
-    }
-}; ?>
+            <flux:modal name="filters" class="md:w-96 space-y-6">
+                <div class=>
+                    <flux:heading size="lg">Filters</flux:heading>
+                    <flux:subheading>Set the desired filter. Leave blank to ignore.</flux:subheading>
+                </div>
 
-<flux:navbar>
-    <div class="flex ml-auto">
-        <flux:dropdown position="top" align="start">
-            <flux:profile avatar="https://fluxui.dev/img/demo/user.png" />
+                <!-- Reset all filters section -->
 
-            <flux:menu>
-                <flux:menu.item icon="user-circle" :href="route('profile')">Profile</flux:menu.item>
+                @if ( !empty( $selectedBuilders ) || !empty( $selectedSubdivisions ) || !empty( $selectedLots ) )
+                    <div class="filter-alert bg-slate-100 dark:bg-zinc-600 w-full">
+                    <flux:button variant="ghost" icon="x-mark" wire:click="resetFilters('all')" class="dark:text-black">Remove All Filters</flux:button>
+                    </div>
+                @endif
 
-                <flux:menu.separator />
+                <!-- Builders Select -->
 
-                <flux:menu.item wire:click="logout" icon="arrow-right-start-on-rectangle">Logout</flux:menu.item>
-            </flux:menu>
-        </flux:dropdown>
+                <flux:select multiple searchable clearable  label="Builders" variant="listbox" indicator="checkbox" placeholder="Select the Builders" wire:model="selectedBuilders" clear="close">
+                    @if ( !empty( $selectedBuilders ) ) <flux:button variant="ghost" icon="x-mark"  wire:click="resetFilters('builders')">Remove Filter</flux:button> @endif
+                    @foreach($filters['builders'] ?? [] as $builder)
+                        <flux:select.option>{{ $builder }}</flux:select.option>
+                    @endforeach
+                </flux:select>
+
+                <!-- Subdivision's Select -->
+                <flux:select multiple searchable clearable label="Subdivisions" variant="listbox" indicator="checkbox" placeholder="Select the Subdivisions" wire:model="selectedSubdivisions" clear="close">
+                    @if ( !empty( $selectedSubdivisions ) ) <flux:button variant="ghost" icon="x-mark" wire:click="resetFilters('subdivisions')">Remove Filter</flux:button> @endif
+                    @foreach($filters['subdivisions'] ?? [] as $subd)
+                        <flux:select.option value="{{ $subd['value'] }}">{{ $subd['label'] }}</flux:select.option>
+                    @endforeach
+                </flux:select>
+
+                <!-- Lot Number Input -->
+                <flux:select multiple searchable clearable label="Lot #" variant="listbox" indicator="checkbox" placeholder="Select the Lot(s)" wire:model="selectedLots" clear="close">
+                    @if ( !empty( $selectedLots ) ) <flux:button variant="ghost" icon="x-mark" wire:click="resetFilters('lots')">Remove Filter</flux:button> @endif
+                    @foreach($filters['lots'] ?? [] as $lot)
+                        <flux:select.option>{{ $lot }}</flux:select.option>
+                    @endforeach
+                </flux:select>
+
+                <div class="flex">
+                    <flux:spacer />
+                    <flux:button type="submit" variant="primary" wire:click="applyGlobalFilters">Save changes</flux:button>
+                </div>
+            </flux:modal>
+            @endif
+
+            @if($showSearch)
+            <!-- "Search" Input -->
+            <flux:input placeholder="Search..." icon="magnifying-glass" class="mx-8" />
+            @endif
+
+            @if($showColumns)
+            <!-- "Rearrange, Edit and Freeze columns" button -->
+            <livewire:layout.edit-columns-dropdown />
+            @endif
+        </flux:navbar>
     </div>
-</flux:navbar>
