@@ -306,6 +306,7 @@ class TaskProgress extends Component
             'showSearch'  => true,
             'showColumns' => true,
             'showAddNew'  => true,
+            'currentAddable'  => 'task',
         ]);
     }
 }

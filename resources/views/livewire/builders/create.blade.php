@@ -1,36 +1,25 @@
-<section>
+<div class="space-y-6 p-4">
     <header>
-        <h2 class="text-lg font-medium text-gray-900">
-            {{ __('Create Builder') }}
-        </h2>
+        <flux:heading size="lg" level="2">{{ __('Create Builder') }}</flux:heading>
     </header>
-    <form wire:submit="store" class="mt-6 space-y-6">
-        <div>
-            <x-input-label for="name" :value="__('Name')" />
-            <x-text-input wire:model="name" id="name" name="name" type="text" class="mt-1 block w-full" required autofocus autocomplete="name" />
-            <x-input-error class="mt-2" :messages="$errors->get('name')" />
+
+    <div class="grid grid-cols-2 gap-4">
+        {{-- Name --}}
+        <flux:input label="Name" type="text" wire:model.defer="name" :error="$errors->first('name')" />
+
+        {{-- Email --}}
+        <flux:input label="Email" type="email" wire:model.defer="email" :error="$errors->first('email')" />
+
+        {{-- Address (full width) --}}
+        <div class="col-span-2">
+            <flux:input label="Address" type="text" wire:model.defer="address" :error="$errors->first('address')" />
         </div>
 
-        <div>
-            <x-input-label for="email" :value="__('Email')" />
-            <x-text-input wire:model="email" id="email" name="email" type="email" class="mt-1 block w-full" required autofocus autocomplete="email" />
-            <x-input-error class="mt-2" :messages="$errors->get('email')" />
-        </div>
+        {{-- Phone --}}
+        <flux:input label="Phone" type="text" wire:model.defer="phone" :error="$errors->first('phone')" />
+    </div>
 
-        <div>
-            <x-input-label for="address" :value="__('Address')" />
-            <x-text-input wire:model="address" id="address" name="address" type="text" class="mt-1 block w-full" autofocus autocomplete="address" />
-            <x-input-error class="mt-2" :messages="$errors->get('address')" />
-        </div>
-
-        <div>
-            <x-input-label for="phone" :value="__('Phone')" />
-            <x-text-input wire:model="phone" id="phone" name="phone" type="text" class="mt-1 block w-full" autofocus autocomplete="tel" />
-            <x-input-error class="mt-2" :messages="$errors->get('phone')" />
-        </div>
-
-        <div class="flex items-center gap-4">
-            <x-primary-button>{{ __('Save') }}</x-primary-button>
-        </div>
-    </form>
-</section>
+    <div class="flex justify-end">
+        <flux:button wire:click="save" variant="primary"> {{ __('Add Builder') }} </flux:button>
+    </div>
+</div>

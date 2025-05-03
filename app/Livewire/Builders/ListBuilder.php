@@ -59,6 +59,10 @@ class ListBuilder extends Component
 
     public function render()
     {
-        return view('livewire.builders.list')->layout('layouts.app');
+        return view('livewire.builders.list')
+        ->layout('layouts.app', [
+            'showAddNew' => true,
+            'currentAddable'  => 'builder',
+        ]);
     }
 }

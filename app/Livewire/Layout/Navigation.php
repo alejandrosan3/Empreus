@@ -7,6 +7,7 @@
     {
         public $title;
         public $showAddNew;
+        public $currentAddable;
         public $showFilters;
         public $showSearch;
         public $showColumns;
@@ -69,12 +70,13 @@
             $this->applyGlobalFilters();
         }
 
-        public function mount($showAddNew=false, $showFilters=false, $showSearch=false, $showColumns=false)
+        public function mount($showAddNew=false, $showFilters=false, $showSearch=false, $showColumns=false, $currentAddable="task" )
         {
             $this->showAddNew = $showAddNew;
             $this->showFilters = $showFilters;
             $this->showSearch = $showSearch;
             $this->showColumns = $showColumns;
+            $this->currentAddable = $currentAddable;
         }
     
         public function render()

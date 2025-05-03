@@ -312,7 +312,9 @@
                 'showFilters' => true,
                 'showSearch'  => false,
                 'showColumns' => true,
-                'showAddNew' => false,]);
+                'showAddNew' => true,
+                'currentAddable'  => 'lot',
+            ]);
         }
 
     }
