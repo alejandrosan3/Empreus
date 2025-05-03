@@ -3,7 +3,7 @@
 namespace App\Livewire\Partials;
 
 use Livewire\Component;
-
+use Illuminate\Support\Collection;
 
 
 class TaskNotes extends Component
@@ -62,7 +62,7 @@ class TaskNotes extends Component
     public function render()
     {
          // 1. Flatten & filter
-         $tasks = collect([$this->tasks]); // Making sure we always have a collection even when it's just 1.
+         $tasks = Collection::wrap($this->tasks); // Making sure we always have a collection even when it's just 1.
         $allNotes = $tasks
         ->flatMap->taskNotes
         ->filter(fn($note) => !empty($note->description));
