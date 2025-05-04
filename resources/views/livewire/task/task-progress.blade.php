@@ -1,107 +1,116 @@
 <div>
     @if (!$selectedTask)
-        <flux:table :paginate="$tasks">
-            <!-- Table Header -->
-            <flux:table.columns>
-                <!-- Fixed Columns -->
-                @foreach($columns as $column)
-                    @if($column['selected'])
-                        <flux:table.column
-                            :sortable="$column['sortable']"
-                            :sorted="$column['sortable'] ? $sortBy === $column['value'] : false"
-                            wire:click="{{ $column['sortable'] ? 'sort(\'' . $column['value'] . '\')' : '' }}"
-                            class="bg-white dark:bg-zinc-800 {{ $column['group'] == 'fixed' ? 'sticky' : '' }}"
-                            data-fixed-index=" {{ $column['group'] == 'fixed' ? $loop->index : '' }}"
-                        >
-                            {{ $column['label'] }}
-                        </flux:table.column>
-                    @endif
-                @endforeach
-                <!-- Actions Column -->
-                <flux:table.column>Actions</flux:table.column>
-            </flux:table.columns>
+        <flux:checkbox.group wire:model.change="checkedTasks">
+            <flux:table :paginate="$tasks">
+                <!-- Table Header -->
+                <flux:table.columns>
+                    <!-- checkbox "Select-All" Column -->
+                    <flux:table.column class="sticky left-0 z-20 bg-white dark:bg-zinc-800" >
+                        <flux:checkbox.all />
+                    </flux:table.column>
+                    <!-- Fixed Columns -->
+                    @foreach($columns as $column)
+                        @if($column['selected'])
+                            <flux:table.column
+                                :sortable="$column['sortable']"
+                                :sorted="$column['sortable'] ? $sortBy === $column['value'] : false"
+                                wire:click="{{ $column['sortable'] ? 'sort(\'' . $column['value'] . '\')' : '' }}"
+                                class="bg-white dark:bg-zinc-800 {{ $column['group'] == 'fixed' ? 'sticky' : '' }}"
+                                data-fixed-index=" {{ $column['group'] == 'fixed' ? $loop->index : '' }}"
+                            >
+                                {{ $column['label'] }}
+                            </flux:table.column>
+                        @endif
+                    @endforeach
+                    <!-- Actions Column -->
+                    <flux:table.column>Actions</flux:table.column>
+                </flux:table.columns>
 
-            <!-- Table Rows -->
-            <flux:table.rows>
-                @foreach($tasks as $task)
-                    <flux:table.row :key="$task->id">
-                        @foreach($columns as $column)
-                            @if($column['selected'])
-                                <flux:table.cell
-                                    class="bg-white dark:bg-zinc-800 {{ $column['group'] == 'fixed' ? 'sticky' : '' }}"
-                                    data-fixed-index=" {{ $column['group'] == 'fixed' ? $loop->index : '' }}">
-                                    @switch($column['value'])
-                                        @case('builder')
-                                            {{ $task->lot->builder->name }}
-                                            @break
-
-                                        @case('subdivision')
-                                            {{ $task->lot->subdivision }}
-                                            @break
-
-                                        @case('address')
-                                            {{ $task->lot->address ?? '-' }}
-                                            @break
-
-                                        @case('lot_number')
-                                            {{ $task->lot->lot_number }}
-                                            @break
-
-                                        @case('task_type')
-                                            {{ $task->taskType->name }}
-                                            @break
-
-                                        @case('status')
-                                            <flux:badge color="{{ $task->statusType->color }}">{{ $task->statusType->name }}</flux:badge>
-                                            @break
-
-                                        @case('num_of_floors')
-                                            {{ $task->lot->num_of_floors }}
-                                            @break
-
-                                        @case('notes')
-                                        {{ optional($task->taskNotes->sortByDesc('created_at')->first())->description ?? '-' }}
-                                            @break
-
-                                        @case('floor_area')
-                                            {{ $task->lot->floor_area ?? "-" }}
-                                            @break
-
-                                        @case('supervisor')
-                                            {{ $task->lot->supervisor->name ?? "-" }}
-                                            @break
-
-                                        @case('is_extra')
-                                            {{ $task->{$column['value']} == 1 ? "Standard" : "EPO" }}
-                                            @break
-
-                                        @default
-                                            {{-- Default: just output the column value directly --}}
-                                            {{ $task->{$column['value']} ?? '-' }}
-
-                                    @endswitch
-                                </flux:table.cell>
-                            @endif
-                        @endforeach
-
-                        <!-- Actions Cell -->
-                        <flux:table.cell>
-                            <flux:dropdown>
-                                <flux:button icon="ellipsis-horizontal" variant="ghost" size="sm" />
-                                <flux:menu>
-                                    <flux:menu.item
-                                        icon="clipboard-document-check"
-                                        wire:click="loadDetails({{ $task->id }})"
-                                    >
-                                        Details
-                                    </flux:menu.item>
-                                </flux:menu>
-                            </flux:dropdown>
+                <!-- Table Rows -->
+                <flux:table.rows>
+                    @foreach($tasks as $task)
+                        <flux:table.row :key="$task->id">
+                        <flux:table.cell class="sticky left-0 z-20 bg-white dark:bg-zinc-800">
+                            <flux:checkbox :value="$task->id" checked="{{ in_array($task->id, $checkedTasks) }}" />
                         </flux:table.cell>
-                    </flux:table.row>
-                @endforeach
-            </flux:table.rows>
-        </flux:table>
+                            @foreach($columns as $column)
+                                @if($column['selected'])
+                                    <flux:table.cell
+                                        class="bg-white dark:bg-zinc-800 {{ $column['group'] == 'fixed' ? 'sticky' : '' }}"
+                                        data-fixed-index=" {{ $column['group'] == 'fixed' ? $loop->index : '' }}">
+                                        @switch($column['value'])
+                                            @case('builder')
+                                                {{ $task->lot->builder->name }}
+                                                @break
+
+                                            @case('subdivision')
+                                                {{ $task->lot->subdivision }}
+                                                @break
+
+                                            @case('address')
+                                                {{ $task->lot->address ?? '-' }}
+                                                @break
+
+                                            @case('lot_number')
+                                                {{ $task->lot->lot_number }}
+                                                @break
+
+                                            @case('task_type')
+                                                {{ $task->taskType->name }}
+                                                @break
+
+                                            @case('status')
+                                                <flux:badge color="{{ $task->statusType->color }}">{{ $task->statusType->name }}</flux:badge>
+                                                @break
+
+                                            @case('num_of_floors')
+                                                {{ $task->lot->num_of_floors }}
+                                                @break
+
+                                            @case('notes')
+                                            {{ optional($task->taskNotes->sortByDesc('created_at')->first())->description ?? '-' }}
+                                                @break
+
+                                            @case('floor_area')
+                                                {{ $task->lot->floor_area ?? "-" }}
+                                                @break
+
+                                            @case('supervisor')
+                                                {{ $task->lot->supervisor->name ?? "-" }}
+                                                @break
+
+                                            @case('is_extra')
+                                                {{ $task->{$column['value']} == 1 ? "Standard" : "EPO" }}
+                                                @break
+
+                                            @default
+                                                {{-- Default: just output the column value directly --}}
+                                                {{ $task->{$column['value']} ?? '-' }}
+
+                                        @endswitch
+                                    </flux:table.cell>
+                                @endif
+                            @endforeach
+
+                            <!-- Actions Cell -->
+                            <flux:table.cell>
+                                <flux:dropdown>
+                                    <flux:button icon="ellipsis-horizontal" variant="ghost" size="sm" />
+                                    <flux:menu>
+                                        <flux:menu.item
+                                            icon="clipboard-document-check"
+                                            wire:click="loadDetails({{ $task->id }})"
+                                        >
+                                            Details
+                                        </flux:menu.item>
+                                    </flux:menu>
+                                </flux:dropdown>
+                            </flux:table.cell>
+                        </flux:table.row>
+                    @endforeach
+                </flux:table.rows>
+            </flux:table>
+        </flux:checkbox.group>
 
     @else
         <!-- If a task is selected, show its details. -->

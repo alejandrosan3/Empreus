@@ -21,6 +21,8 @@ class TaskProgress extends Component
     public $selectedSubdivisions = [];
     public $selectedLots = [];
 
+    public array $checkedTasks = [];
+
     // For dynamically displaying task details
     public $selectedTask = null;
 
