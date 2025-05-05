@@ -83,7 +83,7 @@ class LotImportService
             'supervisor_name' => 'nullable|string|max:255',
             'subdivision' => 'nullable|string|max:255',
             'status' => 'required|string|exists:status_types,identifier',
-            'floor_area' => 'nullable|max:12',
+            'floor_area' => 'nullable',
             'num_of_floors' => 'nullable|integer|min:1',
             'notes' => 'nullable',
             'started_at' => 'nullable|string',
