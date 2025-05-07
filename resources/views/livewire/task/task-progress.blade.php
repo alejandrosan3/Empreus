@@ -1,5 +1,8 @@
 <div>
     @if (!$selectedTask)
+
+        {{-- Modal for hybrid inline editing behavior --}}
+        <livewire:partials.editable-modal />
         <flux:checkbox.group wire:model.change="checkedTasks">
             <flux:table :paginate="$tasks">
                 <!-- Table Header -->
@@ -35,59 +38,147 @@
                         </flux:table.cell>
                             @foreach($columns as $column)
                                 @if($column['selected'])
+                                    @php
+                                        // default to editing the Task or Lot record itself
+                                        $fieldId = $task->id;
+
+                                        switch($column['value']) {
+                                            case 'builder':
+                                                $fieldId        = $task->lot->id;
+                                                $display        = $task->lot->builder->name;
+                                                $fieldType      = 'select';
+                                                $modelClass     = \App\Models\Lot::class;
+                                                $modelAttribute = 'builder_id';
+                                                break;
+
+                                            case 'subdivision':
+                                                $fieldId        = $task->lot->id;
+                                                $display        = $task->lot->subdivision;
+                                                $fieldType      = 'select';
+                                                $modelClass     = \App\Models\Lot::class;
+                                                $modelAttribute = 'subdivision';
+                                                break;
+
+                                            case 'address':
+                                                $fieldId        = $task->lot->id;
+                                                $display        = $task->lot->address ?? '-';
+                                                $fieldType      = 'input';
+                                                $modelClass     = \App\Models\Lot::class;
+                                                $modelAttribute = 'address';
+                                                break;
+
+                                            case 'lot_number':
+                                                $fieldId        = $task->lot->id;
+                                                $display        = $task->lot->lot_number;
+                                                $fieldType      = 'input';
+                                                $modelClass     = \App\Models\Lot::class;
+                                                $modelAttribute = 'lot_number';
+                                                break;
+
+                                            case 'task_type':
+                                                $display        = $task->taskType->name;
+                                                $fieldType      = 'select';
+                                                $modelClass     = \App\Models\Task::class;
+                                                $modelAttribute = 'task_type_id';
+                                                break;
+
+                                            case 'status':
+                                                $display        = $task->statusType->name;
+                                                $fieldType      = 'select';
+                                                $modelClass     = \App\Models\Task::class;
+                                                $modelAttribute = 'status_type_id';
+                                                break;
+
+                                            case 'num_of_floors':
+                                                $fieldId        = $task->lot->id;
+                                                $display        = $task->lot->num_of_floors;
+                                                $fieldType      = 'input';
+                                                $modelClass     = \App\Models\Lot::class;
+                                                $modelAttribute = 'num_of_floors';
+                                                break;
+
+                                            case 'floor_area':
+                                                $fieldId        = $task->lot->id;
+                                                $display        = $task->lot->floor_area ?? '-';
+                                                $fieldType      = 'input';
+                                                $modelClass     = \App\Models\Lot::class;
+                                                $modelAttribute = 'floor_area';
+                                                break;
+
+                                            case 'supervisor':
+                                                $fieldId        = $task->lot->id;
+                                                $display        = $task->lot->supervisor->name ?? '-';
+                                                $fieldType      = 'select';
+                                                $modelClass     = \App\Models\Lot::class;
+                                                $modelAttribute = 'supervisor_id';
+                                                break;
+
+                                            case 'is_extra':
+                                                $display        = $task->is_extra ? 'EPO' : 'Standard';
+                                                $fieldType      = 'select';
+                                                $modelClass     = \App\Models\Task::class;
+                                                $modelAttribute = 'is_extra';
+                                                break;
+
+                                            case 'notes':
+                                                // Edit the most recent note
+                                                $display        = $task->taskNotes->sortByDesc('created_at')->first()->description ?? '-';
+                                                $fieldType      = 'input';
+                                                $modelClass     = \App\Models\TaskNote::class;
+                                                $modelAttribute = 'description';
+                                                break;
+                                            
+                                            case 'scheduled_start_date':
+                                                $display        = $task->scheduled_start_date;
+                                                $fieldType      = 'date';
+                                                $optionKey      = '';
+                                                $modelClass     = \App\Models\Task::class;
+                                                $modelAttribute = 'scheduled_start_date';
+                                                break;
+
+                                            case 'ended_at':
+                                                $display        = $task->ended_at;
+                                                $fieldType      = 'date';
+                                                $optionKey      = '';
+                                                $modelClass     = \App\Models\Task::class;
+                                                $modelAttribute = 'ended_at';
+                                                break;
+
+                                            default:
+                                                $display        = $task->{$column['value']} ?? '-';
+                                                $fieldType      = 'input';
+                                                $optionKey      = '';
+                                                $modelClass     = \App\Models\Task::class;
+                                                $modelAttribute = $column['value'];
+                                        }
+                                        
+                                        $map = [
+                                            'builder'    => 'builders',
+                                            'task_type'  => 'taskTypes',
+                                            'status'     => 'statusTypes',
+                                            'supervisor' => 'supervisors',
+                                            'subdivision'=> 'subdivisions',
+                                            'is_extra'    => 'is_extra',
+                                        ];
+                                        $optionKey = $map[$column['value']] ?? '';
+
+
+                                    @endphp
+
                                     <flux:table.cell
-                                        class="bg-white dark:bg-zinc-800 {{ $column['group'] == 'fixed' ? 'sticky' : '' }}"
-                                        data-fixed-index=" {{ $column['group'] == 'fixed' ? $loop->index : '' }}">
-                                        @switch($column['value'])
-                                            @case('builder')
-                                                {{ $task->lot->builder->name }}
-                                                @break
+                                        x-data
+                                        x-on:dblclick="$wire.dispatch('editField',{fieldId:{{ $fieldId }},currentValue:'{{ addslashes($display) }}',fieldType:'{{ $fieldType }}',optionKey:'{{ $optionKey }}',modelClass:'{{ addslashes($modelClass) }}',modelAttribute:'{{ $modelAttribute }}', editable:'{{$column['editable']}}' })"
+                                        class="bg-white dark:bg-zinc-800 {{ $column['group']=='fixed'?'sticky':'' }}"
+                                        data-fixed-index="{{ $column['group']=='fixed'? $loop->index : '' }}"
+                                    >
+                                        
+                                        @if ($column['value'] === 'status')
+                                            <flux:badge color="{{ $task->statusType->color }}"> {{ $display }} </flux:badge>
+                                        @else
+                                            {{ $display }}
+                                        @endif
 
-                                            @case('subdivision')
-                                                {{ $task->lot->subdivision }}
-                                                @break
 
-                                            @case('address')
-                                                {{ $task->lot->address ?? '-' }}
-                                                @break
-
-                                            @case('lot_number')
-                                                {{ $task->lot->lot_number }}
-                                                @break
-
-                                            @case('task_type')
-                                                {{ $task->taskType->name }}
-                                                @break
-
-                                            @case('status')
-                                                <flux:badge color="{{ $task->statusType->color }}">{{ $task->statusType->name }}</flux:badge>
-                                                @break
-
-                                            @case('num_of_floors')
-                                                {{ $task->lot->num_of_floors }}
-                                                @break
-
-                                            @case('notes')
-                                            {{ optional($task->taskNotes->sortByDesc('created_at')->first())->description ?? '-' }}
-                                                @break
-
-                                            @case('floor_area')
-                                                {{ $task->lot->floor_area ?? "-" }}
-                                                @break
-
-                                            @case('supervisor')
-                                                {{ $task->lot->supervisor->name ?? "-" }}
-                                                @break
-
-                                            @case('is_extra')
-                                                {{ $task->{$column['value']} == 1 ? "Standard" : "EPO" }}
-                                                @break
-
-                                            @default
-                                                {{-- Default: just output the column value directly --}}
-                                                {{ $task->{$column['value']} ?? '-' }}
-
-                                        @endswitch
                                     </flux:table.cell>
                                 @endif
                             @endforeach
