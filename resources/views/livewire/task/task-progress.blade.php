@@ -46,6 +46,7 @@
                                             case 'builder':
                                                 $fieldId        = $task->lot->id;
                                                 $display        = $task->lot->builder->name;
+                                                $rawValue       = $task->lot->builder_id;
                                                 $fieldType      = 'select';
                                                 $modelClass     = \App\Models\Lot::class;
                                                 $modelAttribute = 'builder_id';
@@ -54,6 +55,7 @@
                                             case 'subdivision':
                                                 $fieldId        = $task->lot->id;
                                                 $display        = $task->lot->subdivision;
+                                                $rawValue       = $display;
                                                 $fieldType      = 'select';
                                                 $modelClass     = \App\Models\Lot::class;
                                                 $modelAttribute = 'subdivision';
@@ -62,6 +64,7 @@
                                             case 'address':
                                                 $fieldId        = $task->lot->id;
                                                 $display        = $task->lot->address ?? '-';
+                                                $rawValue       = $display;
                                                 $fieldType      = 'input';
                                                 $modelClass     = \App\Models\Lot::class;
                                                 $modelAttribute = 'address';
@@ -70,6 +73,7 @@
                                             case 'lot_number':
                                                 $fieldId        = $task->lot->id;
                                                 $display        = $task->lot->lot_number;
+                                                $rawValue       = $display;
                                                 $fieldType      = 'input';
                                                 $modelClass     = \App\Models\Lot::class;
                                                 $modelAttribute = 'lot_number';
@@ -77,6 +81,7 @@
 
                                             case 'task_type':
                                                 $display        = $task->taskType->name;
+                                                $rawValue       = $task->taskType->id;
                                                 $fieldType      = 'select';
                                                 $modelClass     = \App\Models\Task::class;
                                                 $modelAttribute = 'task_type_id';
@@ -84,6 +89,7 @@
 
                                             case 'status':
                                                 $display        = $task->statusType->name;
+                                                $rawValue       = $task->statusType->id;
                                                 $fieldType      = 'select';
                                                 $modelClass     = \App\Models\Task::class;
                                                 $modelAttribute = 'status_type_id';
@@ -92,6 +98,7 @@
                                             case 'num_of_floors':
                                                 $fieldId        = $task->lot->id;
                                                 $display        = $task->lot->num_of_floors;
+                                                $rawValue       = $display;
                                                 $fieldType      = 'input';
                                                 $modelClass     = \App\Models\Lot::class;
                                                 $modelAttribute = 'num_of_floors';
@@ -100,6 +107,7 @@
                                             case 'floor_area':
                                                 $fieldId        = $task->lot->id;
                                                 $display        = $task->lot->floor_area ?? '-';
+                                                $rawValue       = $display;
                                                 $fieldType      = 'input';
                                                 $modelClass     = \App\Models\Lot::class;
                                                 $modelAttribute = 'floor_area';
@@ -108,6 +116,7 @@
                                             case 'supervisor':
                                                 $fieldId        = $task->lot->id;
                                                 $display        = $task->lot->supervisor->name ?? '-';
+                                                $rawValue       = $task->lot->supervisor->id ?? '';
                                                 $fieldType      = 'select';
                                                 $modelClass     = \App\Models\Lot::class;
                                                 $modelAttribute = 'supervisor_id';
@@ -116,6 +125,7 @@
                                             case 'is_extra':
                                                 $display        = $task->is_extra ? 'EPO' : 'Standard';
                                                 $fieldType      = 'select';
+                                                $rawValue       = $task->is_extra;
                                                 $modelClass     = \App\Models\Task::class;
                                                 $modelAttribute = 'is_extra';
                                                 break;
@@ -123,6 +133,7 @@
                                             case 'notes':
                                                 // Edit the most recent note
                                                 $display        = $task->taskNotes->sortByDesc('created_at')->first()->description ?? '-';
+                                                $rawValue       = $display;
                                                 $fieldType      = 'input';
                                                 $modelClass     = \App\Models\TaskNote::class;
                                                 $modelAttribute = 'description';
@@ -130,6 +141,7 @@
                                             
                                             case 'scheduled_start_date':
                                                 $display        = $task->scheduled_start_date;
+                                                $rawValue       = $display;
                                                 $fieldType      = 'date';
                                                 $optionKey      = '';
                                                 $modelClass     = \App\Models\Task::class;
@@ -138,6 +150,7 @@
 
                                             case 'ended_at':
                                                 $display        = $task->ended_at;
+                                                $rawValue       = $display;
                                                 $fieldType      = 'date';
                                                 $optionKey      = '';
                                                 $modelClass     = \App\Models\Task::class;
@@ -146,6 +159,7 @@
 
                                             default:
                                                 $display        = $task->{$column['value']} ?? '-';
+                                                $rawValue       = $display;
                                                 $fieldType      = 'input';
                                                 $optionKey      = '';
                                                 $modelClass     = \App\Models\Task::class;
@@ -166,8 +180,18 @@
                                     @endphp
 
                                     <flux:table.cell
+                                        wire:key="cell-{{ $fieldId }}-{{ $column['value'] }}"
                                         x-data
-                                        x-on:dblclick="$wire.dispatch('editField',{fieldId:{{ $fieldId }},currentValue:'{{ addslashes($display) }}',fieldType:'{{ $fieldType }}',optionKey:'{{ $optionKey }}',modelClass:'{{ addslashes($modelClass) }}',modelAttribute:'{{ $modelAttribute }}', editable:'{{$column['editable']}}' })"
+                                        x-on:dblclick="
+                                            $dispatch('editField', {
+                                            fieldId: {{ $fieldId }},
+                                            currentValue: '{{ $rawValue }}',
+                                            fieldType: '{{ $fieldType }}',
+                                            optionKey: '{{ $optionKey }}',
+                                            modelClass: '{{ addslashes($modelClass) }}',
+                                            modelAttribute: '{{ $modelAttribute }}',
+                                            editable: {{ $column['editable'] ? 'true' : 'false' }}
+                                            })"
                                         class="bg-white dark:bg-zinc-800 {{ $column['group']=='fixed'?'sticky':'' }}"
                                         data-fixed-index="{{ $column['group']=='fixed'? $loop->index : '' }}"
                                     >

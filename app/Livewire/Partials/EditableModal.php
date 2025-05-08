@@ -5,6 +5,7 @@ namespace App\Livewire\Partials;
 use Livewire\Component;
 use Flux\Flux;
 use Carbon\Carbon;
+use Livewire\Attributes\Validate;
 
 class EditableModal extends Component
 {
@@ -27,7 +28,7 @@ class EditableModal extends Component
     protected $listeners = ['editField'];
 
 
-        /**
+    /**
      * Show a toast message indicating that the field is not editable.
      */
     public function notEditableActions()
@@ -36,7 +37,8 @@ class EditableModal extends Component
     }
 
     public function editField($fieldId, $currentValue, $fieldType = 'input', $optionKey = null, $modelClass = null, $modelAttribute = 'content', $editable=true)
-    {
+    { 
+
         if(!$editable){
             $this->notEditableActions();
             return;
@@ -72,8 +74,66 @@ class EditableModal extends Component
 
     }
 
+    /**
+     * Define rules dynamically based on which attribute we're editing.
+     */
+    protected function rules(): array
+    {
+        return [
+            'fieldValue' => match($this->modelAttribute) {
+                // mandatory selects
+                'builder_id'       => 'required|exists:builders,id',
+                'task_type_id'     => 'required|exists:task_types,id',
+                'subdivision'      => 'required|string',
+                'is_extra'         => 'required|in:0,1',
+
+                // optional selects
+                'status_type_id'   => 'required|exists:status_types,id',
+                'supervisor_id'    => 'nullable|exists:supervisors,id',
+
+                // inputs
+                'lot_number'       => 'required|string|min:1',
+                'address'          => 'nullable|string',
+                'description'      => 'nullable|string',
+
+                // numbers
+                'num_of_floors'    => 'required|integer',
+                'floor_area'       => 'required|numeric',
+
+                // dates (optional—you can skip if you’re certain the picker always gives valid Y-m-d)
+                'scheduled_start_date',
+                'ended_at',
+                "started_at",
+                "scheduled_end_date"         => 'nullable|date',
+
+                default            => 'required',
+            },
+        ];
+    }
+
+    /**
+     * Define validation messages dynamically based on which attribute we're editing.
+     */
+    protected function messages(): array
+    {
+        return [
+            'fieldValue.required' => 'This field can’t be empty.',
+            'fieldValue.exists'   => 'Please pick a valid option.',
+            'fieldValue.in'       => 'Invalid choice selected.',
+            'fieldValue.string'   => 'Must be text.',
+            'fieldValue.min'      => 'Must be at least :min character.',
+            'fieldValue.integer'  => 'Must be a whole number.',
+            'fieldValue.numeric'  => 'Must be a valid number.',
+            'fieldValue.date'     => 'Must be a valid date.',
+        ];
+    }
+
     public function save()
     {
+        $this->validate(
+            $this->rules(),
+            $this->messages()
+        );
         $allowedModels = [
             \App\Models\Builder::class,
             \App\Models\Subdivision::class,
@@ -91,6 +151,17 @@ class EditableModal extends Component
         }
         $model = $this->modelClass;
         $record = $model::findOrFail($this->fieldId);
+
+        // transform empty String to null for select fields
+        $value = $this->fieldValue;
+        if ($this->fieldType === 'select' && $value === '') {
+            $value = null;
+        }
+
+        // Dates: blank → null, else leave as-is (YYYY-MM-DD)
+        if ($this->fieldType === 'date') {
+            $value = $value ?: null;
+        }
         
         if ($model == \App\Models\TaskNote::class) {
             $note = $model::where('task_id', $this->fieldId)
@@ -105,8 +176,8 @@ class EditableModal extends Component
                 ]);
             }
         }
-                    
-        $record->update([$this->modelAttribute => $this->fieldValue]);
+        $record->update([ $this->modelAttribute => $value,]);
+        $this->reset();
 
         $this->showModal = false;
 

@@ -9,7 +9,7 @@
             @if($fieldType === 'input')
                 <flux:input wire:model="fieldValue" label="Field Content" />
             @elseif($fieldType === 'select')
-                <flux:select wire:model="fieldValue" variant="combobox" :filter="false">
+                <flux:select wire:model="fieldValue" variant="listbox" searchable clearable>
                     
 
                     @foreach($selectOptions as $key => $label)
@@ -19,7 +19,7 @@
 
             @elseif($fieldType === 'date')
                 
-                <flux:date-picker wire:model="fieldValue" label="Select the date"/>
+                <flux:date-picker class="size-auto" wire:model="fieldValue" label="Select the date" clearable with-inputs />
                 
             
             @endif
