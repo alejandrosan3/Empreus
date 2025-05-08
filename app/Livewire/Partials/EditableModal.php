@@ -6,6 +6,7 @@ use Livewire\Component;
 use Flux\Flux;
 use Carbon\Carbon;
 use Livewire\Attributes\Validate;
+use Illuminate\Support\Facades\Cache;
 
 class EditableModal extends Component
 {
@@ -27,6 +28,8 @@ class EditableModal extends Component
 
     protected $listeners = ['editField'];
 
+    public int $companyId;
+
 
     /**
      * Show a toast message indicating that the field is not editable.
@@ -38,17 +41,17 @@ class EditableModal extends Component
 
     public function editField($fieldId, $currentValue, $fieldType = 'input', $optionKey = null, $modelClass = null, $modelAttribute = 'content', $editable=true)
     { 
-
+        $companyId = session('company_id');
         if(!$editable){
             $this->notEditableActions();
             return;
         }
         $this->selectOptions = match($optionKey) {    
-            'builders'     => \App\Models\Builder::pluck('name','id')->toArray(),
-            'taskTypes'    => \App\Models\TaskType::pluck('name','id')->toArray(),
-            'statusTypes'  => \App\Models\StatusType::pluck('name','id')->toArray(),
-            'supervisors'  => \App\Models\Supervisor::pluck('name','id')->toArray(),
-            'subdivisions' => \App\Models\Lot::distinct()->pluck('subdivision')->toArray(),
+            'builders'     =>  $this->builders,
+            'taskTypes'    =>  $this->taskTypes,
+            'statusTypes'  =>  $this->statusTypes,
+            'supervisors'  =>  $this->supervisors,
+            'subdivisions' =>  $this->subdivisions,
             'is_extra'     => ['0' => 'Standard','1' => 'EPO'],
             default        => [],
         };
@@ -177,13 +180,22 @@ class EditableModal extends Component
             }
         }
         $record->update([ $this->modelAttribute => $value,]);
-        $this->reset();
 
         $this->showModal = false;
 
         Flux::toast(text: 'Field updated successfully.', variant: 'success');
 
         $this->dispatch('contentUpdated');
+
+        $this->reset([
+            'fieldValue',
+            'fieldId',
+            'fieldType',
+            'selectOptions',
+            'modelClass',
+            'modelAttribute',
+            'editable',
+          ]);
         return;
     }
 
@@ -194,8 +206,50 @@ class EditableModal extends Component
 
     public function mount()
     {
+        $this->companyId = session('company_id');
+
         if ($this->fieldType === 'date' && !empty($this->fieldValue)) {
             $currentValue = Carbon::parse($currentValue)->format('Y-m-d H:i:s');
         }
+
+        $this->companyId = session('company_id');
+
+        $this->builders     = Cache::remember(
+            "builders.{$this->companyId}",
+            3600,
+            fn() => \App\Models\Builder::whereHas('lots',fn($q)=> $q->where('company_id',$this->companyId))
+                                                ->pluck('name','id')
+                                                ->toArray()
+        );
+    
+        $this->supervisors  = Cache::remember(
+            "supervisors.{$this->companyId}",
+            3600,
+            fn() => \App\Models\Supervisor::whereHas('lots',fn($q)=> $q->where('company_id',$this->companyId))
+                                                    ->pluck('name','id')
+                                                    ->toArray()
+        );
+    
+        $this->subdivisions = Cache::remember(
+            "subdivisions.{$this->companyId}",
+            3600,
+            fn() => \App\Models\Lot::where('company_id',$this->companyId)
+                                             ->distinct()
+                                             ->pluck('subdivision')
+                                             ->toArray()
+        );
+    
+        
+        $this->taskTypes    = Cache::remember(
+            "taskTypes.{$this->companyId}",
+            3600,
+            fn() => \App\Models\TaskType::pluck('name','id')->toArray()
+        );
+        
+        $this->statusTypes  = Cache::remember(
+            "statusTypes.{$this->companyId}",
+            3600,
+            fn() => \App\Models\StatusType::pluck('name','id')->toArray()
+        );
     }
 }
