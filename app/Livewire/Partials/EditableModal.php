@@ -40,7 +40,17 @@ class EditableModal extends Component
     }
 
     public function editField($fieldId, $currentValue, $fieldType = 'input', $optionKey = null, $modelClass = null, $modelAttribute = 'content', $editable=true)
-    { 
+    {
+        $this->reset([
+            'fieldValue',
+            'fieldId',
+            'fieldType',
+            'selectOptions',
+            'modelClass',
+            'modelAttribute',
+            'editable',
+          ]);
+           
         $companyId = session('company_id');
         if(!$editable){
             $this->notEditableActions();
@@ -187,15 +197,6 @@ class EditableModal extends Component
 
         $this->dispatch('contentUpdated');
 
-        $this->reset([
-            'fieldValue',
-            'fieldId',
-            'fieldType',
-            'selectOptions',
-            'modelClass',
-            'modelAttribute',
-            'editable',
-          ]);
         return;
     }
 

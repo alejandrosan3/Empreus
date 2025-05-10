@@ -289,6 +289,11 @@ class TaskProgress extends Component
         })->toArray();
     }
 
+    public function startBulkEdit()
+    {
+        $this->dispatch('bulk-edit-action', ids: $this->checkedTasks );
+    }
+
     /**
      * Livewire 3 event listener for the Navigation's "global-filters-updated" event.
      * Updates our local filter arrays, then re-dispatches to recalc the dropdowns.
@@ -303,7 +308,6 @@ class TaskProgress extends Component
         $this->resetPage();
         $this->dispatchFilters();
     }
-
 
     /**
      * Re-dispatch filter data when sorting changes.
@@ -367,86 +371,87 @@ class TaskProgress extends Component
             }
         );
 
-    //
-    // 2) SUBDIVISIONS LIST — cache keyed by [builders, lots]
-    //
-    $subdivisions = Cache::remember(
-        "taskProgress:{$companyId}:subdivisions:" . md5(json_encode([$bFilters, $lFilters])),
-        $ttl,
-        function () use ($bFilters, $lFilters) {
-            $q = Auth::user()->tasksForCurrentCompany();
+        //
+        // 2) SUBDIVISIONS LIST — cache keyed by [builders, lots]
+        //
+        $subdivisions = Cache::remember(
+            "taskProgress:{$companyId}:subdivisions:" . md5(json_encode([$bFilters, $lFilters])),
+            $ttl,
+            function () use ($bFilters, $lFilters) {
+                $q = Auth::user()->tasksForCurrentCompany();
 
-            // apply only builders & lots filters
-            if (!empty($bFilters)) {
-                $q->whereHas('lot.builder', fn($q) =>
-                    $q->whereIn('name', $bFilters)
-                );
+                // apply only builders & lots filters
+                if (!empty($bFilters)) {
+                    $q->whereHas('lot.builder', fn($q) =>
+                        $q->whereIn('name', $bFilters)
+                    );
+                }
+                if (!empty($lFilters)) {
+                    $q->whereHas('lot', fn($q) =>
+                        $q->whereIn('lot_number', $lFilters)
+                    );
+                }
+
+                return $q->join('lots', 'tasks.lot_id', '=', 'lots.id')
+                        ->select('lots.subdivision','lots.phase')
+                        ->groupBy('lots.subdivision','lots.phase')
+                        ->orderBy('lots.subdivision','asc')
+                        ->get()
+                        ->map(fn($item) => [
+                            'value' => "{$item->subdivision}|{$item->phase}",
+                            'label' => $item->subdivision.($item->phase ? " ({$item->phase})" : ''),
+                        ])
+                        ->toArray();
             }
-            if (!empty($lFilters)) {
-                $q->whereHas('lot', fn($q) =>
-                    $q->whereIn('lot_number', $lFilters)
-                );
+        );
+
+        //
+        // 3) LOT NUMBERS — cache keyed by [builders, subdivisions]
+        //
+        $lots = Cache::remember(
+            "taskProgress:{$companyId}:lots:" . md5(json_encode([$bFilters, $sFilters])),
+            $ttl,
+            function () use ($bFilters, $sFilters) {
+                $q = Auth::user()->tasksForCurrentCompany();
+
+                // apply only builders & subdivisions filters
+                if (!empty($bFilters)) {
+                    $q->whereHas('lot.builder', fn($q) =>
+                        $q->whereIn('name', $bFilters)
+                    );
+                }
+                if (!empty($sFilters)) {
+                    $q->whereHas('lot', fn($q) =>
+                        $q->where(function ($q2) use ($sFilters) {
+                            foreach ($sFilters as $filter) {
+                                [$sub, $ph] = explode('|', $filter);
+                                $q2->orWhere(fn($q3) =>
+                                    $q3->where('subdivision', $sub)
+                                    ->where('phase',       $ph)
+                                );
+                            }
+                        })
+                    );
+                }
+
+                return $q->join('lots', 'tasks.lot_id', '=', 'lots.id')
+                        ->distinct()
+                        ->orderBy('lots.lot_number','asc')
+                        ->pluck('lots.lot_number')
+                        ->toArray();
             }
+        );
 
-            return $q->join('lots', 'tasks.lot_id', '=', 'lots.id')
-                     ->select('lots.subdivision','lots.phase')
-                     ->groupBy('lots.subdivision','lots.phase')
-                     ->orderBy('lots.subdivision','asc')
-                     ->get()
-                     ->map(fn($item) => [
-                         'value' => "{$item->subdivision}|{$item->phase}",
-                         'label' => $item->subdivision.($item->phase ? " ({$item->phase})" : ''),
-                     ])
-                     ->toArray();
-        }
-    );
+        // Finally, dispatch exactly as before:
+        $this->dispatch('filters-updated',
+            builders:    $builders,
+            subdivisions:$subdivisions,
+            lots:        $lots,
+        );
 
-    //
-    // 3) LOT NUMBERS — cache keyed by [builders, subdivisions]
-    //
-    $lots = Cache::remember(
-        "taskProgress:{$companyId}:lots:" . md5(json_encode([$bFilters, $sFilters])),
-        $ttl,
-        function () use ($bFilters, $sFilters) {
-            $q = Auth::user()->tasksForCurrentCompany();
+        $this->resetPage();
+    }
 
-            // apply only builders & subdivisions filters
-            if (!empty($bFilters)) {
-                $q->whereHas('lot.builder', fn($q) =>
-                    $q->whereIn('name', $bFilters)
-                );
-            }
-            if (!empty($sFilters)) {
-                $q->whereHas('lot', fn($q) =>
-                    $q->where(function ($q2) use ($sFilters) {
-                        foreach ($sFilters as $filter) {
-                            [$sub, $ph] = explode('|', $filter);
-                            $q2->orWhere(fn($q3) =>
-                                $q3->where('subdivision', $sub)
-                                   ->where('phase',       $ph)
-                            );
-                        }
-                    })
-                );
-            }
-
-            return $q->join('lots', 'tasks.lot_id', '=', 'lots.id')
-                     ->distinct()
-                     ->orderBy('lots.lot_number','asc')
-                     ->pluck('lots.lot_number')
-                     ->toArray();
-        }
-    );
-
-    // Finally, dispatch exactly as before:
-    $this->dispatch('filters-updated',
-        builders:    $builders,
-        subdivisions:$subdivisions,
-        lots:        $lots,
-    );
-
-    $this->resetPage();
-}
 
     /**
      * Load task details dynamically or redirect if using route-based navigation.

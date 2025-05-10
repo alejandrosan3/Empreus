@@ -3,7 +3,22 @@
 
         {{-- Modal for hybrid inline editing behavior --}}
         <livewire:partials.editable-modal />
-        <flux:checkbox.group wire:model.change="checkedTasks">
+    
+        {{-- Modal for bulk editing behavior --}}
+        <livewire:partials.bulk-edit-modal />
+
+        <flux:checkbox.group x-data="bulkEditCheckboxes()">
+            <div class="h-8 flex items-center">
+                <div x-show="selectedIds.length > 0" x-transition
+                    class="transition-opacity duration-300 opacity-0"
+                    :class="{ 'opacity-100': selectedIds.length > 0 }"
+                >
+                    <flux:button @click="$wire.set('checkedTasks', selectedIds); $wire.startBulkEdit()" size="sm">
+                        Bulk Edit
+                    </flux:button>
+                </div>
+            </div>
+
             <div
                 class="overflow-x-auto"         {{-- ensures horizontal scroll --}}
                 x-data="stickyTable()"           {{-- mount our Alpine component --}}
@@ -40,7 +55,15 @@
                         @foreach($flatTasks as $row)
                             <flux:table.row :key="$row['id']">
                             <flux:table.cell class="sticky left-0 z-20 bg-white dark:bg-zinc-800">
-                                <flux:checkbox :value="$row['id']" checked="{{ in_array($row['id'], $checkedTasks) }}" />
+                                <flux:checkbox 
+                                    x-data="{ id: {{ $row['id'] }} }"
+                                    value="{{ $row['id'] }}"
+                                    x-bind:checked="selectedIds.includes(id)"
+                                    @change="e => {
+                                        if (e.target.checked) selectedIds.push(id);
+                                        else selectedIds = selectedIds.filter(i => i !== id);
+                                    }"
+                                />
                             </flux:table.cell>
                                 @foreach($columns as $column)
                                     @if($column['selected'])
@@ -147,6 +170,21 @@
             </script>
 
         </flux:checkbox.group>
+
+
+        <script>
+            document.addEventListener('alpine:init', () => {
+                Alpine.data('bulkEditCheckboxes', () => ({
+                    selectedIds: [],
+                    allIds: @js(array_column($flatTasks, 'id')),
+
+                    toggleAll(e) {
+                        this.selectedIds = e.detail.all ? this.allIds : [];
+                    }
+                }));
+            });
+        </script>
+
 
     @else
         <!-- If a task is selected, show its details. -->
