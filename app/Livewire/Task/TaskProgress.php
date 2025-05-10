@@ -448,8 +448,6 @@ class TaskProgress extends Component
     $this->resetPage();
 }
 
-
-
     /**
      * Load task details dynamically or redirect if using route-based navigation.
      */

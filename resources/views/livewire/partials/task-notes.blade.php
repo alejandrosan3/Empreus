@@ -13,7 +13,7 @@
             <flux:table.rows>
                 @forelse ($allNotes as $note)
                     <flux:table.row>
-                        <flux:table.cell>{{ $note->created_at->format('Y-m-d') ?? 'N/A' }}</flux:table.cell>
+                        <flux:table.cell>{{ $note->updated_at->format('Y-m-d') ?? 'N/A' }}</flux:table.cell>
                         <flux:table.cell>{{ $note->task->taskType->name ?? 'N/A' }}</flux:table.cell>
                         <flux:table.cell>{{ $note->description }}</flux:table.cell>
                     </flux:table.row>
