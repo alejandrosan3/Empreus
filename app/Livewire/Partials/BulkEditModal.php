@@ -2,6 +2,7 @@
 
 namespace App\Livewire\Partials;
 
+use App\Models\Lot;
 use Livewire\Attributes\On;
 use Livewire\Component;
 use App\Models\Task;
@@ -27,7 +28,7 @@ class BulkEditModal extends Component
     // Option lists
     public array $statusTypes = [];
     public array $supervisors = [];
-    
+
     #[On('bulk-edit-action')]
     public function openModal($ids=[])
     {
@@ -51,61 +52,82 @@ class BulkEditModal extends Component
             'is_extra',
         ]);
     }
-    
+
     public function save()
     {
         $taskFields = [];
         $lotFields = [];
 
-        if ($this->status_type_id !== '' && $this->status_type_id !== null) {
-            $taskFields['status_type_id'] = $this->status_type_id;
-        }
-
-        if ($this->supervisor_id !== '' && $this->supervisor_id !== null) {
+        /**
+         * Set Lot fields to update
+         */
+        if (!empty($this->supervisor_id) && is_int($this->supervisor_id)) {
             $lotFields['supervisor_id'] = $this->supervisor_id;
         }
 
-        if (trim($this->address) !== '' && $this->address !== null) {
+        if (!empty($this->address)) {
             $lotFields['address'] = $this->address;
         }
 
-        if ($this->scheduled_start_date) {
+        /**
+         * Set task fields to update
+         */
+
+        if (!empty($this->status_type_id) && is_int($this->status_type_id)) {
+            $taskFields['status_type_id'] = $this->status_type_id;
+        }
+
+        if (!empty($this->scheduled_start_date)) {
             $taskFields['scheduled_start_date'] = $this->scheduled_start_date;
         }
 
-        if ($this->scheduled_end_date) {
+        if (!empty($this->scheduled_end_date)) {
             $taskFields['scheduled_end_date'] = $this->scheduled_end_date;
         }
 
-        if ($this->started_at) {
+        if (!empty($this->started_at)) {
             $taskFields['started_at'] = $this->started_at;
         }
 
-        if ($this->ended_at) {
+        if (!empty($this->ended_at)) {
             $taskFields['ended_at'] = $this->ended_at;
         }
 
-        if ($this->is_extra !== '' && $this->is_extra !== null) {
+        if (isset($this->is_extra) && is_int($this->is_extra) && in_array($this->is_extra, [0, 1])) {
             $taskFields['is_extra'] = $this->is_extra;
         }
 
+        /**
+         * Return if no fields to update
+         */
+        if (empty($lotFields) && empty($taskFields)) {
+            $this->showModal = false;
+            return;
+        }
 
+        /**
+         * Bulk update tasks
+         */
         if (!empty($taskFields)) {
             Task::whereIn('id', $this->taskIds)->update($taskFields);
         }
+
+        /**
+         * Bulk update lots
+         */
         if (!empty($lotFields)) {
-            Task::whereIn('id', $this->taskIds)
-                ->with('lot')
-                ->get()
-                ->each(function ($task) use ($lotFields) {
-                    $task->lot?->update($lotFields);
-                });
+            $lotIds = Task::whereIn('id', $this->taskIds)
+                ->whereNotNull('lot_id')
+                ->pluck('lot_id')
+                ->unique()
+                ->values();
+
+            if ($lotIds->isNotEmpty()) {
+                Lot::whereIn('id', $lotIds)->update($lotFields);
+            }
+
         }
 
-        if (empty($lotFields) && empty($taskFields)) {
-            Flux::toast('No changes applied', 'warning'); 
-        }
-        
         Flux::toast(text: 'Updated ' . count($this->taskIds) . ' tasks.', heading:'All done!', variant:'success');
         $this->dispatch('contentUpdated');
         $this->showModal = false;
