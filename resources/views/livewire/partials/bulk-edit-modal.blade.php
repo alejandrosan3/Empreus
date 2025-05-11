@@ -31,18 +31,18 @@
             </flux:select>
 
             {{-- Address --}}
-            <flux:input wire:model.defer="address" label="Address" placeholder="Edit Address" />
+            <flux:input wire:model.defer="address" label="Address" placeholder="Edit Address" clearable/>
         </div>
-        
+
 
         {{-- Group 2: Date Pickers --}}
         <flux:separator text="Dates Section" class="my-8" />
 
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
-            <flux:date-picker label="Planned Start Date" wire:model="scheduled_start_date" selectable-header />
-            <flux:date-picker label="Start Date" wire:model="started_at" selectable-header />
-            <flux:date-picker label="Scheduled End Date" wire:model="scheduled_end_date" selectable-header />
-            <flux:date-picker label="End Date" wire:model="ended_at" selectable-header />
+            <flux:date-picker label="Planned Start Date" wire:model="scheduled_start_date" selectable-header clearable />
+            <flux:date-picker label="Start Date" wire:model="started_at" selectable-header clearable />
+            <flux:date-picker label="Scheduled End Date" wire:model="scheduled_end_date" selectable-header clearable />
+            <flux:date-picker label="End Date" wire:model="ended_at" selectable-header clearable />
         </div>
 
         <flux:button wire:click="save" variant="primary">Apply Changes</flux:button>
