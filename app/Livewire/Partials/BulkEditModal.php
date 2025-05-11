@@ -93,7 +93,7 @@ class BulkEditModal extends Component
             $taskFields['ended_at'] = $this->ended_at;
         }
 
-        if (isset($this->is_extra) && is_int($this->is_extra) && in_array($this->is_extra, [0, 1])) {
+        if (isset($this->is_extra) && in_array((int)$this->is_extra, [0, 1])) {
             $taskFields['is_extra'] = $this->is_extra;
         }
 
