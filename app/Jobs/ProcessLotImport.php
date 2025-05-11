@@ -44,7 +44,8 @@ class ProcessLotImport implements ShouldQueue
         } catch (Exception $e) {
             Log::error('Error during lot import.', [
                 'error' => $e->getMessage(),
-                'batch_id' => $this->batch()->id
+                'batch_id' => $this->batch()->id,
+                'tags' => ['error'],
             ]);
 
             throw $e;

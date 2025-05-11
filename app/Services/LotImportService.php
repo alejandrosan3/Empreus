@@ -83,9 +83,9 @@ class LotImportService
             'supervisor_name' => 'nullable|string|max:255',
             'subdivision' => 'nullable|string|max:255',
             'status' => 'required|string|exists:status_types,identifier',
-            'floor_area' => 'nullable|max:12',
+            'floor_area' => 'nullable',
             'num_of_floors' => 'nullable|integer|min:1',
-            'notes' => 'nullable|string',
+            'notes' => 'nullable',
             'started_at' => 'nullable|string',
             'ended_at' => 'nullable|string',
             'address' => 'nullable|string',
@@ -169,7 +169,8 @@ class LotImportService
                 'phase' => (string)$item['phase'],
                 'address' => $item['address'],
                 'subdivision' => $item['subdivision'] ?? null,
-                'floor_area' => !empty($item['floor_area']) && is_numeric($item['floor_area']) ? $item['floor_area'] : 0,
+                'floor_area' => !empty($item['floor_area']) ?
+                    (is_numeric(substr($item['floor_area'], 0, 12)) ? substr($item['floor_area'], 0, 12) : 0) : 0,
                 'num_of_floors' => $item['num_of_floors'] ?? 1,
             ]
         );

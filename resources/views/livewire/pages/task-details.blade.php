@@ -10,27 +10,27 @@
         <!-- Builder Details -->
         @livewire('partials.cards', [
             'items' => [
-                ['label' => 'Builder', 'value' => $task->lot->builder->name, 'level' => 2],
-                ['label' => 'Subdivision', 'value' => $task->lot->subdivision],
-                ['label' => 'Lot', 'value' => $task->lot->lot_number],
-                ['label' => 'Phase', 'value' => $task->lot->phase],
+                ['label' => 'Builder', 'value' => $task->lot->builder?->name ?? 'Missing Builder\'s name', 'level' => 2],
+                ['label' => 'Subdivision', 'value' => $task->lot?->subdivision ?? 'Missing Subdivision'],
+                ['label' => 'Lot', 'value' => $task->lot?->lot_number ?? 'Lot Number Missing'],
+                ['label' => 'Phase', 'value' => $task->lot?->phase ?? '-'],
             ]
         ])
 
         @livewire('partials.cards', [
             'items' => [
-                ['label' => 'Name', 'value' => $task->taskType->name],
-                ['label' => 'Order Number', 'value' => $task->order_number],
-                ['label' => 'price', 'value' => $task->price],
+                ['label' => 'Name', 'value' => $task->taskType?->name ?? 'Missing Task Name'],
+                ['label' => 'Order Number', 'value' => $task?->order_number ?? '-'],
+                ['label' => 'price', 'value' => $task?->price ?? '-'],
                 ['label' => 'Order Type', 'value' => $task->is_extra ? "EPO" : "PO"],
             ]
         ])
 
         @livewire('partials.cards', [
             'items' => [
-                ['label' => 'Supervisor', 'value' => $task->lot->supervisor->name],
-                ['label' => 'Scheduled Start Date', 'value' => $task->scheduled_start_date],
-                ['label' => 'Scheduled End Date', 'value' => $task->scheduled_end_date],
+                ['label' => 'Supervisor', 'value' => $task->lot->supervisor?->name ?? 'N/A'],
+                ['label' => 'Scheduled Start Date', 'value' => $task?->scheduled_start_date ?? "Unscheduled"],
+                ['label' => 'Scheduled End Date', 'value' => $task?->scheduled_end_date ?? "Unscheduled"],
                 ['label' => 'Assigned Group', 'value' => "Coming Soon"],
             ]
         ])

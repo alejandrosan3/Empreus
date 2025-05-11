@@ -124,7 +124,7 @@ return [
      */
 
     'capture_ajax' => true,
-    'add_ajax_timing' => false,
+    'add_ajax_timing' => true,
     'ajax_handler_auto_show' => true,
     'ajax_handler_enable_tab' => true,
 
@@ -219,12 +219,12 @@ return [
             ],
             'backtrace'         => true,   // Use a backtrace to find the origin of the query in your files.
             'backtrace_exclude_paths' => [],   // Paths to exclude from backtrace. (in addition to defaults)
-            'timeline'          => false,  // Add the queries to the timeline
+            'timeline'          => true,  // Add the queries to the timeline
             'duration_background'  => true,   // Show shaded background on each query relative to how long it took to execute.
             'explain' => [                 // Show EXPLAIN output on queries
-                'enabled' => false,
+                'enabled' => true,
             ],
-            'hints'             => false,   // Show hints for common mistakes
+            'hints'             => true,   // Show hints for common mistakes
             'show_copy'         => true,    // Show copy button next to the query,
             'slow_threshold'    => false,   // Only track queries that last longer than this time in ms
             'memory_usage'      => false,   // Show queries memory usage
@@ -236,8 +236,8 @@ return [
             'show_body' => true,
         ],
         'views' => [
-            'timeline' => false,    // Add the views to the timeline (Experimental)
-            'data' => false,        // True for all data, 'keys' for only names, false for no parameters.
+            'timeline' => true,    // Add the views to the timeline (Experimental)
+            'data' => 'keys',        // True for all data, 'keys' for only names, false for no parameters.
             'group' => 50,          // Group duplicate views. Pass value to auto-group, or true/false to force
             'exclude_paths' => [    // Add the paths which you don't want to appear in the views
                 'vendor/filament'   // Exclude Filament components by default

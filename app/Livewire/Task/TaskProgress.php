@@ -8,6 +8,9 @@ use Livewire\Component;
 use Livewire\WithPagination;
 use Livewire\Attributes\On;
 use Livewire\Attributes\Computed;
+use Illuminate\Support\Facades\Cache;
+
+use Flux\Flux;
 
 class TaskProgress extends Component
 {
@@ -21,8 +24,14 @@ class TaskProgress extends Component
     public $selectedSubdivisions = [];
     public $selectedLots = [];
 
+    public array $checkedTasks = [];
+
     // For dynamically displaying task details
     public $selectedTask = null;
+
+    protected $listeners = [
+        'contentUpdated' => '$refresh',
+    ];
 
     /**
      * Sort the table by a given column, toggling sort direction if needed,
@@ -44,8 +53,21 @@ class TaskProgress extends Component
      */
     public function getTasksProperty()
     {
+        $perPage = 20;
+        $page    = request()->get('page', 1);
+
+        $query = Auth::user()->tasksForCurrentCompany()
+        ->with([
+            'lot.builder',            // lot + nested builder
+            'lot.supervisor',         // lot + nested supervisor
+            'taskType',               // one-to-many
+            'statusType',             // one-to-many
+            // load only the latest note
+            'taskNotes' => fn($q) => $q->latest('created_at')->limit(1),
+        ]);
+
         // Start with tasks for the current company
-        $query = Auth::user()->tasksForCurrentCompany();
+        //$query = Auth::user()->tasksForCurrentCompany();
 
         // 1. Filtering by builder
         if (!empty($this->selectedBuilders)) {
@@ -124,9 +146,152 @@ class TaskProgress extends Component
             // Default: assume the column is on the tasks table
             $query->orderBy('tasks.' . $this->sortBy, $this->sortDirection);
         }
-
+        
         // Finally, paginate the result
-        return $query->paginate(20);
+        return $query->Paginate(20);
+    }
+
+    #[Computed]
+    public function getFlatTasksProperty()
+    {
+        // We’ll build a simple array-of-arrays, one per task
+        return $this->tasks->map(function($task) {
+            // Start each row with its id
+            $row = ['id' => $task->id];
+
+            // Loop over the $columns config to keep order/visibility
+            foreach ($this->columns as $column) {
+                if (! $column['selected']) {
+                    continue;
+                }
+
+                // Prepare defaults
+                $display        = '-';
+                $rawValue       = null;
+                $fieldType      = 'input';
+                $modelClass     = \App\Models\Task::class;
+                $modelAttribute = $column['value'];
+                $optionKey      = '';
+                $editable       = $column['editable'];
+
+                switch ($column['value']) {
+                    case 'builder':
+                        $display        = $task->lot->builder->name;
+                        $rawValue       = $task->lot->builder_id;
+                        $modelClass     = \App\Models\Lot::class;
+                        $modelAttribute = 'builder_id';
+                        break;
+                    case 'subdivision':
+                        $display        = $task->lot->subdivision;
+                        $rawValue       = $display;
+                        $modelClass     = \App\Models\Lot::class;
+                        $modelAttribute = 'subdivision';
+                        break;
+                    case 'address':
+                        $display        = $task->lot->address ?? '-';
+                        $rawValue       = $display;
+                        $modelClass     = \App\Models\Lot::class;
+                        $modelAttribute = 'address';
+                        break;
+                    case 'lot_number':
+                        $display        = $task->lot->lot_number;
+                        $rawValue       = $display;
+                        $modelClass     = \App\Models\Lot::class;
+                        $modelAttribute = 'lot_number';
+                        break;
+                    case 'task_type':
+                        $display        = $task->taskType->name;
+                        $rawValue       = $task->taskType->id;
+                        $modelAttribute = 'task_type_id';
+                        break;
+                    case 'status':
+                        $display        = $task->statusType->name;
+                        $rawValue       = $task->statusType->id;
+                        $fieldType      = 'select';
+                        $modelAttribute = 'status_type_id';
+                        break;
+                    case 'num_of_floors':
+                        $display        = $task->lot->num_of_floors;
+                        $rawValue       = $display;
+                        $modelClass     = \App\Models\Lot::class;
+                        $modelAttribute = 'num_of_floors';
+                        break;
+                    case 'floor_area':
+                        $display        = $task->lot->floor_area ?? '-';
+                        $rawValue       = $display;
+                        $modelClass     = \App\Models\Lot::class;
+                        $modelAttribute = 'floor_area';
+                        break;
+                    case 'supervisor':
+                        $display        = $task->lot->supervisor->name ?? '-';
+                        $rawValue       = $task->lot->supervisor_id;
+                        $modelClass     = \App\Models\Lot::class;
+                        $modelAttribute = 'supervisor_id';
+                        break;
+                    case 'is_extra':
+                        $display        = $task->is_extra ? 'EPO' : 'Standard';
+                        $rawValue       = $task->is_extra;
+                        break;
+                    case 'notes':
+                        $latestNote     = $task->taskNotes->first();
+                        $display        = $latestNote->description ?? '-';
+                        $rawValue       = $display;
+                        $modelClass     = \App\Models\TaskNote::class;
+                        $modelAttribute = 'description';
+                        break;
+                    case 'scheduled_start_date':
+                        $display        = $task->scheduled_start_date;
+                        $rawValue       = $display;
+                        $fieldType      = 'date';
+                        $modelAttribute = 'scheduled_start_date';
+                        break;
+                    case 'ended_at':
+                        $display        = $task->ended_at;
+                        $rawValue       = $display;
+                        $fieldType      = 'date';
+                        $modelAttribute = 'ended_at';
+                        break;
+                    default:
+                        if (isset($task->{$column['value']})) {
+                            $display        = $task->{$column['value']};
+                            $rawValue       = $display;
+                        }
+                }
+
+                // Map column keys for option lists if needed
+                $map = [
+                    'builder'    => 'builders',
+                    'task_type'  => 'taskTypes',
+                    'status'     => 'statusTypes',
+                    'supervisor' => 'supervisors',
+                    'subdivision'=> 'subdivisions',
+                    'is_extra'   => 'is_extra',
+                ];
+                $optionKey = $map[$column['value']] ?? '';
+
+                // Put it all into the row under the column’s `value` key
+                $row[$column['value']] = [
+                    'display'        => $display,
+                    'rawValue'       => $rawValue,
+                    'fieldType'      => $fieldType,
+                    'modelClass'     => $modelClass,
+                    'modelAttribute' => $modelAttribute,
+                    'optionKey'      => $optionKey,
+                    'editable'       => $editable,
+                    // include color for badges:
+                    'color'          => $column['value'] === 'status'
+                        ? $task->statusType->color
+                        : null,
+                ];
+            }
+
+            return $row;
+        })->toArray();
+    }
+
+    public function startBulkEdit()
+    {
+        $this->dispatch('bulk-edit-action', ids: $this->checkedTasks );
     }
 
     /**
@@ -144,7 +309,6 @@ class TaskProgress extends Component
         $this->dispatchFilters();
     }
 
-
     /**
      * Re-dispatch filter data when sorting changes.
      */
@@ -161,71 +325,128 @@ class TaskProgress extends Component
     #[On('company-updated')]
     public function dispatchFilters()
     {
-        $query = Auth::user()->tasksForCurrentCompany();
+        $companyId = Auth::id();
+        $ttl       = 300; // cache TTL in seconds
 
-        // Filter by builder through the lot relationship
-        if (!empty($this->selectedBuilders)) {
-            $query->whereHas('lot.builder', function ($q) {
-                $q->whereIn('name', $this->selectedBuilders);
-            });
-        }
+        // Shorthand for your three filter arrays
+        $bFilters = $this->selectedBuilders;
+        $sFilters = $this->selectedSubdivisions;
+        $lFilters = $this->selectedLots;
 
-        // Filter by subdivision/phase through the lot relationship
-        if (!empty($this->selectedSubdivisions)) {
-            $query->whereHas('lot', function ($q) {
-                $q->where(function ($q2) {
-                    foreach ($this->selectedSubdivisions as $filter) {
-                        [$subdivision, $phase] = explode('|', $filter);
-                        $q2->orWhere(function ($q3) use ($subdivision, $phase) {
-                            $q3->where('subdivision', $subdivision)
-                            ->where('phase', $phase);
-                        });
-                    }
-                });
-            });
-        }
+        //
+        // 1) BUILDERS LIST — cache keyed by [subdivisions, lots]
+        //
+        $builders = Cache::remember(
+            "taskProgress:{$companyId}:builders:" . md5(json_encode([$sFilters, $lFilters])),
+            $ttl,
+            function () use ($sFilters, $lFilters) {
+                $q = Auth::user()->tasksForCurrentCompany();
 
-        // Filter by lot number through the lot relationship
-        if (!empty($this->selectedLots)) {
-            $query->whereHas('lot', function ($q) {
-                $q->whereIn('lot_number', $this->selectedLots);
-            });
-        }
+                // apply only subdivisions & lots filters
+                if (!empty($sFilters)) {
+                    $q->whereHas('lot', fn($q) =>
+                        $q->where(function ($q2) use ($sFilters) {
+                            foreach ($sFilters as $filter) {
+                                [$sub, $ph] = explode('|', $filter);
+                                $q2->orWhere(fn($q3) =>
+                                    $q3->where('subdivision', $sub)
+                                    ->where('phase',       $ph)
+                                );
+                            }
+                        })
+                    );
+                }
+                if (!empty($lFilters)) {
+                    $q->whereHas('lot', fn($q) =>
+                        $q->whereIn('lot_number', $lFilters)
+                    );
+                }
 
-        // Get builders from the joined tables: tasks -> lots -> builders
-        $builders = $query->clone()
-            ->join('lots', 'tasks.lot_id', '=', 'lots.id')
-            ->join('builders', 'lots.builder_id', '=', 'builders.id')
-            ->distinct()
-            ->orderBy('builders.name', 'asc')
-            ->pluck('builders.name');
+                return $q->join('lots',     'tasks.lot_id',       '=', 'lots.id')
+                        ->join('builders', 'lots.builder_id',    '=', 'builders.id')
+                        ->distinct()
+                        ->orderBy('builders.name', 'asc')
+                        ->pluck('builders.name')
+                        ->toArray();
+            }
+        );
 
-        // Get subdivisions (and phases) from lots
-        $subdivisions = $query->clone()
-            ->join('lots', 'tasks.lot_id', '=', 'lots.id')
-            ->select('lots.subdivision', 'lots.phase')
-            ->groupBy('lots.subdivision', 'lots.phase')
-            ->orderBy('lots.subdivision', 'asc')
-            ->get()
-            ->map(function ($item) {
-                return [
-                    'value' => $item->subdivision . '|' . $item->phase,
-                    'label' => $item->subdivision . ($item->phase ? " ({$item->phase})" : ""),
-                ];
-            })
-            ->toArray();
+        //
+        // 2) SUBDIVISIONS LIST — cache keyed by [builders, lots]
+        //
+        $subdivisions = Cache::remember(
+            "taskProgress:{$companyId}:subdivisions:" . md5(json_encode([$bFilters, $lFilters])),
+            $ttl,
+            function () use ($bFilters, $lFilters) {
+                $q = Auth::user()->tasksForCurrentCompany();
 
-        // Get lot numbers from the joined tasks and lots
-        $lots = $query->clone()
-            ->join('lots', 'tasks.lot_id', '=', 'lots.id')
-            ->distinct()
-            ->orderBy('lots.lot_number', 'asc')
-            ->pluck('lots.lot_number');
+                // apply only builders & lots filters
+                if (!empty($bFilters)) {
+                    $q->whereHas('lot.builder', fn($q) =>
+                        $q->whereIn('name', $bFilters)
+                    );
+                }
+                if (!empty($lFilters)) {
+                    $q->whereHas('lot', fn($q) =>
+                        $q->whereIn('lot_number', $lFilters)
+                    );
+                }
 
+                return $q->join('lots', 'tasks.lot_id', '=', 'lots.id')
+                        ->select('lots.subdivision','lots.phase')
+                        ->groupBy('lots.subdivision','lots.phase')
+                        ->orderBy('lots.subdivision','asc')
+                        ->get()
+                        ->map(fn($item) => [
+                            'value' => "{$item->subdivision}|{$item->phase}",
+                            'label' => $item->subdivision.($item->phase ? " ({$item->phase})" : ''),
+                        ])
+                        ->toArray();
+            }
+        );
+
+        //
+        // 3) LOT NUMBERS — cache keyed by [builders, subdivisions]
+        //
+        $lots = Cache::remember(
+            "taskProgress:{$companyId}:lots:" . md5(json_encode([$bFilters, $sFilters])),
+            $ttl,
+            function () use ($bFilters, $sFilters) {
+                $q = Auth::user()->tasksForCurrentCompany();
+
+                // apply only builders & subdivisions filters
+                if (!empty($bFilters)) {
+                    $q->whereHas('lot.builder', fn($q) =>
+                        $q->whereIn('name', $bFilters)
+                    );
+                }
+                if (!empty($sFilters)) {
+                    $q->whereHas('lot', fn($q) =>
+                        $q->where(function ($q2) use ($sFilters) {
+                            foreach ($sFilters as $filter) {
+                                [$sub, $ph] = explode('|', $filter);
+                                $q2->orWhere(fn($q3) =>
+                                    $q3->where('subdivision', $sub)
+                                    ->where('phase',       $ph)
+                                );
+                            }
+                        })
+                    );
+                }
+
+                return $q->join('lots', 'tasks.lot_id', '=', 'lots.id')
+                        ->distinct()
+                        ->orderBy('lots.lot_number','asc')
+                        ->pluck('lots.lot_number')
+                        ->toArray();
+            }
+        );
+
+        // Finally, dispatch exactly as before:
         $this->dispatch('filters-updated',
-            builders: $builders,
-            subdivisions: $subdivisions,
-            lots: $lots
+            builders:    $builders,
+            subdivisions:$subdivisions,
+            lots:        $lots,
         );
 
         $this->resetPage();
@@ -276,21 +497,21 @@ class TaskProgress extends Component
     public function mount()
     {
         $this->columns = [
-            ['id' => 1,  'label' => 'Builder',         'value' => 'builder',         'group' => 'fixed',  'selected' => true,  'sortable' => true],
-            ['id' => 2,  'label' => 'Subdivision',     'value' => 'subdivision',     'group' => 'fixed',  'selected' => true,  'sortable' => true],
-            ['id' => 3,  'label' => 'Lot',             'value' => 'lot_number',             'group' => 'fixed',  'selected' => true,  'sortable' => true],
-            ['id' => 4,  'label' => 'Task Type',       'value' => 'task_type',       'group' => 'active', 'selected' => true,  'sortable' => true],
-            ['id' => 5,  'label' => 'Status',          'value' => 'status',          'group' => 'active', 'selected' => true,  'sortable' => true],
-            ['id' => 6,  'label' => 'Stories',         'value' => 'num_of_floors',         'group' => 'active', 'selected' => true,  'sortable' => true],
-            ['id' => 7,  'label' => 'Notes',           'value' => 'notes',           'group' => 'active', 'selected' => true,  'sortable' => false],
-            ['id' => 8,  'label' => 'SQ FT',         'value' => 'floor_area',    'group' => 'active', 'selected' => true,  'sortable' => true],
-            ['id' => 9,  'label' => 'Supervisor',      'value' => 'supervisor',      'group' => 'active', 'selected' => true,  'sortable' => true],
-            ['id' => 10, 'label' => 'Purchase Order',  'value' => 'order_number',  'group' => 'active', 'selected' => true,  'sortable' => true],
-            ['id' => 11, 'label' => 'Planned Start',   'value' => 'scheduled_start_date',   'group' => 'active', 'selected' => true,  'sortable' => true],
-            ['id' => 12, 'label' => 'Address',         'value' => 'address',         'group' => 'active', 'selected' => true,  'sortable' => true],
-            ['id' => 13, 'label' => 'Price',           'value' => 'price',           'group' => 'active', 'selected' => true,  'sortable' => true],
-            ['id' => 14, 'label' => 'Completion Date', 'value' => 'ended_at', 'group' => 'active', 'selected' => true,  'sortable' => true],
-            ['id' => 15, 'label' => 'Order Type', 'value' => 'is_extra', 'group' => 'active', 'selected' => true,  'sortable' => true],
+            ['id' => 1,  'label' => 'Builder',         'value' => 'builder',         'group' => 'fixed',  'selected' => true,  'sortable' => true, 'editable' => false],
+            ['id' => 2,  'label' => 'Subdivision',     'value' => 'subdivision',     'group' => 'fixed',  'selected' => true,  'sortable' => true, 'editable' => false],
+            ['id' => 3,  'label' => 'Lot',             'value' => 'lot_number',             'group' => 'fixed',  'selected' => true,  'sortable' => true, 'editable' => false],
+            ['id' => 4,  'label' => 'Task Type',       'value' => 'task_type',       'group' => 'active', 'selected' => true,  'sortable' => true, 'editable' => false],
+            ['id' => 5,  'label' => 'Status',          'value' => 'status',          'group' => 'active', 'selected' => true,  'sortable' => true, 'editable' => true],
+            ['id' => 6,  'label' => 'Stories',         'value' => 'num_of_floors',         'group' => 'active', 'selected' => true,  'sortable' => true, 'editable' => true],
+            ['id' => 7,  'label' => 'Notes',           'value' => 'notes',           'group' => 'active', 'selected' => true,  'sortable' => false, 'editable' => true],
+            ['id' => 8,  'label' => 'SQ FT',         'value' => 'floor_area',    'group' => 'active', 'selected' => true,  'sortable' => true, 'editable' => true],
+            ['id' => 9,  'label' => 'Supervisor',      'value' => 'supervisor',      'group' => 'active', 'selected' => true,  'sortable' => true, 'editable' => true],
+            ['id' => 10, 'label' => 'Purchase Order',  'value' => 'order_number',  'group' => 'active', 'selected' => true,  'sortable' => true, 'editable' => true],
+            ['id' => 11, 'label' => 'Planned Start',   'value' => 'scheduled_start_date',   'group' => 'active', 'selected' => true,  'sortable' => true, 'editable' => true],
+            ['id' => 12, 'label' => 'Address',         'value' => 'address',         'group' => 'active', 'selected' => true,  'sortable' => true, 'editable' => true],
+            ['id' => 13, 'label' => 'Price',           'value' => 'price',           'group' => 'active', 'selected' => true,  'sortable' => true, 'editable' => true],
+            ['id' => 14, 'label' => 'Completion Date', 'value' => 'ended_at', 'group' => 'active', 'selected' => true,  'sortable' => true, 'editable' => true],
+            ['id' => 15, 'label' => 'Order Type', 'value' => 'is_extra', 'group' => 'active', 'selected' => true,  'sortable' => true, 'editable' => true],
         ];
 
         $this->dispatchFilters();
@@ -301,6 +522,7 @@ class TaskProgress extends Component
     {
         return view('livewire.task.task-progress', [
             'tasks' => $this->tasks,
+            'flatTasks' => $this->flatTasks,
         ])->layout('layouts.app', [
             'showFilters' => true,
             'showSearch'  => true,
