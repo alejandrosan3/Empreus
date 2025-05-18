@@ -2,6 +2,7 @@
 
 namespace Database\Factories;
 
+use App\Enums\StatusType;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
@@ -16,10 +17,12 @@ class StatusTypeFactory extends Factory
      */
     public function definition(): array
     {
+        $statusType = $this->faker->randomElement(StatusType::all());
+
         return [
-            'identifier' => 'pending',
-            'name' => 'Pending',
-            'description' => 'The order has been added but no work has started yet.',
+            'identifier' => $statusType,
+            'name' => $statusType,
+            'description' => $this->faker->sentence,
             'color' => '#B0BEC5',
             'color_dark' => '#757575',
         ];

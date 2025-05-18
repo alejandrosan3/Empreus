@@ -58,13 +58,8 @@ class User extends Authenticatable
     {
         $companyId = session('company_id');
 
-        return Lot::where('company_id', $companyId)
-            ->whereHas('company', function ($query) use ($companyId) {
-                $query->where('companies.id', $companyId)
-                    ->whereHas('users', function ($query) {
-                        $query->where('users.id', $this->id);
-                    });
-            });
+        return Lot::with(['builder', 'tasks.taskType', 'tasks.status'])
+            ->where('company_id', $companyId);
     }
 
     public function tasksForCurrentCompany()

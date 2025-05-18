@@ -67,7 +67,7 @@ class StatusTypeSeeder extends Seeder
 
 
         foreach ($statuses as $status) {
-            StatusType::updateOrCreate(
+            StatusType::findOrCreate(
                 ['identifier' => $status['identifier']],
                 $status
             );
