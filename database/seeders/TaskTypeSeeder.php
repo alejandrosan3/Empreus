@@ -16,7 +16,7 @@ class TaskTypeSeeder extends Seeder
         $task_types = \App\Enums\TaskType::all();
 
         foreach ($task_types as $task_type) {
-            TaskType::findOrCreate(
+            TaskType::firstOrCreate(
                 ['name' => $task_type],
                 [
                     'description' => $task_type,
