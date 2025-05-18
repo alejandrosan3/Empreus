@@ -4,10 +4,9 @@ use App\Http\Middleware\SetCurrentCompany;
 use App\Livewire\Builders\{CreateBuilder, ListBuilder};
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Auth;
-use App\Livewire\Lot\LotProgress;
-use App\Livewire\Task\TaskProgress;
-use App\Livewire\Pages\LotDetails;
-use App\Livewire\Pages\TaskDetails;
+use App\Livewire\Lot\{LotProgress, AddLotForm};
+use App\Livewire\Task\{TaskProgress, AddTaskForm} ;
+use App\Livewire\Pages\{LotDetails, TaskDetails};
 use App\Models\Task;
 
 Route::get('/', function () {
@@ -42,20 +41,24 @@ Route::middleware(['auth', 'verified', SetCurrentCompany::class])
             ->defaults('icon', 'building-office-2');
 
         Route::get('builders/create', CreateBuilder::class)
-            ->name('builders.create')
+            ->name('builder-create')
             ->defaults('label', 'Add Builder')
-            ->defaults('icon', 'building-office');
+            ->defaults('icon', 'user-plus');
 
         Route::get('lot-progress', LotProgress::class)
             ->name('lot-progress')
             ->defaults('label', 'Lots Progress')
             ->defaults('icon', 'clipboard-document-check');
 
+        Route::get('/lots/create', AddTaskForm::class)
+            ->name('lot-create')
+            ->defaults('label', 'Create Lot')
+            ->defaults('icon', 'plus');    
+
         Route::get('task-progress', TaskProgress::class)
             ->name('task-progress')
             ->defaults('label', 'Tasks Progress')
             ->defaults('icon', 'queue-list');
-
 
         Route::get('/lots/{lot_id}/details', LotDetails::class)
             ->name('lot-details')
@@ -66,6 +69,11 @@ Route::middleware(['auth', 'verified', SetCurrentCompany::class])
             ->name('task-details')
             ->defaults('label', 'Task Details view example')
             ->defaults('icon', 'queue-list');
+
+        Route::get('/tasks/create', AddTaskForm::class)
+            ->name('task-create')
+            ->defaults('label', 'Create Task')
+            ->defaults('icon', 'clipboard-document-check');
 });
 
 require __DIR__.'/auth.php';
