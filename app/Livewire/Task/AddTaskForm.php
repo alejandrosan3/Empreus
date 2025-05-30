@@ -4,152 +4,245 @@ namespace App\Livewire\Task;
 
 use Livewire\Component;
 use App\Models\Company;
-
-
+use App\Models\Builder;
+use App\Models\Lot;
+use App\Models\TaskType;
+use App\Models\StatusType;
 use Flux\Flux;
+use Illuminate\Validation\ValidationException;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Validation\Rule;
 
 class AddTaskForm extends Component
 {
-    public $comingFromURL=false;
-    
-    public int $companyId;
-    public $lot;
+    // Context
+    public int    $companyId;
     public string $companyName;
 
-    public $collectedFields = [];
-    // Initial component variables (these will be used solely to not break livewire's parsing)
+    // Dropdown option arrays
+    public $builders          = [];
+    public $subdivisions      = [];
+    public $lots              = [];
+    public $orderTypeOptions  = [];
+    public $taskTypeOptions   = [];
+    public $statusTypeOptions = [];
+
+    // Card definitions
     public array $card1 = [];
     public array $card2 = [];
     public array $card3 = [];
 
-    // Public properties sent to the card component
-    public $builder_id;
-    public $subdivision;
-    public $lot_number;
-    public $phase;
-    
-    public $task_type_id;
-    public $order_number;
-    public $price;
-    public $is_extra;
+    // Selected fields
+    public $builder_id            = null;
+    public $subdivision           = null;
+    public $lot_number            = null;
+    public $task_type_id          = null;
+    public $order_number          = null;
+    public $price                 = null;
+    public $is_extra              = null;
+    public $scheduled_start_date  = null;
+    public $status_type_id        = null;
+    public $note                  = '';
 
-    public $supervisor_id;
-    public $address;
-    public $scheduled_start_date;
-    public $status_type_id;
-    
-    public $note ='';
-
-    public function goBack()
+    // Validation rules
+    public function rules(): array
     {
-        return redirect()->route('task-progress', request()->query());
+        // figure out the current lot’s ID for the unique check
+        $lotId = Lot::where('builder_id', $this->builder_id)
+                    ->where('subdivision',  $this->subdivision)
+                    ->where('lot_number',   $this->lot_number)
+                    ->value('id');
+
+        return [
+            'builder_id'           => 'required|integer',
+            'subdivision'          => 'required|string',
+            'lot_number'           => 'required|string',
+            'task_type_id'         => [
+                'required',
+                'integer',
+                Rule::unique('tasks', 'task_type_id')
+                    ->where(fn($query) => $query->where('lot_id', $lotId))
+            ],
+            'order_number'         => 'required|string',
+            'price'                => 'required|numeric|min:0',
+            'is_extra'             => 'required|in:0,1',
+            'status_type_id'       => 'required|integer',
+        ];
     }
+
+    // Custom validation messages
+    protected array $messages = [
+        'builder_id.required'  => 'Pick a builder.',
+        'subdivision.required' => 'Pick a subdivision.',
+        'lot_number.required'  => 'Pick a lot.',
+        'price.numeric'        => 'Price must be a number.',
+        'price.required'       => 'Price can\'t be empty',
+        'task_type_id.required' => 'Pick a task',
+        'task_type_id.unique'     => 'This task already exists for this Subdivision and Lot',
+        'status_type_id'       => 'Pick a status',
+        'is_extra.required'    => 'Pick the Order Type',
+    ];
+
 
     public function mount()
     {
-        // grab company ID from session
-        $this->companyId = session('company_id');
-
-        // cache the company name forever under a key unique to that ID
+        // 1) Base context
+        $this->companyId   = session('company_id');
         $this->companyName = Cache::rememberForever(
             "company_{$this->companyId}_name",
             fn() => Company::findOrFail($this->companyId)->name
         );
 
+        // 2) Builders (forever cache)
+        $this->builders = Cache::rememberForever(
+            "builder_options.{$this->companyId}",
+            fn() => Builder::whereHas('lots', fn($q) => $q->where('company_id', $this->companyId))
+                          ->orderBy('name')
+                          ->get()
+                          ->map(fn($b) => (object)[
+                              'id'   => $b->id,
+                              'name' => $b->name,
+                          ])
+                          ->toArray()
+        );
+
+        // 3) Static order types
+        $this->orderTypeOptions = [
+            (object)['id'=>0,'name'=>'Standard'],
+            (object)['id'=>1,'name'=>'EPO'],
+        ];
+
+        // 4) Task types (forever cache)
+        $this->taskTypeOptions = Cache::rememberForever(
+            "task_types.{$this->companyId}",
+            fn() => TaskType::orderBy('name')
+                            ->get()
+                            ->map(fn($t)=>(object)['id'=>$t->id,'name'=>$t->name])
+                            ->toArray()
+        );
+
+        // 5) Status types (forever cache)
+        $this->statusTypeOptions = Cache::rememberForever(
+            "status_type_options.{$this->companyId}",
+            fn() => StatusType::orderBy('name')
+                              ->get()
+                              ->map(fn($s)=>(object)['id'=>$s->id,'name'=>$s->name])
+                              ->toArray()
+        );
+
+        // default “pending”
+        $this->status_type_id = 1;
+
+        // 6) Build minimal card definitions
         $this->card1 = [
-            ['label' => 'Builder', 'field' => 'builder_id', 'type' => 'select', 'source' => 'lot'],
-            ['label' => 'Subdivision', 'field' => 'subdivision', 'type' => 'select', 'source' => 'lot'],
-            ['label' => 'Lot', 'field' => 'lot_number', 'type' => 'select', 'source' => 'lot'],
-            ['label' => 'Phase', 'field' => 'phase', 'source' => 'lot'],
+            ['label'=>'Builder',     'field'=>'builder_id',   'type'=>'select', 'options'=>$this->builders],
+            ['label'=>'Subdivision', 'field'=>'subdivision',  'type'=>'select', 'options'=>[]],
+            ['label'=>'Lot',         'field'=>'lot_number',   'type'=>'select', 'options'=>[]],
         ];
 
         $this->card2 = [
-            ['label' => 'Task Name', 'field' => 'task_type_id', 'type' => 'select', 'source' => 'task'],
-            ['label' => 'Order Number', 'field' => 'order_number', 'source' => 'task'],
-            ['label' => 'price', 'field' => 'price', 'source' => 'task'],
-            ['label' => 'Order Type', 'field' => 'is_extra','type' => 'select', 'source' => 'task'],
+            ['label'=>'Task Name',    'field'=>'task_type_id', 'type'=>'select', 'options'=>$this->taskTypeOptions],
+            ['label'=>'Order Number', 'field'=>'order_number', 'type'=>'text'],
+            ['label'=>'Price',        'field'=>'price',        'type'=>'text'],
         ];
 
         $this->card3 = [
-            ['label' => 'Supervisor', 'field' => 'supervisor_id','type' => 'select' , 'source' => 'lot'],
-            ['label' => 'Address', 'field' => 'address','type' => 'select' , 'source' => 'lot'],
-            ['label' => 'Scheduled Start Date', 'field' => 'scheduled_start_date','type' => 'date', 'source' => 'task'],
-            ['label' => 'Current Status', 'field' => 'status_type_id','type' => 'select', 'source' => 'task'],
+            ['label'=>'Order Type',   'field'=>'is_extra',     'type'=>'select', 'options'=>$this->orderTypeOptions],
+            ['label'=>'Scheduled Start Date','field'=>'scheduled_start_date','type'=>'date'],
+            ['label'=>'Current Status',     'field'=>'status_type_id',      'type'=>'select', 'options'=>$this->statusTypeOptions],
         ];
+    }
 
+    // Cascade: builder → subdivisions
+    public function updatedBuilderId($builderId)
+    {
+        
+        $this->subdivisions = Cache::rememberForever(
+            "subdivision_options.{$this->companyId}.{$builderId}",
+            fn() => Lot::where('company_id', $this->companyId)
+                       ->where('builder_id', $builderId)
+                       ->distinct('subdivision')
+                       ->orderBy('subdivision')
+                       ->pluck('subdivision')
+                       ->map(fn($s)=>(object)['id'=>$s,'name'=>$s])
+                       ->toArray()
+        );
+        $this->card1[1]['options'] = $this->subdivisions;
 
+        // reset downstream
+        $this->subdivision  = null;
+        $this->lots         = [];
+        $this->card1[2]['options'] = [];
+        $this->lot_number   = null;
+    }
+
+    // Cascade: subdivision → lots
+    public function updatedSubdivision($sub)
+    {
+        $this->lots = Cache::rememberForever(
+            "lot_options.{$this->companyId}.{$this->builder_id}.{$sub}",
+            fn() => Lot::where('company_id',  $this->companyId)
+                       ->where('builder_id',   $this->builder_id)
+                       ->where('subdivision',   $sub)
+                       ->orderBy('lot_number')
+                       ->pluck('lot_number')
+                       ->map(fn($n)=>(object)['id'=>$n,'name'=>$n])
+                       ->toArray()
+        );
+        $this->card1[2]['options'] = $this->lots;
+
+        // reset downstream
+        $this->lot_number = null;
     }
 
     public function save()
     {
-        $lotFields  = [];
-        $taskFields = [];
+        try {
+            $this->validate();
+        } catch (ValidationException $e) {
+            // 1) Push the errors into Livewire’s error bag
+            $this->setErrorBag($e->validator->errors());
 
-        $lot = \App\Models\Lot::where('builder_id',     $this->builder_id)
-                      ->where('subdivision',    $this->subdivision)
-                      ->where('lot_number',     $this->lot_number)
-                      ->first();
+            // 2) Show a toast
+            Flux::toast(
+                text: 'There are errors in the form — please fix them.',
+                heading: 'Validation Failed',
+                variant: 'warning'
+            );
 
-        // 1) Log all incoming values (debug)
-        logger()->info('[SAVE] form data', [
-            'builder_id'           => $this->builder_id,
-            'subdivision'          => $this->subdivision,
-            'lot_number'           => $this->lot_number,
-            'phase'                => $this->phase,
-            'task_type_id'         => $this->task_type_id,
-            'order_number'         => $this->order_number,
-            'price'                => $this->price,
-            'is_extra'             => $this->is_extra,
-            'supervisor_id'        => $this->supervisor_id,
-            'address'              => $this->address,
-            'scheduled_start_date' => $this->scheduled_start_date,
-            'status_type_id'       => $this->status_type_id,
-        ]);
-
-        // 2) Flatten all field definitions
-        $allFields = array_merge($this->card1, $this->card2, $this->card3);
-
-        foreach ($allFields as $def) {
-            $key   = $def['field'];
-            $value = $this->{$key}   ?? null;
-
-            if ($value !== null && $value !== '') {
-                if ($def['source'] === 'lot') {
-                    $lotFields[$key]  = $value;
-                } else {
-                    $taskFields[$key] = $value;
-                }
-            }
+            // 3) Bail out so we don’t proceed to creation
+            return;
         }
+        
+        // split fields by card definitions
+        $lotKeys  = collect($this->card1)->pluck('field')->all();
+        $taskKeys = collect($this->card2)->pluck('field')
+                         ->merge(collect($this->card3)->pluck('field'))
+                         ->all();
 
-        // 3) Validate presence
+        $lotFields  = []; $taskFields = [];
+        foreach ($lotKeys  as $f) if (!empty($this->{$f}))  $lotFields[$f]  = $this->{$f};
+        foreach ($taskKeys as $f) if (!empty($this->{$f}))  $taskFields[$f] = $this->{$f};
+
         if (empty($lotFields) || empty($taskFields)) {
-            Flux::toast(text: 'Please make sure you fill all the fields.', heading: 'wait a second 🫸', variant: 'warning');
+            Flux::toast(text:'Please fill all fields.', heading:'Wait!', variant:'warning');
             return;
         }
 
-        // 4) Find or create the Lot
-        $lot = \App\Models\Lot::where('builder_id',  $this->builder_id)
-            ->where('subdivision',   $this->subdivision)
-            ->where('lot_number',    $this->lot_number)
-            ->first();
-        
-            if (! $lot) {
-                Flux::toast(
-                    text: 'Please verify builder, subdivision & lot number.',
-                    heading: 'No matching lot found 🤔',
-                    variant: 'warning'
-                );
-                return;
-            }
+        $lot = Lot::where('builder_id', $this->builder_id)
+                  ->where('subdivision',  $this->subdivision)
+                  ->where('lot_number',   $this->lot_number)
+                  ->first();
+        if (! $lot) {
+            Flux::toast(text:'Verify builder, subdivision & lot.', heading:'No lot found', variant:'warning');
+            return;
+        }
 
-        // 5) Create the Task (attach lot_number)
-        $taskFields['lot_id'] = $lot->id;
+        // attach and create
+        $taskFields['lot_id']     = $lot->id;
         $taskFields['company_id'] = $this->companyId;
         $task = \App\Models\Task::create($taskFields);
 
-        // 6) Optional note
         if (!empty($this->note)) {
             $task->taskNotes()->create([
                 'description' => $this->note,
@@ -157,26 +250,26 @@ class AddTaskForm extends Component
             ]);
         }
 
-        // 7) Feedback & reset
-        Flux::toast(text: 'Task created successfully.', heading: 'Success!', variant: 'success');
+        Flux::toast(text:'Task created successfully.', heading:'Success!', variant:'success');
 
-        // only reset the fields we just used + note
-        $fieldsToReset = collect($allFields)
-            ->pluck('field')
+        $fieldsToReset = collect($lotKeys)
+            ->merge($taskKeys)
             ->push('note')
             ->all();
-
         $this->reset($fieldsToReset);
 
-        $this->goBack();
+        return $this->goBack();
     }
 
-
+    public function goBack()
+    {
+        return redirect()->route('task-progress', request()->query());
+    }
 
     public function render()
     {
-        return view('livewire.task.add-task-form',[
-            'companyName' => $this->companyName,    
+        return view('livewire.task.add-task-form', [
+            'companyName' => $this->companyName,
         ])->layout('layouts.app');
     }
 }
