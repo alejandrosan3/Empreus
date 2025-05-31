@@ -50,7 +50,7 @@ Route::middleware(['auth', 'verified', SetCurrentCompany::class])
             ->defaults('label', 'Lots Progress')
             ->defaults('icon', 'clipboard-document-check');
 
-        Route::get('/lots/create', AddTaskForm::class)
+        Route::get('/lots/create', AddLotForm::class)
             ->name('lot-create')
             ->defaults('label', 'Create Lot')
             ->defaults('icon', 'plus');    

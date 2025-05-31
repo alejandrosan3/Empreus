@@ -310,7 +310,7 @@
                 'lots' => $this->lots,
             ])->layout('layouts.app',[
                 'showFilters' => true,
-                'showSearch'  => false,
+                'showSearch'  => true,
                 'showColumns' => true,
                 'showAddNew' => true,
                 'currentAddable'  => 'lot',

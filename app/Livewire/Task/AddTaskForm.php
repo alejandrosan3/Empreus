@@ -8,6 +8,7 @@ use App\Models\Builder;
 use App\Models\Lot;
 use App\Models\TaskType;
 use App\Models\StatusType;
+
 use Flux\Flux;
 use Illuminate\Validation\ValidationException;
 use Illuminate\Support\Facades\Cache;
@@ -142,8 +143,8 @@ class AddTaskForm extends Component
 
         $this->card2 = [
             ['label'=>'Task Name',    'field'=>'task_type_id', 'type'=>'select', 'options'=>$this->taskTypeOptions],
-            ['label'=>'Order Number', 'field'=>'order_number', 'type'=>'text'],
-            ['label'=>'Price',        'field'=>'price',        'type'=>'text'],
+            ['label'=>'Order Number', 'field'=>'order_number'],
+            ['label'=>'Price',        'field'=>'price'],
         ];
 
         $this->card3 = [

@@ -12,14 +12,15 @@
             'items' => [
                 ['label' => 'Builder', 'value' => $lot->builder->name, 'level' => 2],
                 ['label' => 'Subdivision', 'value' => $lot->subdivision],
+                ['label' => 'Lot', 'value' => $lot->lot_number],
             ]
         ])
 
         @livewire('partials.cards', [
             'items' => [
+                ['label' => 'Phase', 'value' => $lot->phase],
                 ['label' => 'Supervisor', 'value' => $lot->supervisor->name],
-                ['label' => 'Lot', 'value' => $lot->lot_number],
-                ['label' => 'Phase', 'value' => $lot->phase]
+                ['label' => 'Address', 'value' => $lot->address],
             ]
         ])
     </div>

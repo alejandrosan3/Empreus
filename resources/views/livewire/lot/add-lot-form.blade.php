@@ -1,52 +1,37 @@
-<section class="space-y-6 p-4">
-    <header>
-        <flux:heading size="lg" level="2">Add New Lot</flux:heading>
-    </header>
+<div class="p-4">
+    <flux:button icon="arrow-left" variant="ghost" wire:click="goBack">
+        Back
+    </flux:button>
 
-    <div class="grid grid-cols-2 gap-4">
-        {{-- Builder --}}
-        <div class="col-span-2">
-            <flux:select label="Builder" variant="combobox" :filter="false" wire:model.defer="builder_id" :error="$errors->first('builder_id')">
-                <x-slot name="input">
-                    <flux:select.input wire:model.live="search" />
-                </x-slot>
-
-                @foreach(\App\Models\Builder::all() as $b)
-                    <flux:select.option
-                        value="{{ $b->id }}"
-                        wire:key="builder-{{ $b->id }}"
-                    >
-                        {{ $b->name }}
-                    </flux:select.option>
+    {{-- Validation errors (will show once we add rules) --}}
+    @if ($errors->any())
+        <div class="mb-4 text-red-600">
+            <ul class="list-disc pl-5">
+                @foreach ($errors->all() as $err)
+                    <li>{{ $err }}</li>
                 @endforeach
-            </flux:select>
+            </ul>
         </div>
+    @endif
 
-        {{-- Subdivision --}}
-        <flux:input label="Subdivision" type="text" wire:model.defer="subdivision" :error="$errors->first('subdivision')" />
+    <flux:heading size="xl" class="mb-4"> Add Lot <flux:badge color="yellow" inset="top bottom">{{ $companyName }}</flux:badge> </flux:heading>
 
-        {{-- Lot Number --}}
-        <flux:input label="Lot #" type="text" wire:model.defer="lot_number" :error="$errors->first('lot_number')" />
+    <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+        {{-- Builder / Subdivision / Lot --}}
+        <livewire:partials.cards :items="$card1" mode="add" :key="'card1-' . $builder_id" />
 
-        {{-- Lot Phase --}}
-        <flux:input label="Phase" type="text" wire:model.defer="phase" :error="$errors->first('phase')" />
+        {{-- Address / Supervisor / Phase --}}
+        <livewire:partials.cards :items="$card2" mode="add" />
 
-        {{-- Supervisor --}}
-        <flux:input label="Supervisor" type="text" wire:model.defer="supervisor" :error="$errors->first('supervisor')" />
-
-        {{-- Address --}}
-        <div class="col-span-2">
-            <flux:input label="Address" type="text" wire:model.defer="address" :error="$errors->first('address')" />
-        </div>
-
-        {{-- Stories --}}
-        <flux:input label="Stories" type="text" wire:model.defer="num_of_floor" :error="$errors->first('num_of_floor')" />
-
-        {{-- SQFT --}}
-        <flux:input label="Supervisor" type="text" wire:model.defer="floor_area" :error="$errors->first('floor_area')" />
+        {{-- Floor Number and SQFT --}}
+        <livewire:partials.cards :items="$card3" mode="add" />
     </div>
 
-    <div class="flex justify-end">
-        <flux:button wire:click="save" variant="primary">Add lot</flux:button>
-    </div>
-</section>
+    <flux:button variant="primary" class="w-full mt-4" wire:click.prevent="save">
+        Add Lot
+    </flux:button>
+
+    @persist('toast')
+        <flux:toast />
+    @endpersist
+</div>
