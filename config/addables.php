@@ -8,6 +8,20 @@ return [
         'modalName' => 'add-builder',
         'route'     => 'builder-create'
     ],
+    'subdivision' => [
+        'label'     => 'Subdivision',
+        'icon'      => 'plus',
+        'livewire'  => 'subdivisions.create',
+        'modalName' => 'add-subdivision',
+        'route'     => 'subdivision-create'
+    ],
+    'supervisor' => [
+        'label'     => 'Supervisor',
+        'icon'      => 'plus',
+        'livewire'  => 'supervisors.create',
+        'modalName' => 'add-supervisor',
+        'route'     => 'supervisor-create'
+    ],
     'lot' => [
         'label'     => 'Lot',
         'icon'      => 'plus',

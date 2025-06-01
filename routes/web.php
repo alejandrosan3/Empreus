@@ -2,6 +2,8 @@
 
 use App\Http\Middleware\SetCurrentCompany;
 use App\Livewire\Builders\{CreateBuilder, ListBuilder};
+use App\Livewire\Subdivisions\{CreateSubdivision, ListSubdivision};
+use App\Livewire\Supervisors\{CreateSupervisor, ListSupervisor};
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Auth;
 use App\Livewire\Lot\{LotProgress, AddLotForm};
@@ -44,6 +46,26 @@ Route::middleware(['auth', 'verified', SetCurrentCompany::class])
             ->name('builder-create')
             ->defaults('label', 'Add Builder')
             ->defaults('icon', 'user-plus');
+
+        Route::get('subdivisions', ListSubdivision::class)
+            ->name('subdivisions')
+            ->defaults('label', 'Subdivisions')
+            ->defaults('icon', 'rectangle-stack');
+
+        Route::get('subdivisions/create', CreateSubdivision::class)
+            ->name('subdivision-create')
+            ->defaults('label', 'Add Subdivision')
+            ->defaults('icon', 'user-plus');
+        
+        Route::get('supervisors', ListSupervisor::class)
+            ->name('supervisors')
+            ->defaults('label', 'Supervisors')
+            ->defaults('icon', 'user-group');
+
+        Route::get('supervisors/create', CreateSupervisor::class)
+            ->name('supervisor-create')
+            ->defaults('label', 'Add Supervisor')
+            ->defaults('icon', 'user-plus');    
 
         Route::get('lot-progress', LotProgress::class)
             ->name('lot-progress')
