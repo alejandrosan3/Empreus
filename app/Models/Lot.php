@@ -57,6 +57,10 @@ class Lot extends Model
         return $this->statusType();
     }
 
+    /**
+     * @param $taskTypeName
+     * @return bool
+     */
     public function hasTaskType($taskTypeName): bool
     {
         return $this->tasks->contains(function ($task) use ($taskTypeName) {
@@ -64,6 +68,10 @@ class Lot extends Model
         });
     }
 
+    /**
+     * @param $taskTypeName
+     * @return false|Task
+     */
     public function getTaskByTypeName($taskTypeName)
     {
         // Use the first() method to find the first task with the specified type name
@@ -72,6 +80,11 @@ class Lot extends Model
         }) ?: false;
     }
 
+    /**
+     * Get the last completed task for this lot.
+     *
+     * @return Task|null
+     */
     public function getLastCompletedTask()
     {
         // "last" means the largest ended_at value
@@ -81,4 +94,19 @@ class Lot extends Model
             ->first();                       // return the first (i.e. newest)
     }
 
+    /**
+     * Retrieve a distinct list of all subdivisions from the database that are not null, ordered alphabetically.
+     *
+     * @return array An array of unique subdivisions.
+     */
+    public static function getAllSubdivisions(): array
+    {
+        return self::query()
+            ->select('subdivision')
+            ->distinct()
+            ->whereNotNull('subdivision')
+            ->orderBy('subdivision')
+            ->pluck('subdivision')
+            ->toArray();
+    }
 }

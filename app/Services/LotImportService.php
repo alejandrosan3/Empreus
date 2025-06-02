@@ -93,6 +93,7 @@ class LotImportService
             'is_extra' => 'required|boolean',
             'price' => 'nullable|max:12',
             'order_number' => 'nullable',
+            'workers' => 'nullable',
         ]);
 
         if ($validator->fails()) {
@@ -213,6 +214,39 @@ class LotImportService
                     ...$taskNoteFindParams,
                     'description' => $item['notes'],
                 ]);
+            }
+        }
+
+        /**
+         * Process Workers
+         *
+         * Registers an account for each worker and attach worker to the Task
+         */
+        if (!empty($item['workers'])) {
+            foreach ($item['workers'] as $workerName) {
+
+                if (empty($workerName)) {
+                    continue;
+                }
+
+                $workerEmailName = trim(preg_replace('/\s+/', '.', $workerName));
+
+                $worker = \App\Models\User::firstOrCreate(
+                    [
+                        'name' => $workerName,
+                        'role' => 'worker',
+                        'email' => strtolower($workerEmailName) . '@demo.com',
+                    ],
+                    [
+                        'password' => \Hash::make('demo'),
+                        'email_verified_at' => now(),
+                    ]
+                );
+
+                if (!$lotTask->workers()->where('user_id', $worker->id)->exists()) {
+                    $lotTask->workers()->attach($worker->id);
+                }
+
             }
         }
 
