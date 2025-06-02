@@ -29,7 +29,7 @@
                     <!-- Table Header -->
                     <flux:table.columns>
                         <!-- checkbox "Select-All" Column -->
-                        <flux:table.column class="sticky left-0 z-20 bg-white dark:bg-zinc-800" >
+                        <flux:table.column class="sticky left-0 z-20 bg-white dark:bg-zinc-800" data-fixed-index="0">
                             <flux:checkbox.all />
                         </flux:table.column>
                         <!-- Fixed Columns -->
@@ -40,7 +40,7 @@
                                     :sorted="$column['sortable'] ? $sortBy === $column['value'] : false"
                                     wire:click="{{ $column['sortable'] ? 'sort(\'' . $column['value'] . '\')' : '' }}"
                                     class="bg-white dark:bg-zinc-800 {{ $column['group'] == 'fixed' ? 'sticky' : '' }}"
-                                    data-fixed-index=" {{ $column['group'] == 'fixed' ? $loop->index : '' }}"
+                                    data-fixed-index=" {{ $column['group'] == 'fixed' ? $loop->index + 1 : '' }}"
                                 >
                                     {{ $column['label'] }}
                                 </flux:table.column>
@@ -54,7 +54,7 @@
                     <flux:table.rows>
                         @foreach($flatTasks as $row)
                             <flux:table.row :key="$row['id']">
-                            <flux:table.cell class="sticky left-0 z-20 bg-white dark:bg-zinc-800">
+                            <flux:table.cell class="sticky left-0 z-20 bg-white dark:bg-zinc-800" data-fixed-index="0" >
                                 <flux:checkbox 
                                     x-data="{ id: {{ $row['id'] }} }"
                                     value="{{ $row['id'] }}"
@@ -81,7 +81,7 @@
                                                 editable: {{ $cell['editable'] ? 'true' : 'false' }}
                                                 })"
                                             class="bg-white dark:bg-zinc-800 {{ $column['group']=='fixed'?'sticky':'' }}"
-                                            data-fixed-index="{{ $column['group']=='fixed'? $loop->index : '' }}"
+                                            data-fixed-index="{{ $column['group']=='fixed'? $loop->index + 1 : '' }}"
                                         >
                                             
                                             @if ($column['value'] === 'status')

@@ -26,6 +26,9 @@
         public $selectedSubdivisions = [];
         public $selectedLots = [];
 
+        // multiselected lots get stored here
+        public $checkedLots = [];
+
         // This is a flag used to show either lotprogress or the contentdetails
         public $selectedLot = null;
 
@@ -33,6 +36,9 @@
         public $epoOverview = "";
         public $epoCount = "";
 
+        protected $listeners = [
+            'contentUpdated' => '$refresh',   // ← built-in Livewire shortcut
+        ];
 
         /**
          * Sort the table by a given column, toggling sort direction if needed,
@@ -47,6 +53,15 @@
                 $this->sortDirection = 'asc';
             }
             $this->dispatchFilters();
+        }
+
+        /**
+         * function that sends the event to the modal.
+         */
+        public function startBulkEdit(): void
+        {
+            // <livewire:partials.bulk-edit-modal> listens for this
+            $this->dispatch('bulk-edit-action', entity: 'lot', ids: $this->checkedLots);
         }
 
 
@@ -274,14 +289,14 @@
 
             $this->columns = [
                 // Fixed columns (always selected)
-                ['id' => 1, 'label' => 'Builder', 'value' => 'builder', 'group' => 'fixed', 'selected' => true, 'sortable' => true],
-                ['id' => 2, 'label' => 'Subdivision', 'value' => 'subdivision', 'group' => 'fixed', 'selected' => true, 'sortable' => true],
-                ['id' => 3, 'label' => 'Lot', 'value' => 'lot_number', 'group' => 'fixed', 'selected' => true, 'sortable' => true],
+                ['id' => 1, 'label' => 'Builder', 'value' => 'builder', 'group' => 'fixed', 'selected' => true, 'sortable' => true, 'editable'=> false],
+                ['id' => 2, 'label' => 'Subdivision', 'value' => 'subdivision', 'group' => 'fixed', 'selected' => true, 'sortable' => true, 'editable'=> false],
+                ['id' => 3, 'label' => 'Lot', 'value' => 'lot_number', 'group' => 'fixed', 'selected' => true, 'sortable' => true, 'editable'=> false],
                 // Active columns (user can toggle visibility)
-                ['id' => 4, 'label' => 'Stories', 'value' => 'stories', 'group' => 'active', 'selected' => false, 'sortable' => false],
-                ['id' => 5, 'label' => 'Last Completed Task', 'value' => 'last_completed_date', 'group' => 'active', 'selected' => true, 'sortable' => true],
-                ['id' => 6, 'label' => 'Standard Tasks', 'value' => 'standard_po', 'group' => 'active', 'selected' => true, 'sortable' => false],
-                ['id' => 7, 'label' => 'EPOs', 'value' => 'epo', 'group' => 'active', 'selected' => true, 'sortable' => false],
+                ['id' => 4, 'label' => 'Stories', 'value' => 'stories', 'group' => 'active', 'selected' => false, 'sortable' => false, 'editable'=> true],
+                ['id' => 5, 'label' => 'Last Completed Task', 'value' => 'last_completed_date', 'group' => 'active', 'selected' => true, 'sortable' => true, 'editable'=> false],
+                ['id' => 6, 'label' => 'Standard Tasks', 'value' => 'standard_po', 'group' => 'active', 'selected' => true, 'sortable' => false, 'editable'=> false],
+                ['id' => 7, 'label' => 'EPOs', 'value' => 'epo', 'group' => 'active', 'selected' => true, 'sortable' => false, 'editable'=> false],
             ];
 
             // Dispatch initial filters when the component loads
@@ -310,9 +325,11 @@
                 'lots' => $this->lots,
             ])->layout('layouts.app',[
                 'showFilters' => true,
-                'showSearch'  => false,
+                'showSearch'  => true,
                 'showColumns' => true,
-                'showAddNew' => false,]);
+                'showAddNew' => true,
+                'currentAddable'  => 'lot',
+            ]);
         }
 
     }

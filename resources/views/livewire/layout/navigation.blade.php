@@ -3,9 +3,7 @@
 
             @if($showAddNew)
             <!-- "Add new element" button -->
-            <flux:tooltip content="Add new X">
-                <flux:button icon="plus"></flux:button>
-            </flux:tooltip>
+                <x-add-button :type="$currentAddable" />
             @endif
 
             @if($showFilters)

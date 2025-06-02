@@ -6,8 +6,9 @@ use Livewire\Component;
 
 class Cards extends Component
 {
-    public $items = []; // Array of title-value pairs
-    
+    public array  $items = []; 
+    public string $mode  = 'view';
+
     public function render()
     {
         return view('livewire.partials.cards');
