@@ -17,20 +17,26 @@ class ListSubdivision extends Component
 
     public $sortBy = 'subdivision';
     public $sortDirection = 'desc';
-    public array  $columns = ['subdivision'];
+    public array  $columns = [];
 
     public function mount()
     {
         $this->companyId   = session('company_id');
+        $this->columns   = ['subdivision'];
 
         // 1. Grab the table columns dynamically
         $this->columns = array_filter(
             Schema::getColumnListing((new Subdivision)->getTable()),
             fn ($column) => !in_array($column, ['id', 'created_at', 'updated_at'])
         );
+
+        // ensure the displayed column is allowed for sorting
+        if (! in_array('subdivision', $this->columns)) {
+            $this->columns[] = 'subdivision';
+        }
     }
 
-    public function sort(string $column): void
+    public function sort(string $column)
     {
         if (! in_array($column, $this->columns)) {
             return;

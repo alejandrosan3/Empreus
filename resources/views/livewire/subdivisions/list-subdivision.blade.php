@@ -2,13 +2,16 @@
     <flux:table :paginate="$this->subdivisions">
 
         {{-- column headers --}}
-        <flux:table.column
-            sortable
-            :sorted="$sortBy === 'subdivision'"
-            :direction="$sortDirection"
-            wire:click="sort('subdivision')">
-            Subdivision
-        </flux:table.column>
+        @foreach ($this->columns as $column)
+            <flux:table.column
+                sortable
+                :direction="'{{ $sortDirection }}'"
+                :sorted="$sortBy === '{{ $column }}'"
+                wire:click="sort('{{ $column }}')"
+            >
+                {{ ucfirst(str_replace('_', ' ', $column)) }}
+            </flux:table.column>
+        @endforeach
 
 
         <flux:table.column>Actions</flux:table.column>
@@ -18,9 +21,6 @@
             @foreach ($this->subdivisions as $row)
                 <flux:table.row :key="$row->subdivision">
                     <flux:table.cell>{{ $row->subdivision }}</flux:table.cell>
-
-                    {{-- <flux:table.cell>{{ $row->lots_count }}</flux:table.cell> --}}
-
                     <flux:table.cell>
                         <flux:button variant="ghost" size="sm" icon="ellipsis-horizontal" inset="top bottom"/>
                     </flux:table.cell>

@@ -291,7 +291,7 @@ class TaskProgress extends Component
 
     public function startBulkEdit()
     {
-        $this->dispatch('bulk-edit-action', ids: $this->checkedTasks );
+        $this->dispatch('bulk-edit-action', entity: 'task', ids: $this->checkedTasks );
     }
 
     /**
