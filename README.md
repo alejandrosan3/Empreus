@@ -1,49 +1,136 @@
-## Empreus Admin
+# Empreus AI Agents Guide
 
-## Local setup
+This document describes the AI agents used in the Empreus project. It’s designed for a **Ubuntu 24.04** (Codex) environment without Docker.
 
-The only requirement is to have Docker installed and running.
+## Agents Overview
 
-Run the following commands to setup the project locally:
+Each agent automates common development tasks by running predefined commands. Before using any agent, ensure you have run `setup.sh` (which installs system packages, PHP, Node.js, MySQL, Redis, Meilisearch, Mailpit) and that services (MySQL, Redis, Meilisearch, Mailpit) are running on `127.0.0.1`.
 
+Agents can be invoked via natural language prompts in Codex (e.g., “Run tests” triggers the Testing Agent).
+
+---
+
+### 1. Dev Environment Setup Agent
+
+**Purpose:** Install PHP (v8.4) & JS dependencies, generate app key, set permissions.
+
+**Commands:**
+
+```bash
+composer install
+npm install
+php artisan key:generate --force
+chmod -R 775 storage bootstrap/cache
 ```
-$ cp .env.example .env
-$ ./docker/sail up -d
-$ ./docker/sail composer config --global http-basic.composer.fluxui.dev "$FLUX_USER" "$FLUX_PASS"
-$ ./docker/sail composer install
-$ ./docker/sail npm install
+
+**When to use:** On a fresh clone or after pulling new dependencies.
+
+---
+
+### 2. Database Migration Agent
+
+**Purpose:** Apply new migrations or rebuild the database schema.
+
+**Commands:**
+
+```bash
+php artisan migrate
+# or for a full reset:
+php artisan migrate:fresh
 ```
 
-Run the following command the first time setting the project up to create the DB and populate it with dummy data
+**Env vars:** `DB_HOST=127.0.0.1`, `DB_DATABASE=laravel`, `DB_USERNAME=root`, `DB_PASSWORD=`
 
+---
+
+### 3. Database Seeding Agent
+
+**Purpose:** Populate required lookup tables and optional dummy data.
+
+**Commands:**
+
+```bash
+php artisan db:seed --class=TaskTypeSeeder --force
+php artisan db:seed --class=StatusTypeSeeder --force
+php artisan db:seed --force
 ```
-# Create the DB
-$ ./docker/sail artisan migrate (:fresh)
 
-# Seed mandatory tables (mandatory)
-$ ./docker/sail artisan db:seed TaskTypeSeeder
-$ ./docker/sail artisan db:seed StatusTypeSeeder
+**When to use:** After migrations, to ensure reference data and test data exist.
 
-# Populate database with Dummy Data (for local/testing)
-$ ./docker/sail artisan db:seed
+---
+
+### 4. Development Server Agent
+
+**Purpose:** Start/stop backend & frontend dev servers.
+
+**Commands:**
+
+```bash
+# Backend
+php artisan serve --host=0.0.0.0 --port=8000
+# Frontend (in another terminal)
+npm run dev
 ```
-You may have to run `./docker/sail artisan key:generate`  
-Lastly run `./docker/sail npm run dev`. The project should be running in: http://localhost
 
-After the first configuration, the only command needed to run the project is:
+**Stop:** Ctrl+C in running terminal (or kill background processes).
 
-`$ ./docker/sail up -d`
+---
 
-To stop the project run:
+### 5. Queue Worker Agent (Horizon)
 
-`$ ./docker/sail down`
+**Purpose:** Run Laravel Horizon to process queued jobs.
 
-### Queues via Laravel Horizon
-Running queue workers via Laravel Horizon is optional but recommended.
+**Command:**
 
-If you want to use Laravel Horizon you only need to:
+```bash
+php artisan horizon
+```
 
-1. Make sure you are using Redis for queue connections
-Set `QUEUE_CONNECTION=redis` in your .env file
-2. Run `$ ./docker/sail artisan horizon`
+**Env vars:** `QUEUE_CONNECTION=redis`, `REDIS_HOST=127.0.0.1`
 
+---
+
+### 6. Testing Agent
+
+**Purpose:** Execute unit/feature tests (and optionally browser tests).
+
+**Commands:**
+
+```bash
+php artisan test
+# If Dusk is configured:
+php artisan dusk
+```
+
+**Env:** Uses `phpunit.xml` (should point to `DB_DATABASE=testing`).
+
+---
+
+### 7. Production Build & Deployment Agent
+
+**Purpose:** Build front-end assets for production and optimize Laravel config/routes.
+
+**Commands:**
+
+```bash
+npm run build
+php artisan optimize
+```
+
+**Env vars:** `APP_ENV=production`, `APP_DEBUG=false`, correct `APP_URL`, production DB/Redis settings, third‑party API keys.
+
+---
+
+## Usage Examples
+
+* **"Initialize my environment"** → Dev Environment Setup Agent
+* **"Run migrations"** → Database Migration Agent
+* **"Seed the database"** → Database Seeding Agent
+* **"Start servers"** → Development Server Agent
+* **"Start queue worker"** → Queue Worker Agent
+* **"Run tests"** → Testing Agent
+* **"Build for production"** → Production Build & Deployment Agent
+
+---
+
+*All agents assume services are on `127.0.0.1` and that you’re on Ubuntu 24.04 (Codex environment) with root or sudo privileges for initial setup.*
