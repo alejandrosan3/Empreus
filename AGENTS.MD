@@ -133,4 +133,4 @@ php artisan optimize
 
 ---
 
-*All agents assume services are on `127.0.0.1` and that you’re on Ubuntu 24.04 (Codex environment) with root or sudo privileges for initial setup.*
+*All agents assume services are on `127.0.0.1` and that you’re on Ubuntu 24.04 (Codex environment) with root or sudo privileges for initial setup. That you use Laravel 11 and Livewire 3*
