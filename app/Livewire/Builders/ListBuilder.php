@@ -26,14 +26,6 @@ class ListBuilder extends Component
             Schema::getColumnListing((new Builder)->getTable()),
             fn ($column) => !in_array($column, ['id', 'created_at', 'updated_at'])
         );
-
-        /* EXAMPLE: Beautify display names
-
-            $this->columnLabels = [
-                'name' => 'Builder Name',
-                'email' => 'Email Address',
-            ];
-        */
         
     }
 
@@ -54,11 +46,15 @@ class ListBuilder extends Component
     {
         return Builder::query()
             ->orderBy($this->sortBy, $this->sortDirection)
-            ->paginate(20);
+            ->simplePaginate(20);
     }
 
     public function render()
     {
-        return view('livewire.builders.list')->layout('layouts.app');
+        return view('livewire.builders.list')
+        ->layout('layouts.app', [
+            'showAddNew' => true,
+            'currentAddable'  => 'builder',
+        ]);
     }
 }

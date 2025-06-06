@@ -9,6 +9,8 @@ use Illuminate\Support\Collection;
 class TaskNotes extends Component
 {
     public $tasks;
+    public string $note ='';
+    public $mode = 'view'; // Default mode is 'view', can be changed to 'edit' or 'add' as needed
 
     // Sort-related
     public $sortBy = 'task_notes.created_at';
@@ -55,10 +57,6 @@ class TaskNotes extends Component
         return $notes;
     }
 
-    public function mount($tasks)
-    {
-        $this->tasks = $tasks;
-    }
     public function render()
     {
          // 1. Flatten & filter
