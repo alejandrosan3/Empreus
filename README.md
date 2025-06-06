@@ -9,9 +9,15 @@ Run the following commands to setup the project locally:
 ```
 $ cp .env.example .env
 $ ./docker/sail up -d
+$ FLUX_USER=alejandrosan3@gmail.com \
+  FLUX_PASS=fcc36e72-5f5d-4402-98f7-8c5d8f7264e2 \
+  ./docker/sail composer config --global http-basic.composer.fluxui.dev "$FLUX_USER" "$FLUX_PASS"
 $ ./docker/sail composer install
 $ ./docker/sail npm install
 ```
+
+`FLUX_USER` and `FLUX_PASS` are required to download private Flux packages. You
+can export them as environment variables instead of inline if preferred.
 
 Run the following command the first time setting the project up to create the DB and populate it with dummy data
 
