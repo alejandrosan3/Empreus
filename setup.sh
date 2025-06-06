@@ -7,15 +7,15 @@ if [[ "$EUID" -ne 0 ]]; then
   exit 1
 fi
 
-# 2. Install PHP 8.4 & extensions
-echo "📦 Installing PHP 8.4 packages..."
+# 2. Install PHP  & extensions
+echo "📦 Installing PHP packages..."
 apt-get update -y
 DEBIAN_FRONTEND=noninteractive apt-get install -y \
-  php8.4-cli php8.4-fpm php8.4-dev \
-  php8.4-mysql php8.4-redis php8.4-gd \
-  php8.4-curl php8.4-mbstring php8.4-xml \
-  php8.4-zip php8.4-bcmath php8.4-intl \
-  php8.4-readline php8.4-imagick php8.4-xdebug
+  php-cli php-fpm php-dev \
+  php-mysql php-redis php-gd \
+  php-curl php-mbstring php-xml \
+  php-zip php-bcmath php-intl \
+  php-readline php-imagick php-xdebug
 
 # 3. Install & daemonize Redis
 echo "🚀 Installing & starting Redis..."
