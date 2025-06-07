@@ -8,6 +8,7 @@ use App\Models\Company;
 use App\Models\Lot;
 use App\Models\Supervisor;
 use Flux\Flux;
+use App\Services\CacheInvalidationService;
 
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Validation\ValidationException;
@@ -170,6 +171,11 @@ class AddLotForm extends Component
             return;
         }
 
+        $subdivisionExists = Lot::where('company_id', $this->companyId)
+            ->where('builder_id', $this->builder_id)
+            ->where('subdivision', $this->subdivision)
+            ->exists();
+
         /* Create the lot */
         $lot = Lot::create([
             'company_id'    => $this->companyId,
@@ -183,6 +189,16 @@ class AddLotForm extends Component
             'floor_area'     => $this->floor_area,
             'status_type_id' => $this->status_type_id
         ]);
+
+        CacheInvalidationService::forNewLot(
+            $this->companyId,
+            $this->builder_id,
+            $this->subdivision
+        );
+
+        if (! $subdivisionExists) {
+            CacheInvalidationService::forNewSubdivision($this->companyId, $this->builder_id);
+        }
 
         Flux::toast(text: 'Lot created successfully.', heading: 'Success!', variant: 'success');
 
