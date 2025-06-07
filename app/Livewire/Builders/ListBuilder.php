@@ -55,21 +55,12 @@ class ListBuilder extends Component
     #[\Livewire\Attributes\Computed]
     public function getBuildersProperty()
     {
-        $query = Builder::query();
-
         if ($this->searchTerm !== '') {
-            $ids = Builder::search($this->searchTerm)->keys()->toArray();
-            $query->whereIn('id', $ids);
-
-            // Preserve search result ordering if there are results
-            if (!empty($ids)) {
-                $query->orderByRaw('FIELD(id, ' . implode(',', $ids) . ')');
-            }
-        } else {
-            $query->orderBy($this->sortBy, $this->sortDirection);
+            return Builder::search($this->searchTerm)->paginate(20);
         }
 
-        return $query->paginate(20);
+        return Builder::orderBy($this->sortBy, $this->sortDirection)
+            ->paginate(20);
     }
 
     public function render()
