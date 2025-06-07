@@ -39,9 +39,9 @@ To stop the project run:
 
 ### Enabling Search
 
-The application uses **Laravel Scout** with **Meilisearch**. Ensure Meilisearch
-is running (it is included in `docker-compose.yml`). Configure the connection in
-your `.env` file:
+The application uses **Laravel Scout** with **Meilisearch**.
+
+Configure the connection in your `.env` file:
 
 ```
 SCOUT_DRIVER=meilisearch
@@ -64,7 +64,7 @@ and supervisors using Meilisearch.
 Running queue workers via Laravel Horizon is optional but recommended.
 
 If you want to use Laravel Horizon you only need to:
-
+    
 1. Make sure you are using Redis for queue connections
 Set `QUEUE_CONNECTION=redis` in your .env file
 2. Run `$ ./docker/sail artisan horizon`

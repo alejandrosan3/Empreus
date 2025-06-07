@@ -75,6 +75,7 @@ class ListBuilder extends Component
         return view('livewire.builders.list')
         ->layout('layouts.app', [
             'showAddNew' => true,
+            'showSearch' => true,
             'currentAddable'  => 'builder',
         ]);
     }

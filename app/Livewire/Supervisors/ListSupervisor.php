@@ -86,6 +86,7 @@ class ListSupervisor extends Component
         return view('livewire.supervisors.list-supervisor')
             ->layout('layouts.app', [
                 'showAddNew'     => true,
+                'showSearch'     => true,
                 'currentAddable' => 'supervisor',
             ]);
     }

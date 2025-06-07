@@ -95,6 +95,7 @@ class ListSubdivision extends Component
         return view('livewire.subdivisions.list-subdivision')
         ->layout('layouts.app', [
             'showAddNew'     => true,
+            'showSearch'     => true,
             'currentAddable' => 'subdivision',
         ]);
     }
