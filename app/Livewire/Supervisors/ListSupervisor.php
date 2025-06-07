@@ -63,21 +63,12 @@ class ListSupervisor extends Component
     #[\Livewire\Attributes\Computed]
     public function getSupervisorsProperty()
     {
-        $query = Supervisor::query();
-
         if ($this->searchTerm !== '') {
-            $ids = Supervisor::search($this->searchTerm)->keys()->toArray();
-            $query->whereIn('id', $ids);
-
-            // Preserve search ranking if there are results
-            if (!empty($ids)) {
-                $query->orderByRaw('FIELD(id, ' . implode(',', $ids) . ')');
-            }
-        } else {
-            $query->orderBy($this->sortBy, $this->sortDirection);
+            return Supervisor::search($this->searchTerm)->paginate(20);
         }
 
-        return $query->paginate(20);
+        return Supervisor::orderBy($this->sortBy, $this->sortDirection)
+            ->paginate(20);
     }
 
     #[On('company-updated')]

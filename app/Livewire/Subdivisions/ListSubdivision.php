@@ -67,25 +67,26 @@ class ListSubdivision extends Component
     #[\Livewire\Attributes\Computed]
     public function getSubdivisionsProperty()
 {
+    if ($this->searchTerm !== '') {
+        return Lot::search($this->searchTerm)
+            ->query(function ($query) {
+                $query->where('company_id', $this->companyId)
+                    ->whereNotNull('subdivision')
+                    ->where('subdivision', '!=', '')
+                    ->select('subdivision')
+                    ->distinct()
+                    ->orderBy('subdivision', $this->sortDirection);
+            })
+            ->paginate(20);
+    }
+
     $query = Lot::query()
         ->where('company_id', $this->companyId)
         ->whereNotNull('subdivision')
         ->where('subdivision', '!=', '')
-        ->select('subdivision', \DB::raw('MIN(id) AS sort_id'))  // grab the min id
-        ->groupBy('subdivision');                              // group by subdivision
-
-    if ($this->searchTerm !== '') {
-        $ids = Lot::search($this->searchTerm)->keys()->toArray();
-        $query->whereIn('id', $ids);
-
-        if (!empty($ids)) {
-            // order by that sort_id according to your relevance list
-            $query->orderByRaw('FIELD(sort_id, ' . implode(',', $ids) . ')');
-        }
-    } else {
-        // default ordering by subdivision name (or use sort_id if you prefer)
-        $query->orderBy('subdivision', $this->sortDirection);
-    }
+        ->select('subdivision', \DB::raw('MIN(id) AS sort_id'))
+        ->groupBy('subdivision')
+        ->orderBy('subdivision', $this->sortDirection);
 
     return $query->paginate(20);
 }

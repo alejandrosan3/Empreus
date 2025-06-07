@@ -76,46 +76,18 @@ class TaskProgress extends Component
         ]);
 
         if ($this->searchTerm !== '') {
-            $ids = Task::search($this->searchTerm)->keys()->toArray();
-            $query->whereIn('tasks.id', $ids);
-
-            // Keep Meilisearch ranking if there are results
-            if (!empty($ids)) {
-                $query->orderByRaw('FIELD(tasks.id, ' . implode(',', $ids) . ')');
-            }
+            return Task::search($this->searchTerm)
+                ->query(function ($query) {
+                    $query->where('tasks.company_id', session('company_id'));
+                    $this->applyTaskFilters($query);
+                })
+                ->paginate(20);
         }
 
         // Start with tasks for the current company
         //$query = Auth::user()->tasksForCurrentCompany();
 
-        // 1. Filtering by builder
-        if (!empty($this->selectedBuilders)) {
-            $query->whereHas('lot.builder', function ($q) {
-                $q->whereIn('name', $this->selectedBuilders);
-            });
-        }
-
-        // 2. Filtering by subdivision/phase
-        if (!empty($this->selectedSubdivisions)) {
-            $query->whereHas('lot', function ($q) {
-                $q->where(function ($q2) {
-                    foreach ($this->selectedSubdivisions as $filter) {
-                        [$subdivision, $phase] = explode('|', $filter);
-                        $q2->orWhere(function ($q3) use ($subdivision, $phase) {
-                            $q3->where('subdivision', $subdivision)
-                            ->where('phase', $phase);
-                        });
-                    }
-                });
-            });
-        }
-
-        // 3. Filtering by lot number
-        if (!empty($this->selectedLots)) {
-            $query->whereHas('lot', function ($q) {
-                $q->whereIn('lots.lot_number', $this->selectedLots);
-            });
-        }
+        $this->applyTaskFilters($query);
 
         // 4. Sorting logic
         //    We join the lots (and builders if needed) to sort by columns that live on those tables.
@@ -168,6 +140,35 @@ class TaskProgress extends Component
         
         // Finally, paginate the result
         return $query->paginate(20);
+    }
+
+    private function applyTaskFilters($query): void
+    {
+        if (!empty($this->selectedBuilders)) {
+            $query->whereHas('lot.builder', function ($q) {
+                $q->whereIn('name', $this->selectedBuilders);
+            });
+        }
+
+        if (!empty($this->selectedSubdivisions)) {
+            $query->whereHas('lot', function ($q) {
+                $q->where(function ($q2) {
+                    foreach ($this->selectedSubdivisions as $filter) {
+                        [$subdivision, $phase] = explode('|', $filter);
+                        $q2->orWhere(function ($q3) use ($subdivision, $phase) {
+                            $q3->where('subdivision', $subdivision)
+                                ->where('phase', $phase);
+                        });
+                    }
+                });
+            });
+        }
+
+        if (!empty($this->selectedLots)) {
+            $query->whereHas('lot', function ($q) {
+                $q->whereIn('lots.lot_number', $this->selectedLots);
+            });
+        }
     }
 
     #[Computed]
