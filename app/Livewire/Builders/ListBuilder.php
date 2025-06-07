@@ -12,6 +12,10 @@ class ListBuilder extends Component
 {
     use WithPagination;
 
+    protected $listeners = [
+        'contentUpdated' => '$refresh',
+    ];
+
     public $sortBy = 'id';
     public $sortDirection = 'desc';
     public $columns = [];

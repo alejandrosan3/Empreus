@@ -5,6 +5,8 @@ namespace App\Livewire\Supervisors;
 use Livewire\Component;
 use App\Models\Supervisor;
 
+use App\Services\CacheInvalidationService;
+
 use Flux\Flux;
 
 class CreateSupervisor extends Component
@@ -25,6 +27,7 @@ class CreateSupervisor extends Component
 
         try {
             Supervisor::create($validated);
+            CacheInvalidationService::forNewSupervisor(session('company_id'));
             Flux::toast(
                 text:'Supervisor created successfully.',
                 heading:'Success!',

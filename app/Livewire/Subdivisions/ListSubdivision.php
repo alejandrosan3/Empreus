@@ -13,6 +13,10 @@ class ListSubdivision extends Component
 {
     use WithPagination;
 
+    protected $listeners = [
+        'contentUpdated' => '$refresh',
+    ];
+
     public int $companyId;
 
     public $sortBy = 'subdivision';

@@ -8,6 +8,7 @@ use App\Models\Company;
 use App\Models\Lot;
 use App\Models\Supervisor;
 use Flux\Flux;
+use App\Services\CacheInvalidationService;
 
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Validation\ValidationException;
@@ -36,6 +37,9 @@ class AddLotForm extends Component
     public $status_type_id = 1;
     public $num_of_floors = null;
     public $floor_area = null;
+
+    public bool $showSubdivisionInput = false;
+    public string $newSubdivision = '';
 
     public function rules(): array
     {
@@ -88,8 +92,7 @@ class AddLotForm extends Component
         
         $this->supervisorOptions = Cache::rememberForever(
         "supervisor_options.{$this->companyId}",
-        fn () => Supervisor::where('company_id', $this->companyId)
-                           ->orderBy('name')
+        fn () => Supervisor::orderBy('name')
                            ->get()
                            ->map(fn ($s) => (object)[
                                'id'   => $s->id,
@@ -123,6 +126,16 @@ class AddLotForm extends Component
         return redirect()->route('lot-progress', request()->query());
     }
 
+    public function toggleSubdivisionInput(): void
+    {
+        $this->showSubdivisionInput = ! $this->showSubdivisionInput;
+        if ($this->showSubdivisionInput) {
+            $this->subdivision = null;
+        } else {
+            $this->newSubdivision = '';
+        }
+    }
+
     public function updatedBuilderId($builderId): void
     {
         $this->subdivisions = Cache::rememberForever(
@@ -144,7 +157,9 @@ class AddLotForm extends Component
 
         // reset downstream field
         $this->subdivision = null;
-    } 
+        $this->showSubdivisionInput = false;
+        $this->newSubdivision = '';
+    }
 
     public function render()
     {
@@ -157,8 +172,12 @@ class AddLotForm extends Component
     {
         try
         {
+            if ($this->showSubdivisionInput && !empty($this->newSubdivision)) {
+                $this->subdivision = $this->newSubdivision;
+            }
+
             $this->validate();
-        } catch (ValidationException $e) 
+        } catch (ValidationException $e)
         {
             $this->setErrorBag($e->validator->errors());
 
@@ -170,19 +189,36 @@ class AddLotForm extends Component
             return;
         }
 
+        $subdivisionExists = Lot::where('company_id', $this->companyId)
+            ->where('builder_id', $this->builder_id)
+            ->where('subdivision', $this->subdivision)
+            ->exists();
+
         /* Create the lot */
         $lot = Lot::create([
             'company_id'    => $this->companyId,
             'builder_id'    => $this->builder_id,
-            'subdivision'   => $this->subdivision,
+            'subdivision'   => !empty($this->newSubdivision)
+                                ? $this->newSubdivision
+                                : $this->subdivision,
             'lot_number'    => $this->lot_number,
             'address'       => $this->address,
             'supervisor_id' => $this->supervisor_id,
             'phase'         => $this->phase,
-            'num_of_floors'   => $this->num_of_floors,
-            'floor_area'     => $this->floor_area,
-            'status_type_id' => $this->status_type_id
+            'num_of_floors' => $this->num_of_floors,
+            'floor_area'    => $this->floor_area,
+            'status_type_id'=> $this->status_type_id,
         ]);
+
+        CacheInvalidationService::forNewLot(
+            $this->companyId,
+            $this->builder_id,
+            $this->subdivision
+        );
+
+        if (! $subdivisionExists) {
+            CacheInvalidationService::forNewSubdivision($this->companyId, $this->builder_id);
+        }
 
         Flux::toast(text: 'Lot created successfully.', heading: 'Success!', variant: 'success');
 
@@ -190,6 +226,7 @@ class AddLotForm extends Component
         $this->reset([
             'builder_id', 'subdivision', 'lot_number',
             'address', 'supervisor_id', 'phase',
+            'newSubdivision', 'showSubdivisionInput',
         ]);
 
         return $this->goBack();
