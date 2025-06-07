@@ -19,7 +19,6 @@ Agents can be invoked via natural language prompts in Codex (e.g., “Run tests�
 ```bash
 composer install
 npm install
-php artisan key:generate --force
 chmod -R 775 storage bootstrap/cache
 ```
 
@@ -39,7 +38,7 @@ php artisan migrate
 php artisan migrate:fresh
 ```
 
-**Env vars:** `DB_HOST=127.0.0.1`, `DB_DATABASE=laravel`, `DB_USERNAME=root`, `DB_PASSWORD=`
+**Env vars:** `DB_HOST=127.0.0.1`, `DB_DATABASE=laravel`, `DB_USERNAME=root`, `DB_PASSWORD=` (empty)
 
 ---
 
@@ -127,9 +126,6 @@ php artisan optimize
 * **"Run migrations"** → Database Migration Agent
 * **"Seed the database"** → Database Seeding Agent
 * **"Start servers"** → Development Server Agent
-* **"Start queue worker"** → Queue Worker Agent
-* **"Run tests"** → Testing Agent
-* **"Build for production"** → Production Build & Deployment Agent
 
 ---
 
