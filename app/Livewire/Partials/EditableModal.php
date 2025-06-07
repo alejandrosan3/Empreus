@@ -194,7 +194,15 @@ class EditableModal extends Component
                 ]);
             }
         }
-        $record->update([ $this->modelAttribute => $value,]);
+
+        if ($model == \App\Models\Lot::class && $this->modelAttribute === 'subdivision') {
+            $old = $record->subdivision;
+            $model::where('company_id', $record->company_id)
+                ->where('subdivision', $old)
+                ->update(['subdivision' => $value]);
+        } else {
+            $record->update([$this->modelAttribute => $value]);
+        }
 
         $this->showModal = false;
 
