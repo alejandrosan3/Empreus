@@ -8,6 +8,8 @@ Each agent automates common development tasks by running predefined commands. Be
 
 Agents can be invoked via natural language prompts in Codex (e.g., “Run tests” triggers the Testing Agent).
 
+Agents should create a new branch by default on each task with the format <task-type>/<task name> i.e: feature/add-help-button or improvement/increase-performance, unless stated otherwise by the client.
+
 ---
 
 ### 1. Dev Environment Setup Agent
