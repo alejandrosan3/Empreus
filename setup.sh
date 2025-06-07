@@ -46,7 +46,26 @@ if ! grep -q '^APP_KEY=' .env; then
   echo "APP_KEY=" >> .env
 fi
 
-# 3. Install PHP and extensions
+# 3. Start MySQL if not already running
+echo "🚀 Checking & starting MySQL..."
+if ! mysqladmin ping --silent; then
+  # Initialize if first run (ignore errors if already initialized)
+  mysqld --initialize-insecure --user=mysql 2>/dev/null || true
+  mysqld --daemonize --user=mysql \
+        --socket=/var/run/mysqld/mysqld.sock \
+        --pid-file=/var/run/mysqld/mysqld.pid
+  until mysqladmin --socket=/var/run/mysqld/mysqld.sock ping --silent; do sleep 1; done
+  echo "✅ MySQL is up"
+else
+  echo "✅ MySQL already running"
+fi
+
+# 4. Install PHP and extensions
+echo "📦 Installing PHP and required extensions..."
+apt-get update -y
+DEBIAN_FRONTEND=noninteractive apt-get install -y \
+  php-cli php-fpm php-dev \
+
 echo "📦 Installing PHP and required extensions..."
 apt-get update -y
 DEBIAN_FRONTEND=noninteractive apt-get install -y \
