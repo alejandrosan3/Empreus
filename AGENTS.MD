@@ -6,7 +6,7 @@ This document describes the AI agents used in the Empreus project. It’s design
 
 Each agent automates common development tasks by running predefined commands. Before using any agent, ensure you have run `setup.sh` (which installs system packages, PHP, Node.js, MySQL, Redis, Meilisearch, Mailpit) and that services (MySQL, Redis, Meilisearch, Mailpit) are running on `127.0.0.1`.
 
-Agents can be invoked via natural language prompts in Codex (e.g., “Run tests” triggers the Testing Agent).
+Agents can be invoked via natural language prompts in Codex
 
 Agents should create a new branch by default on each task with the format <task-type>/<task name> i.e: feature/add-help-button or improvement/increase-performance, unless stated otherwise by the client.
 
@@ -56,7 +56,7 @@ php artisan db:seed --class=StatusTypeSeeder --force
 php artisan db:seed --force
 ```
 
-**When to use:** After migrations, to ensure reference data and test data exist.
+**When to use:** After migrations, to ensure reference data exist.
 
 ---
 
@@ -88,22 +88,6 @@ php artisan horizon
 ```
 
 **Env vars:** `QUEUE_CONNECTION=redis`, `REDIS_HOST=127.0.0.1`
-
----
-
-### 6. Testing Agent
-
-**Purpose:** Execute unit/feature tests (and optionally browser tests).
-
-**Commands:**
-
-```bash
-php artisan test
-# If Dusk is configured:
-php artisan dusk
-```
-
-**Env:** Uses `phpunit.xml` (should point to `DB_DATABASE=testing`).
 
 ---
 

@@ -12,10 +12,6 @@ class ListBuilder extends Component
 {
     use WithPagination;
 
-    protected $listeners = [
-        'contentUpdated' => '$refresh',
-    ];
-
     public $sortBy = 'id';
     public $sortDirection = 'desc';
     public $columns = [];
@@ -23,6 +19,7 @@ class ListBuilder extends Component
 
     protected $listeners = [
         'search-tasks' => 'updateSearch',
+        'contentUpdated' => '$refresh',
     ];
     
     public function mount()
