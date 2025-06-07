@@ -7,9 +7,8 @@ if [[ "$EUID" -ne 0 ]]; then
   exit 1
 fi
 
-# 2. Override env and .env for DB & cache
+# 2. Override environment variables and patch .env for database & cache
 echo "🔧 Configuring environment variables..."
-# Export for this session
 export DB_HOST=127.0.0.1
 export DB_PORT=3306
 export DB_DATABASE=laravel
@@ -18,7 +17,8 @@ export DB_PASSWORD=""
 export DB_CONNECTION=mysql
 export REDIS_HOST=127.0.0.1
 export QUEUE_CONNECTION=redis
-# Also patch .env file
+
+# Patch .env file entries or create if missing
 if [[ -f .env ]]; then
   sed -i 's/^DB_HOST=.*/DB_HOST=127.0.0.1/' .env
   sed -i 's/^DB_PORT=.*/DB_PORT=3306/' .env
@@ -28,6 +28,7 @@ if [[ -f .env ]]; then
   sed -i 's/^DB_CONNECTION=.*/DB_CONNECTION=mysql/' .env
   sed -i 's/^REDIS_HOST=.*/REDIS_HOST=127.0.0.1/' .env
   sed -i 's/^QUEUE_CONNECTION=.*/QUEUE_CONNECTION=redis/' .env
+  sed -i 's/^MAIL_PORT=.*/MAIL_PORT=1025/' .env
 else
   cp .env.example .env
   sed -i 's/^DB_HOST=.*/DB_HOST=127.0.0.1/' .env
@@ -46,26 +47,7 @@ if ! grep -q '^APP_KEY=' .env; then
   echo "APP_KEY=" >> .env
 fi
 
-# 3. Start MySQL if not already running
-echo "🚀 Checking & starting MySQL..."
-if ! mysqladmin ping --silent; then
-  # Initialize if first run (ignore errors if already initialized)
-  mysqld --initialize-insecure --user=mysql 2>/dev/null || true
-  mysqld --daemonize --user=mysql \
-        --socket=/var/run/mysqld/mysqld.sock \
-        --pid-file=/var/run/mysqld/mysqld.pid
-  until mysqladmin --socket=/var/run/mysqld/mysqld.sock ping --silent; do sleep 1; done
-  echo "✅ MySQL is up"
-else
-  echo "✅ MySQL already running"
-fi
-
-# 4. Install PHP and extensions
-echo "📦 Installing PHP and required extensions..."
-apt-get update -y
-DEBIAN_FRONTEND=noninteractive apt-get install -y \
-  php-cli php-fpm php-dev \
-
+# 3. Install PHP and extensions
 echo "📦 Installing PHP and required extensions..."
 apt-get update -y
 DEBIAN_FRONTEND=noninteractive apt-get install -y \
@@ -90,7 +72,7 @@ echo "📧 Installing Mailpit..."
 curl -sL https://raw.githubusercontent.com/axllent/mailpit/develop/install.sh | bash
 nohup mailpit > /tmp/mailpit.log 2>&1 &
 
-# 6. Configure Composer auth for FluxUI
+# 6. Configure Composer HTTP Basic for FluxUI
 echo "🔐 Configuring Composer HTTP Basic auth..."
 if [[ -n "${FLUX_USER:-}" && -n "${FLUX_PASS:-}" ]]; then
   composer config --global http-basic.composer.fluxui.dev "$FLUX_USER" "$FLUX_PASS"
@@ -105,7 +87,7 @@ composer install --no-interaction --prefer-dist
 echo "📦 Installing JS dependencies with npm..."
 npm install
 
-# 8. Set permissions & generate app key
+# 8. Set permissions & generate APP_KEY
 echo "🛠️ Setting storage/cache permissions and generating APP_KEY..."
 chmod -R 775 storage bootstrap/cache
 php artisan key:generate --force
