@@ -79,35 +79,18 @@
          */
         public function getLotsProperty()
         {
+            if ($this->searchTerm !== '') {
+                return Lot::search($this->searchTerm)
+                    ->query(function ($query) {
+                        $query->where('company_id', session('company_id'));
+                        $this->applyLotFilters($query);
+                    })
+                    ->paginate(20);
+            }
+
             $query = Auth::user()->lotsForCurrentCompany();
 
-            if ($this->searchTerm !== '') {
-                $ids = Lot::search($this->searchTerm)->keys();
-                $query->whereIn('lots.id', $ids);
-            }
-
-            // Apply filter logic
-            if (!empty($this->selectedBuilders)) {
-                $query->whereHas('builder', function ($q) {
-                    $q->whereIn('name', $this->selectedBuilders);
-                });
-            }
-
-            if (!empty($this->selectedSubdivisions)) {
-                $query->where(function($q) {
-                    foreach ($this->selectedSubdivisions as $filter) {
-                        [$subdivision, $phase] = explode('|', $filter);
-                        $q->orWhere(function($q2) use ($subdivision, $phase) {
-                            $q2->where('subdivision', $subdivision)
-                               ->where('phase', $phase);
-                        });
-                    }
-                });
-            }
-
-            if (!empty($this->selectedLots)) {
-                $query->whereIn('lot_number', $this->selectedLots);
-            }
+            $this->applyLotFilters($query);
 
             // Sorting logic
             if ($this->sortBy === 'builder') {
@@ -118,10 +101,9 @@
                 $query
                     ->join('status_types', 'lots.status_type_id', '=', 'status_types.id')
                     ->orderBy('status_types.name', $this->sortDirection);
-            }elseif ($this->sortBy === 'lot_number') {
+            } elseif ($this->sortBy === 'lot_number') {
                 $query->orderByRaw("CAST(lot_number AS UNSIGNED) {$this->sortDirection}, lot_number ASC");
             } elseif ($this->sortBy === 'last_completed_date') {
-
                 $query
                     ->select('lots.*')
                     ->selectRaw('(SELECT MAX(t.ended_at)
@@ -135,6 +117,31 @@
             }
 
             return $query->paginate(20);
+        }
+
+        private function applyLotFilters($query): void
+        {
+            if (!empty($this->selectedBuilders)) {
+                $query->whereHas('builder', function ($q) {
+                    $q->whereIn('name', $this->selectedBuilders);
+                });
+            }
+
+            if (!empty($this->selectedSubdivisions)) {
+                $query->where(function ($q) {
+                    foreach ($this->selectedSubdivisions as $filter) {
+                        [$subdivision, $phase] = explode('|', $filter);
+                        $q->orWhere(function ($q2) use ($subdivision, $phase) {
+                            $q2->where('subdivision', $subdivision)
+                                ->where('phase', $phase);
+                        });
+                    }
+                });
+            }
+
+            if (!empty($this->selectedLots)) {
+                $query->whereIn('lot_number', $this->selectedLots);
+            }
         }
 
 
