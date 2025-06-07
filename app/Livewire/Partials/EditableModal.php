@@ -143,7 +143,6 @@ class EditableModal extends Component
             'fieldValue.numeric'  => 'Must be a valid number.',
             'fieldValue.date'     => 'Must be a valid date.',
             'fieldValue.email'    => 'Must be a valid email.',
-            'fieldValue.digits'   => 'Must be exactly :digits digits.',
         ];
     }
 
