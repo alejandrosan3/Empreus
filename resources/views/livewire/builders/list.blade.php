@@ -1,6 +1,7 @@
-<livewire:partials.editable-modal />
+<div>
+    <livewire:partials.editable-modal />
 
-<flux:table :paginate="$this->builders">
+    <flux:table :paginate="$this->builders">
     @foreach ($this->columns as $column)
         <flux:table.column
             sortable
@@ -41,3 +42,4 @@
         @endforeach
     </flux:table.rows>
 </flux:table>
+</div>

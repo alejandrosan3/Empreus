@@ -13,6 +13,10 @@ class ListSubdivision extends Component
 {
     use WithPagination;
 
+    protected $listeners = [
+        'contentUpdated' => '$refresh',
+    ];
+
     public int $companyId;
 
     public $sortBy = 'subdivision';
@@ -56,6 +60,8 @@ class ListSubdivision extends Component
             ->where('company_id', $this->companyId)
             ->whereNotNull('subdivision')
             ->where('subdivision', '!=', '')
+            // group lots by subdivision and pick the smallest lot ID so we
+            // have a record to update when inline editing
             ->selectRaw('MIN(id) as id, subdivision')
             ->groupBy('subdivision')
             ->orderBy($this->sortBy, $this->sortDirection)

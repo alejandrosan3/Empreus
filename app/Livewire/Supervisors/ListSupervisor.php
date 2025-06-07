@@ -12,6 +12,10 @@ class ListSupervisor extends Component
 {
     use WithPagination;
 
+    protected $listeners = [
+        'contentUpdated' => '$refresh',
+    ];
+
     public int    $companyId;
 
     public array  $columns       = [];
