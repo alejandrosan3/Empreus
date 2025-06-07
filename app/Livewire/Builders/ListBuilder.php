@@ -58,11 +58,13 @@ class ListBuilder extends Component
         $query = Builder::query();
 
         if ($this->searchTerm !== '') {
-            $ids = Builder::search($this->searchTerm)->keys();
+            $ids = Builder::search($this->searchTerm)->keys()->toArray();
             $query->whereIn('id', $ids);
 
-            // Preserve search result ordering
-            $query->orderByRaw('FIELD(id, ' . implode(',', $ids) . ')');
+            // Preserve search result ordering if there are results
+            if (!empty($ids)) {
+                $query->orderByRaw('FIELD(id, ' . implode(',', $ids) . ')');
+            }
         } else {
             $query->orderBy($this->sortBy, $this->sortDirection);
         }

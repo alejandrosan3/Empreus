@@ -62,11 +62,13 @@ class ListSupervisor extends Component
         $query = Supervisor::query();
 
         if ($this->searchTerm !== '') {
-            $ids = Supervisor::search($this->searchTerm)->keys();
+            $ids = Supervisor::search($this->searchTerm)->keys()->toArray();
             $query->whereIn('id', $ids);
 
-            // Preserve search ranking
-            $query->orderByRaw('FIELD(id, ' . implode(',', $ids) . ')');
+            // Preserve search ranking if there are results
+            if (!empty($ids)) {
+                $query->orderByRaw('FIELD(id, ' . implode(',', $ids) . ')');
+            }
         } else {
             $query->orderBy($this->sortBy, $this->sortDirection);
         }

@@ -76,11 +76,13 @@ class TaskProgress extends Component
         ]);
 
         if ($this->searchTerm !== '') {
-            $ids = Task::search($this->searchTerm)->keys();
+            $ids = Task::search($this->searchTerm)->keys()->toArray();
             $query->whereIn('tasks.id', $ids);
 
-            // Keep Meilisearch ranking
-            $query->orderByRaw('FIELD(tasks.id, ' . implode(',', $ids) . ')');
+            // Keep Meilisearch ranking if there are results
+            if (!empty($ids)) {
+                $query->orderByRaw('FIELD(tasks.id, ' . implode(',', $ids) . ')');
+            }
         }
 
         // Start with tasks for the current company
