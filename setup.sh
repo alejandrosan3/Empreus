@@ -7,7 +7,9 @@ if [[ "$EUID" -ne 0 ]]; then
   exit 1
 fi
 
-echo "🔧 Overriding environment variables for database & cache"
+# 2. Override env and .env for DB & cache
+echo "🔧 Configuring environment variables..."
+# Export for this session
 export DB_HOST=127.0.0.1
 export DB_PORT=3306
 export DB_DATABASE=laravel
@@ -16,8 +18,35 @@ export DB_PASSWORD=""
 export DB_CONNECTION=mysql
 export REDIS_HOST=127.0.0.1
 export QUEUE_CONNECTION=redis
+# Also patch .env file
+if [[ -f .env ]]; then
+  sed -i 's/^DB_HOST=.*/DB_HOST=127.0.0.1/' .env
+  sed -i 's/^DB_PORT=.*/DB_PORT=3306/' .env
+  sed -i 's/^DB_DATABASE=.*/DB_DATABASE=laravel/' .env
+  sed -i 's/^DB_USERNAME=.*/DB_USERNAME=root/' .env
+  sed -i 's|^DB_PASSWORD=.*|DB_PASSWORD=|' .env
+  sed -i 's/^DB_CONNECTION=.*/DB_CONNECTION=mysql/' .env
+  sed -i 's/^REDIS_HOST=.*/REDIS_HOST=127.0.0.1/' .env
+  sed -i 's/^QUEUE_CONNECTION=.*/QUEUE_CONNECTION=redis/' .env
+else
+  cp .env.example .env
+  sed -i 's/^DB_HOST=.*/DB_HOST=127.0.0.1/' .env
+  sed -i 's/^DB_PORT=.*/DB_PORT=3306/' .env
+  sed -i 's/^DB_DATABASE=.*/DB_DATABASE=laravel/' .env
+  sed -i 's/^DB_USERNAME=.*/DB_USERNAME=root/' .env
+  sed -i 's|^DB_PASSWORD=.*|DB_PASSWORD=|' .env
+  sed -i 's/^DB_CONNECTION=.*/DB_CONNECTION=mysql/' .env
+  sed -i 's/^REDIS_HOST=.*/REDIS_HOST=127.0.0.1/' .env
+  sed -i 's/^QUEUE_CONNECTION=.*/QUEUE_CONNECTION=redis/' .env
+  sed -i 's/^MAIL_PORT=.*/MAIL_PORT=1025/' .env
+fi
 
-# 2. Install PHP and extensions
+# Ensure APP_KEY placeholder exists
+if ! grep -q '^APP_KEY=' .env; then
+  echo "APP_KEY=" >> .env
+fi
+
+# 3. Install PHP and extensions
 echo "📦 Installing PHP and required extensions..."
 apt-get update -y
 DEBIAN_FRONTEND=noninteractive apt-get install -y \
@@ -27,12 +56,12 @@ DEBIAN_FRONTEND=noninteractive apt-get install -y \
   php-intl php-readline php-imagick php-xdebug \
   unzip git curl
 
-# 3. Install & start Redis
+# 4. Install & start Redis
 echo "🚀 Starting Redis-server..."
 apt-get install -yqq redis-server
 redis-server --daemonize yes
 
-# 4. Install & launch Meilisearch and Mailpit
+# 5. Install & launch Meilisearch and Mailpit
 echo "🔎 Installing Meilisearch..."
 curl -sL https://github.com/meilisearch/meilisearch/releases/latest/download/meilisearch-linux-amd64 \
   -o /usr/local/bin/meilisearch && chmod +x /usr/local/bin/meilisearch
@@ -42,19 +71,7 @@ echo "📧 Installing Mailpit..."
 curl -sL https://raw.githubusercontent.com/axllent/mailpit/develop/install.sh | bash
 nohup mailpit > /tmp/mailpit.log 2>&1 &
 
-# 5. Prepare .env file
-if [[ ! -f .env ]]; then
-  echo "⚙️ Creating .env from example..."
-  cp .env.example .env
-  sed -i 's/DB_HOST=mysql/DB_HOST=127.0.0.1/' .env
-  sed -i 's/MAIL_PORT=2525/MAIL_PORT=1025/' .env
-fi
-# Ensure APP_KEY placeholder exists
-if ! grep -q '^APP_KEY=' .env; then
-  echo "APP_KEY=" >> .env
-fi
-
-# 6. Configure Composer HTTP Basic for private FluxUI packages
+# 6. Configure Composer auth for FluxUI
 echo "🔐 Configuring Composer HTTP Basic auth..."
 if [[ -n "${FLUX_USER:-}" && -n "${FLUX_PASS:-}" ]]; then
   composer config --global http-basic.composer.fluxui.dev "$FLUX_USER" "$FLUX_PASS"
@@ -62,7 +79,7 @@ else
   echo "⚠️  FLUX_USER/FLUX_PASS missing; private packages may fail"
 fi
 
-# 7. Install PHP & JS dependencies
+# 7. Install dependencies
 echo "📦 Installing PHP dependencies with Composer..."
 composer install --no-interaction --prefer-dist
 
