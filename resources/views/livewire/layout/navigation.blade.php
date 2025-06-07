@@ -61,9 +61,9 @@
             @endif
 
             @if($showSearch)
-            <!-- "Search" Input -->
-            <form method="GET" action="{{ route('search') }}" class="mx-8">
-                <flux:input name="query" value="{{ request('query') }}" placeholder="Search..." icon="magnifying-glass" />
+            <!-- "Search" Input handled by Livewire -->
+            <form wire:submit.prevent="submitSearch" class="mx-8">
+                <flux:input wire:model.defer="searchTerm" placeholder="Search..." icon="magnifying-glass" />
             </form>
             @endif
 

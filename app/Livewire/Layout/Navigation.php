@@ -10,7 +10,10 @@
         public $currentAddable;
         public $showFilters;
         public $showSearch;
-        public $showColumns;
+    public $showColumns;
+
+    // Search input bound via Livewire
+    public $searchTerm = '';
 
         // These lists fill the dropdown options for Builders/Subdivisions/Lots
         public $filters = [
@@ -68,6 +71,14 @@
                     break;
             }
             $this->applyGlobalFilters();
+        }
+
+        /**
+         * Dispatch the search query so pages can react.
+         */
+        public function submitSearch()
+        {
+            $this->dispatch('search-tasks', query: $this->searchTerm);
         }
 
         public function mount($showAddNew=false, $showFilters=false, $showSearch=false, $showColumns=false, $currentAddable="task" )

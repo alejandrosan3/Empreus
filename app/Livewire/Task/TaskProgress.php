@@ -24,6 +24,8 @@ class TaskProgress extends Component
     public $selectedSubdivisions = [];
     public $selectedLots = [];
 
+    public $searchTerm = '';
+
     public array $checkedTasks = [];
 
     // For dynamically displaying task details
@@ -31,6 +33,7 @@ class TaskProgress extends Component
 
     protected $listeners = [
         'contentUpdated' => '$refresh',
+        'search-tasks' => 'updateSearch',
     ];
 
     /**
@@ -46,6 +49,12 @@ class TaskProgress extends Component
             $this->sortDirection = 'asc';
         }
         $this->dispatchFilters();
+    }
+
+    public function updateSearch($query)
+    {
+        $this->searchTerm = $query;
+        $this->resetPage();
     }
 
     /**
@@ -65,6 +74,11 @@ class TaskProgress extends Component
             // load only the latest note
             'taskNotes' => fn($q) => $q->latest('created_at')->limit(1),
         ]);
+
+        if ($this->searchTerm !== '') {
+            $ids = Task::search($this->searchTerm)->keys();
+            $query->whereIn('tasks.id', $ids);
+        }
 
         // Start with tasks for the current company
         //$query = Auth::user()->tasksForCurrentCompany();
