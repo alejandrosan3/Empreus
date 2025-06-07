@@ -56,8 +56,8 @@ class ListSubdivision extends Component
             ->where('company_id', $this->companyId)
             ->whereNotNull('subdivision')
             ->where('subdivision', '!=', '')
-            ->select('subdivision')
-            ->distinct()
+            ->selectRaw('MIN(id) as id, subdivision')
+            ->groupBy('subdivision')
             ->orderBy($this->sortBy, $this->sortDirection)
             ->simplePaginate(20);
     }
