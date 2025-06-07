@@ -18,7 +18,64 @@
 
     <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
         {{-- Builder / Subdivision / Lot --}}
-        <livewire:partials.cards :items="$card1" mode="add" :key="'card1-' . $builder_id" />
+        <div>
+            <flux:card>
+                {{-- Builder select --}}
+                <flux:select
+                    wire:key="builder_id-none"
+                    label="Builder"
+                    variant="listbox"
+                    wire:model.live="builder_id"
+                    :error="$errors->first('builder_id')"
+                    searchable
+                    clearable
+                >
+                    <option disabled value="">— Select —</option>
+                    @foreach($card1[0]['options'] as $opt)
+                        <flux:select.option value="{{ $opt->id }}">{{ $opt->name }}</flux:select.option>
+                    @endforeach
+                </flux:select>
+
+                {{-- Subdivision select or input --}}
+                @if(!$showSubdivisionInput)
+                    <div class="flex items-end gap-2">
+                        <div class="flex-1">
+                            @php $disabled = empty($card1[1]['options']); @endphp
+                            <flux:select
+                                wire:key="subdivision-{{ $builder_id ?? 'none' }}"
+                                label="Subdivision"
+                                variant="listbox"
+                                wire:model.live="subdivision"
+                                :error="$errors->first('subdivision')"
+                                searchable
+                                clearable
+                                :disabled="$disabled"
+                            >
+                                <option disabled value="">— Select —</option>
+                                @foreach($card1[1]['options'] as $opt)
+                                    <flux:select.option value="{{ $opt->id }}">{{ $opt->name }}</flux:select.option>
+                                @endforeach
+                            </flux:select>
+                        </div>
+                        <flux:button wire:click="toggleSubdivisionInput" size="sm" variant="ghost" icon="plus" />
+                    </div>
+                @else
+                    <flux:input
+                        label="Subdivision"
+                        wire:model.defer="newSubdivision"
+                        :error="$errors->first('subdivision')"
+                    />
+                @endif
+
+                {{-- Lot Number --}}
+                <flux:input
+                    wire:key="lot_number-{{ $subdivision ?? 'none' }}"
+                    label="Lot Number"
+                    wire:model.defer="lot_number"
+                    :error="$errors->first('lot_number')"
+                />
+            </flux:card>
+        </div>
 
         {{-- Address / Supervisor / Phase --}}
         <livewire:partials.cards :items="$card2" mode="add" />

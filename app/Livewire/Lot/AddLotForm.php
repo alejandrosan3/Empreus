@@ -37,6 +37,9 @@ class AddLotForm extends Component
     public $num_of_floors = null;
     public $floor_area = null;
 
+    public bool $showSubdivisionInput = false;
+    public string $newSubdivision = '';
+
     public function rules(): array
     {
         return [
@@ -123,6 +126,16 @@ class AddLotForm extends Component
         return redirect()->route('lot-progress', request()->query());
     }
 
+    public function toggleSubdivisionInput(): void
+    {
+        $this->showSubdivisionInput = ! $this->showSubdivisionInput;
+        if ($this->showSubdivisionInput) {
+            $this->subdivision = null;
+        } else {
+            $this->newSubdivision = '';
+        }
+    }
+
     public function updatedBuilderId($builderId): void
     {
         $this->subdivisions = Cache::rememberForever(
@@ -144,7 +157,9 @@ class AddLotForm extends Component
 
         // reset downstream field
         $this->subdivision = null;
-    } 
+        $this->showSubdivisionInput = false;
+        $this->newSubdivision = '';
+    }
 
     public function render()
     {
@@ -157,8 +172,12 @@ class AddLotForm extends Component
     {
         try
         {
+            if ($this->showSubdivisionInput && !empty($this->newSubdivision)) {
+                $this->subdivision = $this->newSubdivision;
+            }
+
             $this->validate();
-        } catch (ValidationException $e) 
+        } catch (ValidationException $e)
         {
             $this->setErrorBag($e->validator->errors());
 
@@ -168,6 +187,16 @@ class AddLotForm extends Component
                 variant: 'warning'
             );
             return;
+        }
+
+        if ($this->showSubdivisionInput && !empty($this->newSubdivision)) {
+            // record subdivision for listings
+            Lot::create([
+                'company_id'  => $this->companyId,
+                'builder_id'  => $this->builder_id,
+                'subdivision' => $this->newSubdivision,
+            ]);
+            $this->updatedBuilderId($this->builder_id);
         }
 
         /* Create the lot */
@@ -190,6 +219,7 @@ class AddLotForm extends Component
         $this->reset([
             'builder_id', 'subdivision', 'lot_number',
             'address', 'supervisor_id', 'phase',
+            'newSubdivision', 'showSubdivisionInput',
         ]);
 
         return $this->goBack();
