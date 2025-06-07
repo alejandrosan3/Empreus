@@ -91,8 +91,7 @@ class AddLotForm extends Component
         
         $this->supervisorOptions = Cache::rememberForever(
         "supervisor_options.{$this->companyId}",
-        fn () => Supervisor::where('company_id', $this->companyId)
-                           ->orderBy('name')
+        fn () => Supervisor::orderBy('name')
                            ->get()
                            ->map(fn ($s) => (object)[
                                'id'   => $s->id,
@@ -189,28 +188,20 @@ class AddLotForm extends Component
             return;
         }
 
-        if ($this->showSubdivisionInput && !empty($this->newSubdivision)) {
-            // record subdivision for listings
-            Lot::create([
-                'company_id'  => $this->companyId,
-                'builder_id'  => $this->builder_id,
-                'subdivision' => $this->newSubdivision,
-            ]);
-            $this->updatedBuilderId($this->builder_id);
-        }
-
         /* Create the lot */
         $lot = Lot::create([
             'company_id'    => $this->companyId,
             'builder_id'    => $this->builder_id,
-            'subdivision'   => $this->subdivision,
+            'subdivision'   => !empty($this->newSubdivision)
+                                ? $this->newSubdivision
+                                : $this->subdivision,
             'lot_number'    => $this->lot_number,
             'address'       => $this->address,
             'supervisor_id' => $this->supervisor_id,
             'phase'         => $this->phase,
-            'num_of_floors'   => $this->num_of_floors,
-            'floor_area'     => $this->floor_area,
-            'status_type_id' => $this->status_type_id
+            'num_of_floors' => $this->num_of_floors,
+            'floor_area'    => $this->floor_area,
+            'status_type_id'=> $this->status_type_id,
         ]);
 
         Flux::toast(text: 'Lot created successfully.', heading: 'Success!', variant: 'success');
