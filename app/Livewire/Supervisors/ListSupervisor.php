@@ -17,6 +17,11 @@ class ListSupervisor extends Component
     public array  $columns       = [];
     public string $sortBy        = 'id';
     public string $sortDirection = 'desc';
+    public string $searchTerm    = '';
+
+    protected $listeners = [
+        'search-tasks' => 'updateSearch',
+    ];
 
 
     public function mount(): void
@@ -44,12 +49,24 @@ class ListSupervisor extends Component
         $this->sortBy = $column;
     }
 
+    public function updateSearch($query)
+    {
+        $this->searchTerm = $query;
+        $this->resetPage();
+    }
+
 
     #[\Livewire\Attributes\Computed]
     public function getSupervisorsProperty()
     {
-        return Supervisor::query()
-            ->orderBy($this->sortBy, $this->sortDirection)
+        $query = Supervisor::query();
+
+        if ($this->searchTerm !== '') {
+            $ids = Supervisor::search($this->searchTerm)->keys();
+            $query->whereIn('id', $ids);
+        }
+
+        return $query->orderBy($this->sortBy, $this->sortDirection)
             ->simplePaginate(20);
     }
 

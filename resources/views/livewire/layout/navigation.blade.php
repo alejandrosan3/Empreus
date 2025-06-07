@@ -62,9 +62,13 @@
 
             @if($showSearch)
             <!-- "Search" Input handled by Livewire -->
-            <form wire:submit.prevent="submitSearch" class="mx-8">
-                <flux:input wire:model.defer="searchTerm" placeholder="Search..." icon="magnifying-glass" />
-            </form>
+            <flux:input
+                wire:model.defer="searchTerm"
+                wire:keydown.enter.prevent="submitSearch"
+                placeholder="Search..."
+                icon="magnifying-glass"
+                class="mx-8"
+            />
             @endif
 
             @if($showColumns)

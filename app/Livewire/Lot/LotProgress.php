@@ -26,6 +26,8 @@
         public $selectedSubdivisions = [];
         public $selectedLots = [];
 
+        public $searchTerm = '';
+
         // multiselected lots get stored here
         public $checkedLots = [];
 
@@ -38,6 +40,7 @@
 
         protected $listeners = [
             'contentUpdated' => '$refresh',   // ← built-in Livewire shortcut
+            'search-tasks'   => 'updateSearch',
         ];
 
         /**
@@ -64,6 +67,12 @@
             $this->dispatch('bulk-edit-action', entity: 'lot', ids: $this->checkedLots);
         }
 
+        public function updateSearch($query)
+        {
+            $this->searchTerm = $query;
+            $this->resetPage();
+        }
+
 
         /**
          * Computed property for retrieving lots based on selected filters + sort.
@@ -71,6 +80,11 @@
         public function getLotsProperty()
         {
             $query = Auth::user()->lotsForCurrentCompany();
+
+            if ($this->searchTerm !== '') {
+                $ids = Lot::search($this->searchTerm)->keys();
+                $query->whereIn('lots.id', $ids);
+            }
 
             // Apply filter logic
             if (!empty($this->selectedBuilders)) {

@@ -15,6 +15,11 @@ class ListBuilder extends Component
     public $sortBy = 'id';
     public $sortDirection = 'desc';
     public $columns = [];
+    public $searchTerm = '';
+
+    protected $listeners = [
+        'search-tasks' => 'updateSearch',
+    ];
     
     public function mount()
     {
@@ -41,11 +46,23 @@ class ListBuilder extends Component
         }
     }
 
+    public function updateSearch($query)
+    {
+        $this->searchTerm = $query;
+        $this->resetPage();
+    }
+
     #[\Livewire\Attributes\Computed]
     public function getBuildersProperty()
     {
-        return Builder::query()
-            ->orderBy($this->sortBy, $this->sortDirection)
+        $query = Builder::query();
+
+        if ($this->searchTerm !== '') {
+            $ids = Builder::search($this->searchTerm)->keys();
+            $query->whereIn('id', $ids);
+        }
+
+        return $query->orderBy($this->sortBy, $this->sortDirection)
             ->simplePaginate(20);
     }
 

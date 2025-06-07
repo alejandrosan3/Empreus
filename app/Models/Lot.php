@@ -6,10 +6,11 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Laravel\Scout\Searchable;
 
 class Lot extends Model
 {
-    use HasFactory;
+    use HasFactory, Searchable;
 
     /**
      * @var array
@@ -108,5 +109,22 @@ class Lot extends Model
             ->orderBy('subdivision')
             ->pluck('subdivision')
             ->toArray();
+    }
+
+    /**
+     * Data for Meilisearch indexing.
+     */
+    public function toSearchableArray(): array
+    {
+        $this->loadMissing(['builder', 'supervisor']);
+
+        return [
+            'id'         => $this->id,
+            'lot_number' => $this->lot_number,
+            'address'    => $this->address,
+            'subdivision'=> $this->subdivision,
+            'builder'    => $this->builder->name ?? null,
+            'supervisor' => $this->supervisor->name ?? null,
+        ];
     }
 }

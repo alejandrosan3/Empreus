@@ -89,7 +89,7 @@ class Task extends Model
      */
     public function toSearchableArray(): array
     {
-        $this->loadMissing(['lot.builder', 'taskType', 'statusType']);
+        $this->loadMissing(['lot.builder', 'lot.supervisor', 'taskType', 'statusType']);
 
         return [
             'id'          => $this->id,
@@ -97,6 +97,7 @@ class Task extends Model
             'address'     => $this->lot->address,
             'builder'     => $this->lot->builder->name ?? null,
             'subdivision' => $this->lot->subdivision,
+            'supervisor'  => $this->lot->supervisor->name ?? null,
             'task_type'   => $this->taskType->name ?? null,
             'status'      => $this->statusType->name ?? null,
         ];

@@ -37,6 +37,29 @@ To stop the project run:
 
 `$ ./docker/sail down`
 
+### Enabling Search
+
+The application uses **Laravel Scout** with **Meilisearch**. Ensure Meilisearch
+is running (it is included in `docker-compose.yml`). Configure the connection in
+your `.env` file:
+
+```
+SCOUT_DRIVER=meilisearch
+MEILISEARCH_HOST=http://meilisearch:7700
+```
+
+After starting the containers, import the search indexes:
+
+```
+./docker/sail artisan scout:import "App\Models\Task"
+./docker/sail artisan scout:import "App\Models\Lot"
+./docker/sail artisan scout:import "App\Models\Builder"
+./docker/sail artisan scout:import "App\Models\Supervisor"
+```
+
+Once imported, the search bar in the navigation filters tasks, lots, builders
+and supervisors using Meilisearch.
+
 ### Queues via Laravel Horizon
 Running queue workers via Laravel Horizon is optional but recommended.
 

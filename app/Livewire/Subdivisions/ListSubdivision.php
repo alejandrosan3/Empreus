@@ -18,6 +18,11 @@ class ListSubdivision extends Component
     public $sortBy = 'subdivision';
     public $sortDirection = 'desc';
     public array  $columns = [];
+    public $searchTerm = '';
+
+    protected $listeners = [
+        'search-tasks' => 'updateSearch',
+    ];
 
     public function mount()
     {
@@ -49,16 +54,28 @@ class ListSubdivision extends Component
         $this->sortBy = $column;
     }
 
+    public function updateSearch($query)
+    {
+        $this->searchTerm = $query;
+        $this->resetPage();
+    }
+
     #[\Livewire\Attributes\Computed]
     public function getSubdivisionsProperty()
     {
-        return Lot::query()
+        $query = Lot::query()
             ->where('company_id', $this->companyId)
             ->whereNotNull('subdivision')
             ->where('subdivision', '!=', '')
             ->select('subdivision')
-            ->distinct()
-            ->orderBy($this->sortBy, $this->sortDirection)
+            ->distinct();
+
+        if ($this->searchTerm !== '') {
+            $ids = Lot::search($this->searchTerm)->keys();
+            $query->whereIn('id', $ids);
+        }
+
+        return $query->orderBy($this->sortBy, $this->sortDirection)
             ->simplePaginate(20);
     }
 
