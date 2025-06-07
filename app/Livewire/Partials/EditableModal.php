@@ -105,6 +105,9 @@ class EditableModal extends Component
                 'supervisor_id'    => 'nullable|exists:supervisors,id',
 
                 // inputs
+                'name'             => 'required|string|max:255',
+                'email'            => 'nullable|email|max:255',
+                'phone'            => 'nullable|numeric',
                 'lot_number'       => 'required|string|min:1',
                 'address'          => 'nullable|string',
                 'description'      => 'nullable|string',
@@ -114,10 +117,10 @@ class EditableModal extends Component
                 'floor_area'       => 'required|numeric',
 
                 // dates (optional—you can skip if you’re certain the picker always gives valid Y-m-d)
-                'scheduled_start_date',
-                'ended_at',
-                "started_at",
-                "scheduled_end_date"         => 'nullable|date',
+                'scheduled_start_date' => 'nullable|date',
+                'ended_at'             => 'nullable|date',
+                'started_at'           => 'nullable|date',
+                'scheduled_end_date'   => 'nullable|date',
 
                 default            => 'required',
             },
@@ -135,9 +138,12 @@ class EditableModal extends Component
             'fieldValue.in'       => 'Invalid choice selected.',
             'fieldValue.string'   => 'Must be text.',
             'fieldValue.min'      => 'Must be at least :min character.',
+            'fieldValue.max'      => 'Must not exceed :max characters.',
             'fieldValue.integer'  => 'Must be a whole number.',
             'fieldValue.numeric'  => 'Must be a valid number.',
             'fieldValue.date'     => 'Must be a valid date.',
+            'fieldValue.email'    => 'Must be a valid email.',
+            'fieldValue.digits'   => 'Must be exactly :digits digits.',
         ];
     }
 
