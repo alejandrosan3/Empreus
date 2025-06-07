@@ -78,6 +78,9 @@ class TaskProgress extends Component
         if ($this->searchTerm !== '') {
             $ids = Task::search($this->searchTerm)->keys();
             $query->whereIn('tasks.id', $ids);
+
+            // Keep Meilisearch ranking
+            $query->orderByRaw('FIELD(tasks.id, ' . implode(',', $ids) . ')');
         }
 
         // Start with tasks for the current company
@@ -162,7 +165,7 @@ class TaskProgress extends Component
         }
         
         // Finally, paginate the result
-        return $query->Paginate(20);
+        return $query->paginate(20);
     }
 
     #[Computed]

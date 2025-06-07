@@ -64,10 +64,14 @@ class ListSupervisor extends Component
         if ($this->searchTerm !== '') {
             $ids = Supervisor::search($this->searchTerm)->keys();
             $query->whereIn('id', $ids);
+
+            // Preserve search ranking
+            $query->orderByRaw('FIELD(id, ' . implode(',', $ids) . ')');
+        } else {
+            $query->orderBy($this->sortBy, $this->sortDirection);
         }
 
-        return $query->orderBy($this->sortBy, $this->sortDirection)
-            ->simplePaginate(20);
+        return $query->paginate(20);
     }
 
     #[On('company-updated')]

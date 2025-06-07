@@ -73,10 +73,14 @@ class ListSubdivision extends Component
         if ($this->searchTerm !== '') {
             $ids = Lot::search($this->searchTerm)->keys();
             $query->whereIn('id', $ids);
+
+            // Preserve relevance order
+            $query->orderByRaw('FIELD(id, ' . implode(',', $ids) . ')');
+        } else {
+            $query->orderBy($this->sortBy, $this->sortDirection);
         }
 
-        return $query->orderBy($this->sortBy, $this->sortDirection)
-            ->simplePaginate(20);
+        return $query->paginate(20);
     }
 
      #[On('company-updated')]
