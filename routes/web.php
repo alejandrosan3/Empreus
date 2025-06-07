@@ -3,7 +3,7 @@
 use App\Http\Middleware\SetCurrentCompany;
 use App\Http\Middleware\CheckUserRole;
 use App\Livewire\Builders\{CreateBuilder, ListBuilder};
-use App\Livewire\Subdivisions\{CreateSubdivision, ListSubdivision};
+use App\Livewire\Subdivisions\ListSubdivision;
 use App\Livewire\Supervisors\{CreateSupervisor, ListSupervisor};
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Auth;
@@ -53,10 +53,6 @@ Route::middleware(['auth', 'verified', SetCurrentCompany::class])
                 ->defaults('label', 'Subdivisions')
                 ->defaults('icon', 'rectangle-stack');
 
-            Route::get('subdivisions/create', CreateSubdivision::class)
-                ->name('subdivision-create')
-                ->defaults('label', 'Add Subdivision')
-                ->defaults('icon', 'user-plus');
 
             Route::get('supervisors', ListSupervisor::class)
                 ->name('supervisors')
