@@ -62,7 +62,9 @@
 
             @if($showSearch)
             <!-- "Search" Input -->
-            <flux:input placeholder="Search..." icon="magnifying-glass" class="mx-8" />
+            <form method="GET" action="{{ route('search') }}" class="mx-8">
+                <flux:input name="query" value="{{ request('query') }}" placeholder="Search..." icon="magnifying-glass" />
+            </form>
             @endif
 
             @if($showColumns)

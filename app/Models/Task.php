@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Laravel\Scout\Searchable;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -11,7 +12,7 @@ use Illuminate\Database\Eloquent\Casts\Attribute;
 
 class Task extends Model
 {
-    use HasFactory;
+    use HasFactory, Searchable;
 
     protected $fillable = [
         'lot_id',
@@ -81,5 +82,23 @@ class Task extends Model
     public function workers(): BelongsToMany
     {
         return $this->belongsToMany(User::class);
+    }
+
+    /**
+     * Specify the data to be indexed by Meilisearch.
+     */
+    public function toSearchableArray(): array
+    {
+        $this->loadMissing(['lot.builder', 'taskType', 'statusType']);
+
+        return [
+            'id'          => $this->id,
+            'lot_number'  => $this->lot->lot_number,
+            'address'     => $this->lot->address,
+            'builder'     => $this->lot->builder->name ?? null,
+            'subdivision' => $this->lot->subdivision,
+            'task_type'   => $this->taskType->name ?? null,
+            'status'      => $this->statusType->name ?? null,
+        ];
     }
 }

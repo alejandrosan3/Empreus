@@ -99,6 +99,11 @@ Route::middleware(['auth', 'verified', SetCurrentCompany::class])
                 ->defaults('icon', 'clipboard-document-check');
         });
 
+        Route::get('/search', \App\Livewire\Search\Results::class)
+            ->name('search')
+            ->defaults('label', 'Search')
+            ->defaults('icon', 'magnifying-glass');
+
 });
 
 require __DIR__.'/auth.php';
