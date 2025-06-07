@@ -71,11 +71,13 @@ class ListSubdivision extends Component
             ->distinct();
 
         if ($this->searchTerm !== '') {
-            $ids = Lot::search($this->searchTerm)->keys();
+            $ids = Lot::search($this->searchTerm)->keys()->toArray();
             $query->whereIn('id', $ids);
 
-            // Preserve relevance order
-            $query->orderByRaw('FIELD(id, ' . implode(',', $ids) . ')');
+            // Preserve relevance order when there are results
+            if (!empty($ids)) {
+                $query->orderByRaw('FIELD(id, ' . implode(',', $ids) . ')');
+            }
         } else {
             $query->orderBy($this->sortBy, $this->sortDirection);
         }
