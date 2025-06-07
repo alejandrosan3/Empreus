@@ -7,7 +7,6 @@ use Livewire\Component;
 use Livewire\WithPagination;
 use Illuminate\Support\Facades\Schema;
 use App\Models\Lot;
-use App\Models\Subdivision;
 
 class ListSubdivision extends Component
 {
@@ -28,12 +27,11 @@ class ListSubdivision extends Component
     public function mount()
     {
         $this->companyId   = session('company_id');
-        $this->columns   = ['subdivision'];
 
-        // 1. Grab the table columns dynamically
+        // Grab the table columns dynamically
         $this->columns = array_filter(
-            Schema::getColumnListing((new Subdivision)->getTable()),
-            fn ($column) => !in_array($column, ['id', 'created_at', 'updated_at'])
+            Schema::getColumnListing((new Lot)->getTable()),
+            fn ($column) => $column === 'subdivision'
         );
 
         // ensure the displayed column is allowed for sorting
@@ -81,7 +79,7 @@ class ListSubdivision extends Component
         ->where('company_id', $this->companyId)
         ->whereNotNull('subdivision')
         ->where('subdivision', '!=', '')
-        ->select('subdivision', \DB::raw('MIN(id) AS sort_id'))
+        ->select('subdivision', \DB::raw('MIN(id) AS id'))
         ->groupBy('subdivision')
         ->orderBy('subdivision', $this->sortDirection);
 
@@ -99,9 +97,7 @@ class ListSubdivision extends Component
     {
         return view('livewire.subdivisions.list-subdivision')
         ->layout('layouts.app', [
-            'showAddNew'     => true,
             'showSearch'     => true,
-            'currentAddable' => 'subdivision',
         ]);
     }
 }

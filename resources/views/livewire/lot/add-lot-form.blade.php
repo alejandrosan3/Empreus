@@ -57,7 +57,7 @@
                                 @endforeach
                             </flux:select>
                         </div>
-                        <flux:button wire:click="toggleSubdivisionInput" size="sm" variant="ghost" icon="plus" />
+                        <flux:button wire:click="toggleSubdivisionInput" size="sm" variant="ghost" icon="plus" :disabled="$disabled" />
                     </div>
                 @else
                     <flux:input
