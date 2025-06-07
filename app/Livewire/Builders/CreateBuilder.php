@@ -5,6 +5,8 @@ namespace App\Livewire\Builders;
 use Livewire\Component;
 use App\Models\Builder;
 
+use App\Services\CacheInvalidationService;
+
 use Flux\Flux;
 
 class CreateBuilder extends Component
@@ -27,6 +29,7 @@ class CreateBuilder extends Component
 
         try {
             Builder::create($validated);
+            CacheInvalidationService::forNewBuilder(session('company_id'));
             Flux::toast(
                 text:'Builder created successfully.',
                 heading:'Success!',

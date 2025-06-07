@@ -14,6 +14,7 @@ use Carbon\Carbon;
 use Illuminate\Support\Facades\Validator;
 use Exception;
 use Illuminate\Support\Facades\Log;
+use App\Services\CacheInvalidationService;
 
 class LotImportService
 {
@@ -145,6 +146,14 @@ class LotImportService
             ['name' => $item['builder']]
         );
 
+        $builderHadLots = Lot::where('company_id', $company->id)
+            ->where('builder_id', $builder->id)
+            ->exists();
+
+        if ($builder->wasRecentlyCreated || ! $builderHadLots) {
+            CacheInvalidationService::forNewBuilder($company->id);
+        }
+
         /**
          * Find or create Supervisor
          */
@@ -152,6 +161,9 @@ class LotImportService
         $supervisor = Supervisor::firstOrCreate(
             ['name' => $supervisorName]
         );
+        if ($supervisor->wasRecentlyCreated) {
+            CacheInvalidationService::forNewSupervisor($company->id);
+        }
 
         /**
          * Process Lot
@@ -161,6 +173,11 @@ class LotImportService
             'builder_id' => $builder->id,
             'lot_number' => $item['lot_number'],
         ];
+
+        $subdivisionExists = Lot::where('company_id', $company->id)
+            ->where('builder_id', $builder->id)
+            ->where('subdivision', $item['subdivision'] ?? null)
+            ->exists();
 
         $lot = Lot::updateOrCreate(
             $lotData,
@@ -175,6 +192,18 @@ class LotImportService
                 'num_of_floors' => $item['num_of_floors'] ?? 1,
             ]
         );
+
+        if ($lot->wasRecentlyCreated) {
+            CacheInvalidationService::forNewLot(
+                $company->id,
+                $builder->id,
+                $lot->subdivision
+            );
+
+            if (! $subdivisionExists) {
+                CacheInvalidationService::forNewSubdivision($company->id, $builder->id);
+            }
+        }
 
         /**
          * Process Lot Task
