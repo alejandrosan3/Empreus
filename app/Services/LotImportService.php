@@ -158,6 +158,7 @@ class LotImportService
         $lotData = [
             'company_id' => $company->id,
             'builder_id' => $builder->id,
+            'subdivision' => $item['subdivision'],
             'lot_number' => $item['lot_number'],
         ];
 
