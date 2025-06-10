@@ -60,11 +60,16 @@
                         <flux:button wire:click="toggleSubdivisionInput" size="sm" variant="ghost" icon="plus" :disabled="$disabled" />
                     </div>
                 @else
-                    <flux:input
-                        label="Subdivision"
-                        wire:model.defer="newSubdivision"
-                        :error="$errors->first('subdivision')"
-                    />
+                    <div class="flex items-end gap-2">
+                        <div class="flex-1">
+                            <flux:input
+                                label="Subdivision"
+                                wire:model.defer="newSubdivision"
+                                :error="$errors->first('subdivision')"
+                            />
+                        </div>
+                        <flux:button wire:click="toggleSubdivisionInput" size="sm" variant="ghost" icon="x-mark" />
+                    </div>
                 @endif
 
                 {{-- Lot Number --}}
