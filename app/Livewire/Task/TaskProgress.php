@@ -193,6 +193,7 @@ class TaskProgress extends Component
                 $modelAttribute = $column['value'];
                 $optionKey      = '';
                 $editable       = $column['editable'];
+                $recordId       = $task->id;
 
                 switch ($column['value']) {
                     case 'builder':
@@ -200,24 +201,28 @@ class TaskProgress extends Component
                         $rawValue       = $task->lot->builder_id;
                         $modelClass     = \App\Models\Lot::class;
                         $modelAttribute = 'builder_id';
+                        $recordId       = $task->lot->id;
                         break;
                     case 'subdivision':
                         $display        = $task->lot->subdivision;
                         $rawValue       = $display;
                         $modelClass     = \App\Models\Lot::class;
                         $modelAttribute = 'subdivision';
+                        $recordId       = $task->lot->id;
                         break;
                     case 'address':
                         $display        = $task->lot->address ?? '-';
                         $rawValue       = $display;
                         $modelClass     = \App\Models\Lot::class;
                         $modelAttribute = 'address';
+                        $recordId       = $task->lot->id;
                         break;
                     case 'lot_number':
                         $display        = $task->lot->lot_number;
                         $rawValue       = $display;
                         $modelClass     = \App\Models\Lot::class;
                         $modelAttribute = 'lot_number';
+                        $recordId       = $task->lot->id;
                         break;
                     case 'task_type':
                         $display        = $task->taskType->name;
@@ -235,18 +240,22 @@ class TaskProgress extends Component
                         $rawValue       = $display;
                         $modelClass     = \App\Models\Lot::class;
                         $modelAttribute = 'num_of_floors';
+                        $recordId       = $task->lot->id;
                         break;
                     case 'floor_area':
                         $display        = $task->lot->floor_area ?? '-';
                         $rawValue       = $display;
                         $modelClass     = \App\Models\Lot::class;
                         $modelAttribute = 'floor_area';
+                        $recordId       = $task->lot->id;
                         break;
                     case 'supervisor':
                         $display        = $task->lot->supervisor->name ?? '-';
                         $rawValue       = $task->lot->supervisor_id;
                         $modelClass     = \App\Models\Lot::class;
                         $modelAttribute = 'supervisor_id';
+                        $fieldType      = 'select';
+                        $recordId       = $task->lot->id;
                         break;
                     case 'is_extra':
                         $display        = $task->is_extra ? 'EPO' : 'Standard';
@@ -298,6 +307,7 @@ class TaskProgress extends Component
                     'modelAttribute' => $modelAttribute,
                     'optionKey'      => $optionKey,
                     'editable'       => $editable,
+                    'recordId'       => $recordId,
                     // include color for badges:
                     'color'          => $column['value'] === 'status'
                         ? $task->statusType->color

@@ -72,7 +72,7 @@
                                             wire:key="cell-{{ $row['id'] }}-{{ $column['value'] }}"
                                             x-on:dblclick="
                                                 $dispatch('editField', {
-                                                fieldId: {{ $row['id'] }},
+                                                fieldId: {{ $cell['recordId'] }},
                                                 currentValue: '{{ $cell['rawValue'] }}',
                                                 fieldType: '{{ $cell['fieldType'] }}',
                                                 optionKey: '{{ $cell['optionKey'] }}',
