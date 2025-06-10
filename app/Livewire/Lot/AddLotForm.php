@@ -40,9 +40,13 @@ class AddLotForm extends Component
 
     public bool $showSubdivisionInput = false;
     public string $newSubdivision = '';
+    public string $subdToggleTooltip = 'Create New Subdivision';
+    public string $subdToggleIcon = 'plus';
 
     public bool $showSupervisorInput = false;
     public string $newSupervisor = '';
+    public string $supervisorToggleTooltip = 'Create New Subdivision';
+    public string $supervisorToggleIcon = 'plus';
 
     public function rules(): array
     {
@@ -136,8 +140,12 @@ class AddLotForm extends Component
         $this->showSubdivisionInput = ! $this->showSubdivisionInput;
         if ($this->showSubdivisionInput) {
             $this->subdivision = null;
+            $this->subdToggleTooltip = 'Select Subdivision';
+            $this->subdToggleIcon = 'x-mark';
         } else {
             $this->newSubdivision = '';
+            $this->subdToggleTooltip = 'Create New Subdivision';
+            $this->subdToggleIcon = 'plus';
         }
     }
 
@@ -146,8 +154,12 @@ class AddLotForm extends Component
         $this->showSupervisorInput = ! $this->showSupervisorInput;
         if ($this->showSupervisorInput) {
             $this->supervisor_id = null;
+            $this->supervisorToggleTooltip = 'Create New Supervisor';
+            $this->supervisorToggleIcon = 'plus';
         } else {
             $this->newSupervisor = '';
+            $this->supervisorToggleTooltip = 'Create New Supervisor';
+            $this->supervisorToggleIcon = 'plus';
         }
     }
 

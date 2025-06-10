@@ -30,17 +30,16 @@
                     searchable
                     clearable
                 >
-                    <option disabled value="">— Select —</option>
                     @foreach($card1[0]['options'] as $opt)
                         <flux:select.option value="{{ $opt->id }}">{{ $opt->name }}</flux:select.option>
                     @endforeach
                 </flux:select>
 
                 {{-- Subdivision select or input --}}
-                @if(!$showSubdivisionInput)
-                    <div class="flex items-end gap-2">
+                <div class="flex items-end gap-2">
+                    @php $disabled = empty($card1[1]['options']); @endphp
+                    @if(!$showSubdivisionInput)
                         <div class="flex-1">
-                            @php $disabled = empty($card1[1]['options']); @endphp
                             <flux:select
                                 wire:key="subdivision-{{ $builder_id ?? 'none' }}"
                                 label="Subdivision"
@@ -51,22 +50,23 @@
                                 clearable
                                 :disabled="$disabled"
                             >
-                                <option disabled value="">— Select —</option>
-                                @foreach($card1[1]['options'] as $opt)
-                                    <flux:select.option value="{{ $opt->id }}">{{ $opt->name }}</flux:select.option>
-                                @endforeach
+                                    @foreach($card1[1]['options'] as $opt)
+                                        <flux:select.option value="{{ $opt->id }}">{{ $opt->name }}</flux:select.option>
+                                    @endforeach
                             </flux:select>
                         </div>
-                        <flux:button wire:click="toggleSubdivisionInput" size="sm" variant="ghost" icon="plus" :disabled="$disabled" />
-                    </div>
-                @else
-                    <flux:input
-                        label="Subdivision"
-                        wire:model.defer="newSubdivision"
-                        :error="$errors->first('subdivision')"
-                    />
-                @endif
-
+                    @else
+                            <div class="flex-1">
+                                <flux:input
+                                    label="Subdivision"
+                                    wire:model.defer="newSubdivision"
+                                    :error="$errors->first('subdivision')"
+                                />
+                            </div>
+                        
+                    @endif
+                    <flux:button :tooltip="$subdToggleTooltip" wire:click="toggleSubdivisionInput" size="sm" variant="ghost" :icon="$subdToggleIcon" :disabled="$disabled" />
+                </div>
                 {{-- Lot Number --}}
                 <flux:input
                     wire:key="lot_number-{{ $subdivision ?? 'none' }}"
@@ -92,40 +92,34 @@
                     :error="$errors->first('address')"
                 />
 
-                @php $disabled = empty($card2[2]['options']); @endphp
+                <div class="flex items-end gap-2">
                 @if(!$showSupervisorInput)
-                    <div class="flex items-end gap-2">
-                        <div class="flex-1">
-                            <flux:select
-                                wire:key="supervisor-{{ $builder_id ?? 'none' }}"
-                                label="Supervisor"
-                                variant="listbox"
-                                wire:model.live="supervisor_id"
-                                :error="$errors->first('supervisor_id')"
-                                searchable
-                                clearable
-                                :disabled="$disabled"
-                            >
-                                <option disabled value="">— Select —</option>
-                                @foreach($card2[2]['options'] as $opt)
-                                    <flux:select.option value="{{ $opt->id }}">{{ $opt->name }}</flux:select.option>
-                                @endforeach
-                            </flux:select>
-                        </div>
-                        <flux:button wire:click="toggleSupervisorInput" size="sm" variant="ghost" icon="plus" :disabled="$disabled" />
+                    <div class="flex-1">
+                        <flux:select
+                            wire:key="supervisor-{{ $builder_id ?? 'none' }}"
+                            label="Supervisor"
+                            variant="listbox"
+                            wire:model.live="supervisor_id"
+                            :error="$errors->first('supervisor_id')"
+                            searchable
+                            clearable
+                        >
+                            @foreach($card2[2]['options'] as $opt)
+                                <flux:select.option value="{{ $opt->id }}">{{ $opt->name }}</flux:select.option>
+                            @endforeach
+                        </flux:select>
                     </div>
                 @else
-                    <div class="flex items-end gap-2">
-                        <div class="flex-1">
-                            <flux:input
-                                label="Supervisor"
-                                wire:model.defer="newSupervisor"
-                                :error="$errors->first('newSupervisor')"
-                            />
-                        </div>
-                        <flux:button wire:click="toggleSupervisorInput" size="sm" variant="ghost" icon="x-mark" />
+                    <div class="flex-1">
+                        <flux:input
+                            label="Supervisor"
+                            wire:model.defer="newSupervisor"
+                            :error="$errors->first('newSupervisor')"
+                        />
                     </div>
                 @endif
+                <flux:button :tooltip="$supervisorToggleTooltip" wire:click="toggleSupervisorInput" size="sm" variant="ghost" :icon="$supervisorToggleIcon" />
+            </div>
             </flux:card>
         </div>
 
