@@ -78,7 +78,56 @@
         </div>
 
         {{-- Address / Supervisor / Phase --}}
-        <livewire:partials.cards :items="$card2" mode="add" />
+        <div>
+            <flux:card>
+                <flux:input
+                    label="Phase"
+                    wire:model.defer="phase"
+                    :error="$errors->first('phase')"
+                />
+
+                <flux:input
+                    label="Address"
+                    wire:model.defer="address"
+                    :error="$errors->first('address')"
+                />
+
+                @php $disabled = empty($card2[2]['options']); @endphp
+                @if(!$showSupervisorInput)
+                    <div class="flex items-end gap-2">
+                        <div class="flex-1">
+                            <flux:select
+                                wire:key="supervisor-{{ $builder_id ?? 'none' }}"
+                                label="Supervisor"
+                                variant="listbox"
+                                wire:model.live="supervisor_id"
+                                :error="$errors->first('supervisor_id')"
+                                searchable
+                                clearable
+                                :disabled="$disabled"
+                            >
+                                <option disabled value="">— Select —</option>
+                                @foreach($card2[2]['options'] as $opt)
+                                    <flux:select.option value="{{ $opt->id }}">{{ $opt->name }}</flux:select.option>
+                                @endforeach
+                            </flux:select>
+                        </div>
+                        <flux:button wire:click="toggleSupervisorInput" size="sm" variant="ghost" icon="plus" :disabled="$disabled" />
+                    </div>
+                @else
+                    <div class="flex items-end gap-2">
+                        <div class="flex-1">
+                            <flux:input
+                                label="Supervisor"
+                                wire:model.defer="newSupervisor"
+                                :error="$errors->first('newSupervisor')"
+                            />
+                        </div>
+                        <flux:button wire:click="toggleSupervisorInput" size="sm" variant="ghost" icon="x-mark" />
+                    </div>
+                @endif
+            </flux:card>
+        </div>
 
         {{-- Floor Number and SQFT --}}
         <livewire:partials.cards :items="$card3" mode="add" />
