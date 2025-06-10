@@ -69,3 +69,4 @@ If you want to use Laravel Horizon you only need to:
 Set `QUEUE_CONNECTION=redis` in your .env file
 2. Run `$ ./docker/sail artisan horizon`
 
+

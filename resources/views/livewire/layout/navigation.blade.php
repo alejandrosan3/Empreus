@@ -6,6 +6,7 @@
                 <x-add-button :type="$currentAddable" />
             @endif
 
+
             @if($showFilters)
             <!-- "Filters" button -->
             <flux:modal.trigger name="filters">

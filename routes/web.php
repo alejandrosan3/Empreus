@@ -8,7 +8,7 @@ use App\Livewire\Supervisors\{CreateSupervisor, ListSupervisor};
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Auth;
 use App\Livewire\Lot\{LotProgress, AddLotForm};
-use App\Livewire\Task\{TaskProgress, AddTaskForm} ;
+use App\Livewire\Task\{TaskProgress, AddTaskForm, TaskScheduler} ;
 use App\Livewire\Pages\{LotDetails, TaskDetails};
 use App\Models\Task;
 
@@ -78,6 +78,11 @@ Route::middleware(['auth', 'verified', SetCurrentCompany::class])
                 ->name('task-progress')
                 ->defaults('label', 'Tasks Progress')
                 ->defaults('icon', 'queue-list');
+
+            Route::get('task-scheduler', TaskScheduler::class)
+                ->name('task-scheduler')
+                ->defaults('label', 'Task Scheduler')
+                ->defaults('icon', 'calendar-days');
 
             Route::get('/lots/{lot_id}/details', LotDetails::class)
                 ->name('lot-details')

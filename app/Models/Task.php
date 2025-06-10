@@ -39,6 +39,11 @@ class Task extends Model
         return $this->belongsTo(Company::class);
     }
 
+    public function scopeByStatus($query, int $statusId)
+    {
+        return $query->where('status_type_id', $statusId);
+    }
+
     public function taskType(): BelongsTo
     {
         return $this->belongsTo(TaskType::class);
