@@ -41,6 +41,9 @@ class AddLotForm extends Component
     public bool $showSubdivisionInput = false;
     public string $newSubdivision = '';
 
+    public bool $showSupervisorInput = false;
+    public string $newSupervisor = '';
+
     public function rules(): array
     {
         return [
@@ -54,7 +57,8 @@ class AddLotForm extends Component
                     ->where('company_id',  $this->companyId)
                 ),
             ],
-            'supervisor_id'=> 'required|integer',
+            'supervisor_id'=> $this->showSupervisorInput ? 'nullable|integer' : 'required|integer',
+            'newSupervisor' => $this->showSupervisorInput ? 'required|string|max:255' : 'nullable',
         ];
     }
 
@@ -65,6 +69,7 @@ class AddLotForm extends Component
         'lot_number.unique'     => 'This lot already exists for this builder / subdivision.',
         'address.required'      => 'Address is required.',
         'supervisor_id.required'=> 'Pick a supervisor.',
+        'newSupervisor.required'=> 'Enter supervisor name.',
     ];
 
     
@@ -136,6 +141,16 @@ class AddLotForm extends Component
         }
     }
 
+    public function toggleSupervisorInput(): void
+    {
+        $this->showSupervisorInput = ! $this->showSupervisorInput;
+        if ($this->showSupervisorInput) {
+            $this->supervisor_id = null;
+        } else {
+            $this->newSupervisor = '';
+        }
+    }
+
     public function updatedBuilderId($builderId): void
     {
         $this->subdivisions = Cache::rememberForever(
@@ -176,6 +191,10 @@ class AddLotForm extends Component
                 $this->subdivision = $this->newSubdivision;
             }
 
+            if ($this->showSupervisorInput && !empty($this->newSupervisor)) {
+                // validation will ensure name is provided
+            }
+
             $this->validate();
         } catch (ValidationException $e)
         {
@@ -193,6 +212,14 @@ class AddLotForm extends Component
             ->where('builder_id', $this->builder_id)
             ->where('subdivision', $this->subdivision)
             ->exists();
+
+        if ($this->showSupervisorInput && !empty($this->newSupervisor)) {
+            $supervisor = Supervisor::firstOrCreate(['name' => $this->newSupervisor]);
+            if ($supervisor->wasRecentlyCreated) {
+                CacheInvalidationService::forNewSupervisor($this->companyId);
+            }
+            $this->supervisor_id = $supervisor->id;
+        }
 
         /* Create the lot */
         $lot = Lot::create([
@@ -227,6 +254,7 @@ class AddLotForm extends Component
             'builder_id', 'subdivision', 'lot_number',
             'address', 'supervisor_id', 'phase',
             'newSubdivision', 'showSubdivisionInput',
+            'newSupervisor', 'showSupervisorInput',
         ]);
 
         return $this->goBack();
