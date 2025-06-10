@@ -40,17 +40,7 @@ class EditableModal extends Component
     }
 
     public function editField($fieldId, $currentValue, $fieldType = 'input', $optionKey = null, $modelClass = null, $modelAttribute = 'content', $editable=true)
-    {
-        $this->reset([
-            'fieldValue',
-            'fieldId',
-            'fieldType',
-            'selectOptions',
-            'modelClass',
-            'modelAttribute',
-            'editable',
-          ]);
-           
+    { 
         $companyId = session('company_id');
         if(!$editable){
             $this->notEditableActions();
@@ -105,9 +95,6 @@ class EditableModal extends Component
                 'supervisor_id'    => 'nullable|exists:supervisors,id',
 
                 // inputs
-                'name'             => 'required|string|max:255',
-                'email'            => 'nullable|email|max:255',
-                'phone'            => 'nullable|numeric',
                 'lot_number'       => 'required|string|min:1',
                 'address'          => 'nullable|string',
                 'description'      => 'nullable|string',
@@ -115,14 +102,14 @@ class EditableModal extends Component
                 // numbers
                 'num_of_floors'    => 'required|integer',
                 'floor_area'       => 'required|numeric',
+                'price'            => 'required|numeric',
 
                 // dates (optional—you can skip if you’re certain the picker always gives valid Y-m-d)
                 'scheduled_start_date' => 'nullable|date',
-                'ended_at'             => 'nullable|date',
-                'started_at'           => 'nullable|date',
-                'scheduled_end_date'   => 'nullable|date',
+                'ended_at'            => 'nullable|date',
+                "started_at"           => 'nullable|date',
+                "scheduled_end_date"   => 'nullable|date',
 
-                default            => 'required',
             },
         ];
     }
@@ -138,11 +125,9 @@ class EditableModal extends Component
             'fieldValue.in'       => 'Invalid choice selected.',
             'fieldValue.string'   => 'Must be text.',
             'fieldValue.min'      => 'Must be at least :min character.',
-            'fieldValue.max'      => 'Must not exceed :max characters.',
             'fieldValue.integer'  => 'Must be a whole number.',
             'fieldValue.numeric'  => 'Must be a valid number.',
             'fieldValue.date'     => 'Must be a valid date.',
-            'fieldValue.email'    => 'Must be a valid email.',
         ];
     }
 
@@ -168,7 +153,9 @@ class EditableModal extends Component
             return;
         }
         $model = $this->modelClass;
+        
         $record = $model::findOrFail($this->fieldId);
+        
 
         // transform empty String to null for select fields
         $value = $this->fieldValue;
@@ -194,15 +181,7 @@ class EditableModal extends Component
                 ]);
             }
         }
-
-        if ($model == \App\Models\Lot::class && $this->modelAttribute === 'subdivision') {
-            $old = $record->subdivision;
-            $model::where('company_id', $record->company_id)
-                ->where('subdivision', $old)
-                ->update(['subdivision' => $value]);
-        } else {
-            $record->update([$this->modelAttribute => $value]);
-        }
+        $record->update([ $this->modelAttribute => $value,]);
 
         $this->showModal = false;
 
@@ -210,6 +189,15 @@ class EditableModal extends Component
 
         $this->dispatch('contentUpdated');
 
+        $this->reset([
+            'fieldValue',
+            'fieldId',
+            'fieldType',
+            'selectOptions',
+            'modelClass',
+            'modelAttribute',
+            'editable',
+          ]);
         return;
     }
 

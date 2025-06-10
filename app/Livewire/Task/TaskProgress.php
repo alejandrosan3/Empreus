@@ -260,6 +260,7 @@ class TaskProgress extends Component
                     case 'is_extra':
                         $display        = $task->is_extra ? 'EPO' : 'Standard';
                         $rawValue       = $task->is_extra;
+                        $fieldType      = 'select';
                         break;
                     case 'notes':
                         $latestNote     = $task->taskNotes->first();
