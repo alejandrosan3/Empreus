@@ -8,9 +8,7 @@ use Livewire\Component;
 use Livewire\WithPagination;
 use Livewire\Attributes\On;
 use Livewire\Attributes\Computed;
-use Illuminate\Support\Facades\Cache;
-
-use Flux\Flux;
+use App\Services\FilterOptionsService;
 
 class TaskProgress extends Component
 {
@@ -147,31 +145,9 @@ class TaskProgress extends Component
 
     private function applyTaskFilters($query): void
     {
-        if (!empty($this->selectedBuilders)) {
-            $query->whereHas('lot.builder', function ($q) {
-                $q->whereIn('name', $this->selectedBuilders);
-            });
-        }
-
-        if (!empty($this->selectedSubdivisions)) {
-            $query->whereHas('lot', function ($q) {
-                $q->where(function ($q2) {
-                    foreach ($this->selectedSubdivisions as $filter) {
-                        [$subdivision, $phase] = explode('|', $filter);
-                        $q2->orWhere(function ($q3) use ($subdivision, $phase) {
-                            $q3->where('subdivision', $subdivision)
-                                ->where('phase', $phase);
-                        });
-                    }
-                });
-            });
-        }
-
-        if (!empty($this->selectedLots)) {
-            $query->whereHas('lot', function ($q) {
-                $q->whereIn('lots.lot_number', $this->selectedLots);
-            });
-        }
+        $query->filterByBuilders($this->selectedBuilders)
+            ->filterBySubdivisions($this->selectedSubdivisions)
+            ->filterByLots($this->selectedLots);
     }
 
     #[Computed]
@@ -378,128 +354,17 @@ class TaskProgress extends Component
     #[On('company-updated')]
     public function dispatchFilters()
     {
-        $companyId = Auth::id();
-        $ttl       = 300; // cache TTL in seconds
-
-        // Shorthand for your three filter arrays
-        $bFilters = $this->selectedBuilders;
-        $sFilters = $this->selectedSubdivisions;
-        $lFilters = $this->selectedLots;
-
-        //
-        // 1) BUILDERS LIST — cache keyed by [subdivisions, lots]
-        //
-        $builders = Cache::remember(
-            "taskProgress:{$companyId}:builders:" . md5(json_encode([$sFilters, $lFilters])),
-            $ttl,
-            function () use ($sFilters, $lFilters) {
-                $q = Auth::user()->tasksForCurrentCompany();
-
-                // apply only subdivisions & lots filters
-                if (!empty($sFilters)) {
-                    $q->whereHas('lot', fn($q) =>
-                        $q->where(function ($q2) use ($sFilters) {
-                            foreach ($sFilters as $filter) {
-                                [$sub, $ph] = explode('|', $filter);
-                                $q2->orWhere(fn($q3) =>
-                                    $q3->where('subdivision', $sub)
-                                    ->where('phase',       $ph)
-                                );
-                            }
-                        })
-                    );
-                }
-                if (!empty($lFilters)) {
-                    $q->whereHas('lot', fn($q) =>
-                        $q->whereIn('lot_number', $lFilters)
-                    );
-                }
-
-                return $q->join('lots',     'tasks.lot_id',       '=', 'lots.id')
-                        ->join('builders', 'lots.builder_id',    '=', 'builders.id')
-                        ->distinct()
-                        ->orderBy('builders.name', 'asc')
-                        ->pluck('builders.name')
-                        ->toArray();
-            }
+        $service  = app(\App\Services\FilterOptionsService::class);
+        $options  = $service->taskOptions(
+            $this->selectedBuilders,
+            $this->selectedSubdivisions,
+            $this->selectedLots
         );
 
-        //
-        // 2) SUBDIVISIONS LIST — cache keyed by [builders, lots]
-        //
-        $subdivisions = Cache::remember(
-            "taskProgress:{$companyId}:subdivisions:" . md5(json_encode([$bFilters, $lFilters])),
-            $ttl,
-            function () use ($bFilters, $lFilters) {
-                $q = Auth::user()->tasksForCurrentCompany();
-
-                // apply only builders & lots filters
-                if (!empty($bFilters)) {
-                    $q->whereHas('lot.builder', fn($q) =>
-                        $q->whereIn('name', $bFilters)
-                    );
-                }
-                if (!empty($lFilters)) {
-                    $q->whereHas('lot', fn($q) =>
-                        $q->whereIn('lot_number', $lFilters)
-                    );
-                }
-
-                return $q->join('lots', 'tasks.lot_id', '=', 'lots.id')
-                        ->select('lots.subdivision','lots.phase')
-                        ->groupBy('lots.subdivision','lots.phase')
-                        ->orderBy('lots.subdivision','asc')
-                        ->get()
-                        ->map(fn($item) => [
-                            'value' => "{$item->subdivision}|{$item->phase}",
-                            'label' => $item->subdivision.($item->phase ? " ({$item->phase})" : ''),
-                        ])
-                        ->toArray();
-            }
-        );
-
-        //
-        // 3) LOT NUMBERS — cache keyed by [builders, subdivisions]
-        //
-        $lots = Cache::remember(
-            "taskProgress:{$companyId}:lots:" . md5(json_encode([$bFilters, $sFilters])),
-            $ttl,
-            function () use ($bFilters, $sFilters) {
-                $q = Auth::user()->tasksForCurrentCompany();
-
-                // apply only builders & subdivisions filters
-                if (!empty($bFilters)) {
-                    $q->whereHas('lot.builder', fn($q) =>
-                        $q->whereIn('name', $bFilters)
-                    );
-                }
-                if (!empty($sFilters)) {
-                    $q->whereHas('lot', fn($q) =>
-                        $q->where(function ($q2) use ($sFilters) {
-                            foreach ($sFilters as $filter) {
-                                [$sub, $ph] = explode('|', $filter);
-                                $q2->orWhere(fn($q3) =>
-                                    $q3->where('subdivision', $sub)
-                                    ->where('phase',       $ph)
-                                );
-                            }
-                        })
-                    );
-                }
-
-                return $q->join('lots', 'tasks.lot_id', '=', 'lots.id')
-                        ->distinct()
-                        ->orderBy('lots.lot_number','asc')
-                        ->pluck('lots.lot_number')
-                        ->toArray();
-            }
-        );
-
-        // Finally, dispatch exactly as before:
         $this->dispatch('filters-updated',
-            builders:    $builders,
-            subdivisions:$subdivisions,
-            lots:        $lots,
+            builders:     $options['builders'],
+            subdivisions: $options['subdivisions'],
+            lots:         $options['lots'],
         );
 
         $this->resetPage();
