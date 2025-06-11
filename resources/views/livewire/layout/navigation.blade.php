@@ -15,7 +15,7 @@
             </flux:modal.trigger>
 
             <flux:modal name="filters" class="md:w-96 space-y-6">
-                <div class=>
+                <div class="">
                     <flux:heading size="lg">Filters</flux:heading>
                     <flux:subheading>Set the desired filter. Leave blank to ignore.</flux:subheading>
                 </div>

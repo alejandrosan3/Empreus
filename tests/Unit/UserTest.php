@@ -31,6 +31,9 @@ class UserTest extends TestCase
 
         // Set default company context
         session(['company_id' => $this->company1->id]);
+
+        $this->seed(\Database\Seeders\StatusTypeSeeder::class);
+        $this->seed(\Database\Seeders\TaskTypeSeeder::class);
     }
 
     /**
