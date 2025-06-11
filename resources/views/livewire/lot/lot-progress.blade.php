@@ -136,6 +136,88 @@
                                             </flux:table.cell>
                                             @break
 
+                                        @case('address')
+                                            @php $raw = $lot->address ?? ''; @endphp
+                                            <flux:table.cell
+                                            class="bg-white dark:bg-zinc-800 {{ $column['group'] == 'fixed' ? 'sticky z-10' : '' }}"
+                                            data-fixed-index=" {{ $column['group'] == 'fixed' ? $loop->index : '' }}"
+                                            x-on:dblclick="
+                                                $dispatch('editField', {
+                                                    fieldId:        {{ $lot->id }},
+                                                    currentValue:   '{{ $raw }}',
+                                                    fieldType:      'input',
+                                                    optionKey:      '',
+                                                    modelClass:     '{{ addslashes(\App\Models\Lot::class) }}',
+                                                    modelAttribute: 'address',
+                                                    editable:       true
+                                                })"
+                                            >
+                                                {{ $lot->address ?? '-' }}
+                                            </flux:table.cell>
+                                            @break
+
+                                        @case('phase')
+                                            @php $raw = $lot->phase ?? ''; @endphp
+                                            <flux:table.cell
+                                            class="bg-white dark:bg-zinc-800 {{ $column['group'] == 'fixed' ? 'sticky z-10' : '' }}"
+                                            data-fixed-index=" {{ $column['group'] == 'fixed' ? $loop->index : '' }}"
+                                            x-on:dblclick="
+                                                $dispatch('editField', {
+                                                    fieldId:        {{ $lot->id }},
+                                                    currentValue:   '{{ $raw }}',
+                                                    fieldType:      'input',
+                                                    optionKey:      '',
+                                                    modelClass:     '{{ addslashes(\App\Models\Lot::class) }}',
+                                                    modelAttribute: 'phase',
+                                                    editable:       true
+                                                })"
+                                            >
+                                                {{ $lot->phase ?? '-' }}
+                                            </flux:table.cell>
+                                            @break
+
+                                        @case('supervisor')
+                                            @php $raw = $lot->supervisor_id ?? ''; @endphp
+                                            <flux:table.cell
+                                            class="bg-white dark:bg-zinc-800 {{ $column['group'] == 'fixed' ? 'sticky z-10' : '' }}"
+                                            data-fixed-index=" {{ $column['group'] == 'fixed' ? $loop->index : '' }}"
+                                            x-on:dblclick="
+                                                $dispatch('editField', {
+                                                    fieldId:        {{ $lot->id }},
+                                                    currentValue:   '{{ $raw }}',
+                                                    fieldType:      'select',
+                                                    optionKey:      'supervisors',
+                                                    modelClass:     '{{ addslashes(\App\Models\Lot::class) }}',
+                                                    modelAttribute: 'supervisor_id',
+                                                    editable:       true
+                                                })"
+                                            >
+                                                {{ $lot->supervisor->name ?? '-' }}
+                                            </flux:table.cell>
+                                            @break
+
+
+                                        @case('floor_area')
+                                            @php $raw = $lot->floor_area ?? ''; @endphp
+                                            <flux:table.cell
+                                            class="bg-white dark:bg-zinc-800 {{ $column['group'] == 'fixed' ? 'sticky z-10' : '' }}"
+                                            data-fixed-index=" {{ $column['group'] == 'fixed' ? $loop->index : '' }}"
+                                            x-on:dblclick="
+                                                $dispatch('editField', {
+                                                    fieldId:        {{ $lot->id }},
+                                                    currentValue:   '{{ $raw }}',
+                                                    fieldType:      'input',
+                                                    optionKey:      '',
+                                                    modelClass:     '{{ addslashes(\App\Models\Lot::class) }}',
+                                                    modelAttribute: 'floor_area',
+                                                    editable:       true
+                                                })"
+                                            >
+                                                {{ $lot->floor_area ?? '-' }}
+                                            </flux:table.cell>
+                                            @break
+
+
                                         @case('epo')
                                             <flux:table.cell
                                             class="bg-white dark:bg-zinc-800{{ $column['group'] == 'fixed' ? 'sticky z-10' : '' }}"

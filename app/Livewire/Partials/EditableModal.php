@@ -109,6 +109,7 @@ class EditableModal extends Component
                 'ended_at'            => 'nullable|date',
                 "started_at"           => 'nullable|date',
                 "scheduled_end_date"   => 'nullable|date',
+                'phase'               => 'nullable|string',
 
             },
         ];
