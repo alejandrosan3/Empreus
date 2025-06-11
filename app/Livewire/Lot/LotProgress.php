@@ -155,6 +155,7 @@
         #[On('company-updated')]
         public function dispatchFilters()
         {
+
             $service  = app(FilterOptionsService::class);
             $options  = $service->lotOptions(
                 $this->selectedBuilders,
@@ -249,6 +250,12 @@
          */
         public function mount()
         {
+
+            if (!empty($this->selectedBuilders) && !is_numeric($this->selectedBuilders[0])) {
+                $this->selectedBuilders = \App\Models\Builder::whereIn('name', $this->selectedBuilders)
+                    ->pluck('id')
+                    ->toArray();
+            }
 
             $this->columns = [
                 // Fixed columns (always selected)
