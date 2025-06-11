@@ -145,6 +145,7 @@ class TaskProgress extends Component
 
     private function applyTaskFilters($query): void
     {
+
         $query->filterByBuilders($this->selectedBuilders)
             ->filterBySubdivisions($this->selectedSubdivisions)
             ->filterByLots($this->selectedLots);
@@ -352,6 +353,12 @@ class TaskProgress extends Component
      * Dispatch filter options for the toolbar dropdowns.
      */
     #[On('company-updated')]
+    public function clearCacheAndDispatch()
+    {
+        Cache::flush();
+        $this->dispatchFilters();
+    }
+
     public function dispatchFilters()
     {
         $service  = app(\App\Services\FilterOptionsService::class);
@@ -414,6 +421,12 @@ class TaskProgress extends Component
      */
     public function mount()
     {
+        if (!empty($this->selectedBuilders) && !is_numeric($this->selectedBuilders[0])) {
+            $this->selectedBuilders = \App\Models\Builder::whereIn('name', $this->selectedBuilders)
+                ->pluck('id')
+                ->toArray();
+        }
+
         $this->columns = [
             ['id' => 1,  'label' => 'Builder',         'value' => 'builder',         'group' => 'fixed',  'selected' => true,  'sortable' => true, 'editable' => false],
             ['id' => 2,  'label' => 'Subdivision',     'value' => 'subdivision',     'group' => 'fixed',  'selected' => true,  'sortable' => true, 'editable' => false],

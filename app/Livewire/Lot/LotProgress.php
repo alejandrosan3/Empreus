@@ -250,6 +250,12 @@
         public function mount()
         {
 
+            if (!empty($this->selectedBuilders) && !is_numeric($this->selectedBuilders[0])) {
+                $this->selectedBuilders = \App\Models\Builder::whereIn('name', $this->selectedBuilders)
+                    ->pluck('id')
+                    ->toArray();
+            }
+
             $this->columns = [
                 // Fixed columns (always selected)
                 ['id' => 1, 'label' => 'Builder', 'value' => 'builder', 'group' => 'fixed', 'selected' => true, 'sortable' => true, 'editable'=> false],
