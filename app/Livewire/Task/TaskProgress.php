@@ -207,8 +207,8 @@ class TaskProgress extends Component
                         $recordId       = $task->lot->id;
                         break;
                     case 'subdivision':
-                        $display        = $task->lot->subdivision;
-                        $rawValue       = $display;
+                        $display        = $task->lot->subdivision . ($task->lot->phase ? " ({$task->lot->phase})" : '');
+                        $rawValue       = $task->lot->subdivision;
                         $modelClass     = \App\Models\Lot::class;
                         $modelAttribute = 'subdivision';
                         $recordId       = $task->lot->id;
