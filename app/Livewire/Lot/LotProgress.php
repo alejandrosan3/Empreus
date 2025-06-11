@@ -125,11 +125,11 @@
 
         private function applyLotFilters($query): void
         {
-            if (!empty($this->selectedBuilders)) {
-                $query->whereHas('builder', function ($q) {
-                    $q->whereIn('name', $this->selectedBuilders);
-                });
-            }
+        if (!empty($this->selectedBuilders)) {
+            $query->whereHas('builder', function ($q) {
+                $q->whereIn('id', $this->selectedBuilders);
+            });
+        }
 
             if (!empty($this->selectedSubdivisions)) {
                 $query->where(function ($q) {
@@ -176,7 +176,7 @@
 
             if (!empty($this->selectedBuilders)) {
                 $query->whereHas('builder', function ($q) {
-                    $q->whereIn('name', $this->selectedBuilders);
+                    $q->whereIn('id', $this->selectedBuilders);
                 });
             }
             if (!empty($this->selectedSubdivisions)) {
@@ -198,9 +198,15 @@
             // For re-populating select options
             $builders = $query->clone()
                 ->join('builders', 'lots.builder_id', '=', 'builders.id')
+                ->select('builders.id','builders.name')
                 ->distinct()
                 ->orderby('builders.name', 'asc')
-                ->pluck('builders.name');
+                ->get()
+                ->map(fn($b) => [
+                    'value' => $b->id,
+                    'label' => $b->name,
+                ])
+                ->toArray();
 
             $subdivisions = $query->clone()
                 ->select('subdivision', 'phase')
@@ -311,6 +317,12 @@
          */
         public function mount()
         {
+
+            if (!empty($this->selectedBuilders) && !is_numeric($this->selectedBuilders[0])) {
+                $this->selectedBuilders = \App\Models\Builder::whereIn('name', $this->selectedBuilders)
+                    ->pluck('id')
+                    ->toArray();
+            }
 
             $this->columns = [
                 // Fixed columns (always selected)
