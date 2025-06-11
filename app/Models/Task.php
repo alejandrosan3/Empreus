@@ -29,6 +29,41 @@ class Task extends Model
         'original_task_name',
     ];
 
+    public function scopeFilterByBuilders($query, array $builders = [])
+    {
+        if (!empty($builders)) {
+            $query->whereHas('lot.builder', fn($q) => $q->whereIn('name', $builders));
+        }
+
+        return $query;
+    }
+
+    public function scopeFilterBySubdivisions($query, array $subdivisions = [])
+    {
+        if (!empty($subdivisions)) {
+            $query->whereHas('lot', function ($q) use ($subdivisions) {
+                $q->where(function ($q2) use ($subdivisions) {
+                    foreach ($subdivisions as $filter) {
+                        [$sub, $phase] = explode('|', $filter);
+                        $q2->orWhere(fn($q3) => $q3->where('subdivision', $sub)
+                            ->where('phase', $phase));
+                    }
+                });
+            });
+        }
+
+        return $query;
+    }
+
+    public function scopeFilterByLots($query, array $lots = [])
+    {
+        if (!empty($lots)) {
+            $query->whereHas('lot', fn($q) => $q->whereIn('lot_number', $lots));
+        }
+
+        return $query;
+    }
+
     public function lot()
     {
         return $this->belongsTo(Lot::class);
