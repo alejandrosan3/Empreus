@@ -103,6 +103,10 @@
                     ->orderBy('status_types.name', $this->sortDirection);
             } elseif ($this->sortBy === 'lot_number') {
                 $query->orderByRaw("CAST(lot_number AS UNSIGNED) {$this->sortDirection}, lot_number ASC");
+            } elseif ($this->sortBy === 'supervisor') {
+                $query
+                    ->join('supervisors', 'lots.supervisor_id', '=', 'supervisors.id')
+                    ->orderBy('supervisors.name', $this->sortDirection);
             } elseif ($this->sortBy === 'last_completed_date') {
                 $query
                     ->select('lots.*')
@@ -318,6 +322,13 @@
                 ['id' => 5, 'label' => 'Last Completed Task', 'value' => 'last_completed_date', 'group' => 'active', 'selected' => true, 'sortable' => true, 'editable'=> false],
                 ['id' => 6, 'label' => 'Standard Tasks', 'value' => 'standard_po', 'group' => 'active', 'selected' => true, 'sortable' => false, 'editable'=> false],
                 ['id' => 7, 'label' => 'EPOs', 'value' => 'epo', 'group' => 'active', 'selected' => true, 'sortable' => false, 'editable'=> false],
+                // Additional columns hidden by default
+                ['id' => 8,  'label' => 'Address',            'value' => 'address',            'group' => 'active', 'selected' => false, 'sortable' => true,  'editable'=> true],
+                ['id' => 9,  'label' => 'Phase',              'value' => 'phase',              'group' => 'active', 'selected' => false, 'sortable' => true,  'editable'=> true],
+                ['id' => 10, 'label' => 'Supervisor',         'value' => 'supervisor',         'group' => 'active', 'selected' => false, 'sortable' => true,  'editable'=> true],
+                ['id' => 11, 'label' => 'Status',             'value' => 'status',             'group' => 'active', 'selected' => false, 'sortable' => true,  'editable'=> true],
+                ['id' => 12, 'label' => 'SQ FT',              'value' => 'floor_area',         'group' => 'active', 'selected' => false, 'sortable' => true,  'editable'=> true],
+                ['id' => 13, 'label' => 'Original Task Name', 'value' => 'original_task_name', 'group' => 'active', 'selected' => false, 'sortable' => false, 'editable'=> false],
             ];
 
             // Dispatch initial filters when the component loads

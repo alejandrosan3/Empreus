@@ -117,6 +117,9 @@ class TaskProgress extends Component
             $query->join('lots', 'tasks.lot_id', '=', 'lots.id')
                   ->join('supervisors', 'lots.supervisor_id', '=', 'supervisors.id')
                   ->orderBy('supervisors.name', $this->sortDirection);
+        } elseif ($this->sortBy === 'phase') {
+            $query->join('lots', 'tasks.lot_id', '=', 'lots.id')
+                  ->orderBy('lots.phase', $this->sortDirection);
         } elseif ($this->sortBy === 'task_type') {
             // Sorting by task type (from task_types table)
             $query->join('task_types', 'tasks.task_type_id', '=', 'task_types.id')
@@ -274,6 +277,25 @@ class TaskProgress extends Component
                         $rawValue       = $display;
                         $fieldType      = 'date';
                         $modelAttribute = 'scheduled_start_date';
+                        break;
+                    case 'scheduled_end_date':
+                        $display        = $task->scheduled_end_date;
+                        $rawValue       = $display;
+                        $fieldType      = 'date';
+                        $modelAttribute = 'scheduled_end_date';
+                        break;
+                    case 'started_at':
+                        $display        = $task->started_at;
+                        $rawValue       = $display;
+                        $fieldType      = 'date';
+                        $modelAttribute = 'started_at';
+                        break;
+                    case 'phase':
+                        $display        = $task->lot->phase;
+                        $rawValue       = $display;
+                        $modelClass     = \App\Models\Lot::class;
+                        $modelAttribute = 'phase';
+                        $recordId       = $task->lot->id;
                         break;
                     case 'ended_at':
                         $display        = $task->ended_at;
@@ -539,10 +561,13 @@ class TaskProgress extends Component
             ['id' => 9,  'label' => 'Supervisor',      'value' => 'supervisor',      'group' => 'active', 'selected' => true,  'sortable' => true, 'editable' => true],
             ['id' => 10, 'label' => 'Purchase Order',  'value' => 'order_number',  'group' => 'active', 'selected' => true,  'sortable' => true, 'editable' => true],
             ['id' => 11, 'label' => 'Planned Start',   'value' => 'scheduled_start_date',   'group' => 'active', 'selected' => true,  'sortable' => true, 'editable' => true],
-            ['id' => 12, 'label' => 'Address',         'value' => 'address',         'group' => 'active', 'selected' => true,  'sortable' => true, 'editable' => true],
+            ['id' => 12, 'label' => 'Address',         'value' => 'address',         'group' => 'active', 'selected' => false, 'sortable' => true, 'editable' => true],
             ['id' => 13, 'label' => 'Price',           'value' => 'price',           'group' => 'active', 'selected' => true,  'sortable' => true, 'editable' => true],
             ['id' => 14, 'label' => 'Completion Date', 'value' => 'ended_at', 'group' => 'active', 'selected' => true,  'sortable' => true, 'editable' => true],
-            ['id' => 15, 'label' => 'Order Type', 'value' => 'is_extra', 'group' => 'active', 'selected' => true,  'sortable' => true, 'editable' => true],
+            ['id' => 15, 'label' => 'Order Type',      'value' => 'is_extra',         'group' => 'active', 'selected' => true,  'sortable' => true, 'editable' => true],
+            ['id' => 16, 'label' => 'Start Date',      'value' => 'started_at',       'group' => 'active', 'selected' => false, 'sortable' => true, 'editable' => true],
+            ['id' => 17, 'label' => 'Planned End',     'value' => 'scheduled_end_date','group' => 'active', 'selected' => false, 'sortable' => true, 'editable' => true],
+            ['id' => 18, 'label' => 'Phase',           'value' => 'phase',             'group' => 'active', 'selected' => false, 'sortable' => true, 'editable' => true],
         ];
 
         $this->dispatchFilters();
