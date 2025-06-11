@@ -40,16 +40,43 @@
 
 
         /**
-         * Triggered by "Save changes" button in the Blade (wire:click="applyGlobalFilters").
-         * Dispatches "global-filters-updated" so LotProgress or other components can update.
+         * Dispatches the "global-filters-updated" event with the current filter
+         * selections so other components can react instantly.
          */
         public function applyGlobalFilters()
-        {   
+        {
             $this->dispatch('global-filters-updated', [
                 'builders' => $this->selectedBuilders,
                 'subdivisions' => $this->selectedSubdivisions,
                 'lots' => $this->selectedLots,
             ]);
+        }
+
+        /**
+         * Automatically apply filters whenever the selected Builders list is
+         * updated.
+         */
+        public function updatedSelectedBuilders()
+        {
+            $this->applyGlobalFilters();
+        }
+
+        /**
+         * Automatically apply filters whenever the selected Subdivisions list is
+         * updated.
+         */
+        public function updatedSelectedSubdivisions()
+        {
+            $this->applyGlobalFilters();
+        }
+
+        /**
+         * Automatically apply filters whenever the selected Lots list is
+         * updated.
+         */
+        public function updatedSelectedLots()
+        {
+            $this->applyGlobalFilters();
         }
 
         public function resetFilters($choice="all")
