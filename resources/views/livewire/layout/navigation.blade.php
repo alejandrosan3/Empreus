@@ -20,18 +20,37 @@
                     <flux:subheading>Set the desired filter. Leave blank to ignore.</flux:subheading>
                 </div>
 
-                <!-- Reset all filters section -->
-
+                <!-- Display currently applied filters -->
                 @if ( !empty( $selectedBuilders ) || !empty( $selectedSubdivisions ) || !empty( $selectedLots ) )
-                    <div class="filter-alert bg-slate-100 dark:bg-zinc-600 w-full">
-                    <flux:button variant="ghost" icon="x-mark" wire:click="resetFilters('all')" class="dark:text-black">Remove All Filters</flux:button>
+                    <div class="flex flex-wrap gap-2 mb-2">
+                        @if(!empty($selectedBuilders))
+                            <flux:badge color="blue">
+                                Builders: {{ implode(', ', $selectedBuilders) }}
+                                <flux:badge.close wire:click="resetFilters('builders')" />
+                            </flux:badge>
+                        @endif
+                        @if(!empty($selectedSubdivisions))
+                            <flux:badge color="green">
+                                Subdivisions: {{ collect($selectedSubdivisions)->implode(', ') }}
+                                <flux:badge.close wire:click="resetFilters('subdivisions')" />
+                            </flux:badge>
+                        @endif
+                        @if(!empty($selectedLots))
+                            <flux:badge color="amber">
+                                Lots: {{ implode(', ', $selectedLots) }}
+                                <flux:badge.close wire:click="resetFilters('lots')" />
+                            </flux:badge>
+                        @endif
+                        <flux:badge color="slate" variant="solid">
+                            Clear All
+                            <flux:badge.close wire:click="resetFilters('all')" />
+                        </flux:badge>
                     </div>
                 @endif
 
                 <!-- Builders Select -->
 
                 <flux:select multiple searchable clearable  label="Builders" variant="listbox" indicator="checkbox" placeholder="Select the Builders" wire:model="selectedBuilders" clear="close">
-                    @if ( !empty( $selectedBuilders ) ) <flux:button variant="ghost" icon="x-mark"  wire:click="resetFilters('builders')">Remove Filter</flux:button> @endif
                     @foreach($filters['builders'] ?? [] as $builder)
                         <flux:select.option>{{ $builder }}</flux:select.option>
                     @endforeach
@@ -39,7 +58,6 @@
 
                 <!-- Subdivision's Select -->
                 <flux:select multiple searchable clearable label="Subdivisions" variant="listbox" indicator="checkbox" placeholder="Select the Subdivisions" wire:model="selectedSubdivisions" clear="close">
-                    @if ( !empty( $selectedSubdivisions ) ) <flux:button variant="ghost" icon="x-mark" wire:click="resetFilters('subdivisions')">Remove Filter</flux:button> @endif
                     @foreach($filters['subdivisions'] ?? [] as $subd)
                         <flux:select.option value="{{ $subd['value'] }}">{{ $subd['label'] }}</flux:select.option>
                     @endforeach
@@ -47,7 +65,6 @@
 
                 <!-- Lot Number Input -->
                 <flux:select multiple searchable clearable label="Lot #" variant="listbox" indicator="checkbox" placeholder="Select the Lot(s)" wire:model="selectedLots" clear="close">
-                    @if ( !empty( $selectedLots ) ) <flux:button variant="ghost" icon="x-mark" wire:click="resetFilters('lots')">Remove Filter</flux:button> @endif
                     @foreach($filters['lots'] ?? [] as $lot)
                         <flux:select.option>{{ $lot }}</flux:select.option>
                     @endforeach
@@ -76,4 +93,26 @@
             <livewire:layout.edit-columns-dropdown />
             @endif
         </flux:navbar>
+        @if($showFilters && ( !empty($selectedBuilders) || !empty($selectedSubdivisions) || !empty($selectedLots) ))
+        <div class="px-4 py-2 flex flex-wrap gap-2 border-b border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900">
+            @if(!empty($selectedBuilders))
+                <flux:badge color="blue">
+                    Builders: {{ implode(', ', $selectedBuilders) }}
+                    <flux:badge.close wire:click="resetFilters('builders')" />
+                </flux:badge>
+            @endif
+            @if(!empty($selectedSubdivisions))
+                <flux:badge color="green">
+                    Subdivisions: {{ collect($selectedSubdivisions)->implode(', ') }}
+                    <flux:badge.close wire:click="resetFilters('subdivisions')" />
+                </flux:badge>
+            @endif
+            @if(!empty($selectedLots))
+                <flux:badge color="amber">
+                    Lots: {{ implode(', ', $selectedLots) }}
+                    <flux:badge.close wire:click="resetFilters('lots')" />
+                </flux:badge>
+            @endif
+        </div>
+        @endif
     </div>
