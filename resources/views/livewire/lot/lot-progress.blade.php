@@ -196,25 +196,6 @@
                                             </flux:table.cell>
                                             @break
 
-                                        @case('status')
-                                            @php $raw = $lot->status_type_id ?? ''; @endphp
-                                            <flux:table.cell
-                                            class="bg-white dark:bg-zinc-800 {{ $column['group'] == 'fixed' ? 'sticky z-10' : '' }}"
-                                            data-fixed-index=" {{ $column['group'] == 'fixed' ? $loop->index : '' }}"
-                                            x-on:dblclick="
-                                                $dispatch('editField', {
-                                                    fieldId:        {{ $lot->id }},
-                                                    currentValue:   '{{ $raw }}',
-                                                    fieldType:      'select',
-                                                    optionKey:      'statusTypes',
-                                                    modelClass:     '{{ addslashes(\App\Models\Lot::class) }}',
-                                                    modelAttribute: 'status_type_id',
-                                                    editable:       true
-                                                })"
-                                            >
-                                                {{ $lot->statusType->name ?? '-' }}
-                                            </flux:table.cell>
-                                            @break
 
                                         @case('floor_area')
                                             @php $raw = $lot->floor_area ?? ''; @endphp
@@ -236,11 +217,6 @@
                                             </flux:table.cell>
                                             @break
 
-                                        @case('original_task_name')
-                                            <flux:table.cell class="bg-white dark:bg-zinc-800 {{ $column['group'] == 'fixed' ? 'sticky z-10' : '' }}" data-fixed-index=" {{ $column['group'] == 'fixed' ? $loop->index : '' }}">
-                                                {{ optional($lot->tasks->first())->original_task_name ?? '-' }}
-                                            </flux:table.cell>
-                                            @break
 
                                         @case('epo')
                                             <flux:table.cell
