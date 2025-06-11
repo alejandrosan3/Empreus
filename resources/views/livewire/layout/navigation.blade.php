@@ -33,7 +33,7 @@
                 <flux:select multiple searchable clearable  label="Builders" variant="listbox" indicator="checkbox" placeholder="Select the Builders" wire:model="selectedBuilders" clear="close">
                     @if ( !empty( $selectedBuilders ) ) <flux:button variant="ghost" icon="x-mark"  wire:click="resetFilters('builders')">Remove Filter</flux:button> @endif
                     @foreach($filters['builders'] ?? [] as $builder)
-                        <flux:select.option>{{ $builder }}</flux:select.option>
+                        <flux:select.option value="{{ $builder['value'] }}">{{ $builder['label'] }}</flux:select.option>
                     @endforeach
                 </flux:select>
 

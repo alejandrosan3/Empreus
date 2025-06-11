@@ -149,7 +149,7 @@ class TaskProgress extends Component
     {
         if (!empty($this->selectedBuilders)) {
             $query->whereHas('lot.builder', function ($q) {
-                $q->whereIn('name', $this->selectedBuilders);
+                $q->whereIn('id', $this->selectedBuilders);
             });
         }
 
@@ -415,11 +415,15 @@ class TaskProgress extends Component
                     );
                 }
 
-                return $q->join('lots',     'tasks.lot_id',       '=', 'lots.id')
-                        ->join('builders', 'lots.builder_id',    '=', 'builders.id')
+                return $q->join('lots', 'tasks.lot_id', '=', 'lots.id')
+                        ->join('builders', 'lots.builder_id', '=', 'builders.id')
                         ->distinct()
                         ->orderBy('builders.name', 'asc')
-                        ->pluck('builders.name')
+                        ->get(['builders.id', 'builders.name'])
+                        ->map(fn($b) => [
+                            'value' => $b->id,
+                            'label' => $b->name,
+                        ])
                         ->toArray();
             }
         );
@@ -436,7 +440,7 @@ class TaskProgress extends Component
                 // apply only builders & lots filters
                 if (!empty($bFilters)) {
                     $q->whereHas('lot.builder', fn($q) =>
-                        $q->whereIn('name', $bFilters)
+                        $q->whereIn('id', $bFilters)
                     );
                 }
                 if (!empty($lFilters)) {
@@ -470,7 +474,7 @@ class TaskProgress extends Component
                 // apply only builders & subdivisions filters
                 if (!empty($bFilters)) {
                     $q->whereHas('lot.builder', fn($q) =>
-                        $q->whereIn('name', $bFilters)
+                        $q->whereIn('id', $bFilters)
                     );
                 }
                 if (!empty($sFilters)) {
@@ -549,6 +553,12 @@ class TaskProgress extends Component
      */
     public function mount()
     {
+        if (!empty($this->selectedBuilders) && !is_numeric($this->selectedBuilders[0])) {
+            $this->selectedBuilders = \App\Models\Builder::whereIn('name', $this->selectedBuilders)
+                ->pluck('id')
+                ->toArray();
+        }
+
         $this->columns = [
             ['id' => 1,  'label' => 'Builder',         'value' => 'builder',         'group' => 'fixed',  'selected' => true,  'sortable' => true, 'editable' => false],
             ['id' => 2,  'label' => 'Subdivision',     'value' => 'subdivision',     'group' => 'fixed',  'selected' => true,  'sortable' => true, 'editable' => false],
