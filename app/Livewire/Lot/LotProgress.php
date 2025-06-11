@@ -8,6 +8,7 @@
     use Livewire\WithPagination;
     use Livewire\Attributes\On;
     use Livewire\Attributes\Computed;
+    use App\Services\FilterOptionsService;
 
     class LotProgress extends Component
     {
@@ -125,27 +126,9 @@
 
         private function applyLotFilters($query): void
         {
-            if (!empty($this->selectedBuilders)) {
-                $query->whereHas('builder', function ($q) {
-                    $q->whereIn('name', $this->selectedBuilders);
-                });
-            }
-
-            if (!empty($this->selectedSubdivisions)) {
-                $query->where(function ($q) {
-                    foreach ($this->selectedSubdivisions as $filter) {
-                        [$subdivision, $phase] = explode('|', $filter);
-                        $q->orWhere(function ($q2) use ($subdivision, $phase) {
-                            $q2->where('subdivision', $subdivision)
-                                ->where('phase', $phase);
-                        });
-                    }
-                });
-            }
-
-            if (!empty($this->selectedLots)) {
-                $query->whereIn('lot_number', $this->selectedLots);
-            }
+            $query->filterByBuilders($this->selectedBuilders)
+                ->filterBySubdivisions($this->selectedSubdivisions)
+                ->filterByLots($this->selectedLots);
         }
 
 
@@ -172,59 +155,17 @@
         #[On('company-updated')]
         public function dispatchFilters()
         {
-            $query = Auth::user()->lotsForCurrentCompany();
+            $service  = app(FilterOptionsService::class);
+            $options  = $service->lotOptions(
+                $this->selectedBuilders,
+                $this->selectedSubdivisions,
+                $this->selectedLots
+            );
 
-            if (!empty($this->selectedBuilders)) {
-                $query->whereHas('builder', function ($q) {
-                    $q->whereIn('name', $this->selectedBuilders);
-                });
-            }
-            if (!empty($this->selectedSubdivisions)) {
-                $query->where(function($q) {
-                    foreach ($this->selectedSubdivisions as $filter) {
-                        // split the composite value
-                        [$subdivision, $phase] = explode('|', $filter);
-                        $q->orWhere(function($q2) use ($subdivision, $phase) {
-                            $q2->where('subdivision', $subdivision)
-                               ->where('phase', $phase);
-                        });
-                    }
-                });
-            }
-            if (!empty($this->selectedLots)) {
-                $query->whereIn('lot_number', $this->selectedLots);
-            }
-
-            // For re-populating select options
-            $builders = $query->clone()
-                ->join('builders', 'lots.builder_id', '=', 'builders.id')
-                ->distinct()
-                ->orderby('builders.name', 'asc')
-                ->pluck('builders.name');
-
-            $subdivisions = $query->clone()
-                ->select('subdivision', 'phase')
-                ->groupBy('subdivision', 'phase')
-                ->orderby('subdivision', 'asc')
-                ->get()
-                ->map(function ($item) {
-                    return [
-                        'value' => $item['subdivision'] . '|' . $item['phase'],
-                        'label' => $item['subdivision'] . ($item['phase'] ? " ({$item['phase']})" : ""),
-                    ];
-                })
-                ->toArray();
-
-            $lots = $query->clone()
-                ->distinct()
-                ->orderby('lot_number', 'asc')
-                ->pluck('lot_number');
-
-            // Dispatch the filter data as a browser event (for the dropdowns):
             $this->dispatch('filters-updated',
-                builders: $builders,
-                subdivisions: $subdivisions,
-                lots: $lots
+                builders:     $options['builders'],
+                subdivisions: $options['subdivisions'],
+                lots:         $options['lots'],
             );
             $this->resetPage();
         }
@@ -275,9 +216,6 @@
          */
         private function isRouteRequest()
         {
-            logger()->info('Route Name:', ['route' => optional(request()->route())->getName()]);
-            logger()->info('Headers:', ['headers' => request()->headers->all()]);
-
             // If it's a Livewire request, return false.
             if (request()->header('X-Livewire')) {
                 return false;
