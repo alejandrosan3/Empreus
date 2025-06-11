@@ -216,9 +216,6 @@
          */
         private function isRouteRequest()
         {
-            logger()->info('Route Name:', ['route' => optional(request()->route())->getName()]);
-            logger()->info('Headers:', ['headers' => request()->headers->all()]);
-
             // If it's a Livewire request, return false.
             if (request()->header('X-Livewire')) {
                 return false;
