@@ -16,7 +16,7 @@ class FilterOptionsService
             ->filterBySubdivisions($subdivisions)
             ->filterByLots($lots);
 
-        $buildersList = $query->clone()
+        $buildersList = (clone $query)
             ->join('lots', 'tasks.lot_id', '=', 'lots.id')
             ->join('builders', 'lots.builder_id', '=', 'builders.id')
             ->distinct()
@@ -24,7 +24,7 @@ class FilterOptionsService
             ->pluck('builders.name')
             ->toArray();
 
-        $subdivisionList = $query->clone()
+        $subdivisionList = (clone $query)
             ->join('lots', 'tasks.lot_id', '=', 'lots.id')
             ->select('lots.subdivision', 'lots.phase')
             ->groupBy('lots.subdivision', 'lots.phase')
@@ -36,7 +36,7 @@ class FilterOptionsService
             ])
             ->toArray();
 
-        $lotList = $query->clone()
+        $lotList = (clone $query)
             ->join('lots', 'tasks.lot_id', '=', 'lots.id')
             ->distinct()
             ->orderBy('lots.lot_number')
@@ -58,14 +58,14 @@ class FilterOptionsService
             ->filterBySubdivisions($subdivisions)
             ->filterByLots($lots);
 
-        $buildersList = $query->clone()
+        $buildersList = (clone $query)
             ->join('builders', 'lots.builder_id', '=', 'builders.id')
             ->distinct()
             ->orderBy('builders.name')
             ->pluck('builders.name')
             ->toArray();
 
-        $subdivisionList = $query->clone()
+        $subdivisionList = (clone $query)
             ->select('subdivision', 'phase')
             ->groupBy('subdivision', 'phase')
             ->orderBy('subdivision')
@@ -76,7 +76,7 @@ class FilterOptionsService
             ])
             ->toArray();
 
-        $lotList = $query->clone()
+        $lotList = (clone $query)
             ->distinct()
             ->orderBy('lot_number')
             ->pluck('lot_number')
