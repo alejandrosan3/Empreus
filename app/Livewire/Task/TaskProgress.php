@@ -376,9 +376,15 @@ class TaskProgress extends Component
      * Dispatch filter options for the toolbar dropdowns.
      */
     #[On('company-updated')]
+    public function clearCacheAndDispatch()
+    {
+        Cache::flush();
+        $this->dispatchFilters();
+    }
+
     public function dispatchFilters()
     {
-        $companyId = Auth::id();
+        $companyId = session('company_id');
         $ttl       = 300; // cache TTL in seconds
 
         // Shorthand for your three filter arrays
