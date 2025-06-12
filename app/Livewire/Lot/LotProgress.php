@@ -21,10 +21,8 @@
         public $columns = [];
         public $taskTypes = ['Clean Rough', 'Rough Windows', 'Pressure Wash', 'Floor Machine', 'Reclean #1', 'Reclean #2', 'Final Clean', 'Final Windows'];
 
-        // These store the user's chosen filters
-        public $selectedBuilders = [];
-        public $selectedSubdivisions = [];
-        public $selectedLots = [];
+        // Selected filters keyed by column name
+        public array $selectedFilters = [];
 
         public $searchTerm = '';
 
@@ -125,26 +123,34 @@
 
         private function applyLotFilters($query): void
         {
-        if (!empty($this->selectedBuilders)) {
-            $query->whereHas('builder', function ($q) {
-                $q->whereIn('id', $this->selectedBuilders);
-            });
-        }
+            foreach ($this->selectedFilters as $column => $values) {
+                if (empty($values)) {
+                    continue;
+                }
 
-            if (!empty($this->selectedSubdivisions)) {
-                $query->where(function ($q) {
-                    foreach ($this->selectedSubdivisions as $filter) {
-                        [$subdivision, $phase] = explode('|', $filter);
-                        $q->orWhere(function ($q2) use ($subdivision, $phase) {
-                            $q2->where('subdivision', $subdivision)
-                                ->where('phase', $phase);
+                switch ($column) {
+                    case 'builder':
+                        $query->whereHas('builder', fn($q) => $q->whereIn('id', $values));
+                        break;
+                    case 'subdivision':
+                        $query->where(function ($q) use ($values) {
+                            foreach ($values as $filter) {
+                                [$subdivision, $phase] = explode('|', $filter);
+                                $q->orWhere(fn($q2) => $q2->where('subdivision', $subdivision)
+                                                    ->where('phase', $phase));
+                            }
                         });
-                    }
-                });
-            }
-
-            if (!empty($this->selectedLots)) {
-                $query->whereIn('lot_number', $this->selectedLots);
+                        break;
+                    case 'lot_number':
+                        $query->whereIn('lot_number', $values);
+                        break;
+                    case 'supervisor':
+                        $query->whereHas('supervisor', fn($q) => $q->whereIn('id', $values));
+                        break;
+                    case 'phase':
+                        $query->whereIn('phase', $values);
+                        break;
+                }
             }
         }
 
@@ -156,9 +162,7 @@
         #[On('global-filters-updated')]
         public function handleGlobalFilters(array $data)
         {
-            $this->selectedBuilders    = $data['builders']      ?? [];
-            $this->selectedSubdivisions = $data['subdivisions'] ?? [];
-            $this->selectedLots       = $data['lots']          ?? [];
+            $this->selectedFilters = $data;
 
             $this->resetPage();
             $this->dispatchFilters();
@@ -174,64 +178,88 @@
         {
             $query = Auth::user()->lotsForCurrentCompany();
 
-            if (!empty($this->selectedBuilders)) {
-                $query->whereHas('builder', function ($q) {
-                    $q->whereIn('id', $this->selectedBuilders);
-                });
-            }
-            if (!empty($this->selectedSubdivisions)) {
-                $query->where(function($q) {
-                    foreach ($this->selectedSubdivisions as $filter) {
-                        // split the composite value
-                        [$subdivision, $phase] = explode('|', $filter);
-                        $q->orWhere(function($q2) use ($subdivision, $phase) {
-                            $q2->where('subdivision', $subdivision)
-                               ->where('phase', $phase);
-                        });
+            $filters = [];
+
+            foreach (['builder','subdivision','lot_number','supervisor','phase'] as $column) {
+                $optionsQuery = clone $query;
+
+                foreach ($this->selectedFilters as $key => $values) {
+                    if ($key === $column || empty($values)) {
+                        continue;
                     }
-                });
+                    switch ($key) {
+                        case 'builder':
+                            $optionsQuery->whereHas('builder', fn($q) => $q->whereIn('id', $values));
+                            break;
+                        case 'subdivision':
+                            $optionsQuery->where(function ($q) use ($values) {
+                                foreach ($values as $val) {
+                                    [$sub,$ph] = explode('|',$val);
+                                    $q->orWhere(fn($q2)=>$q2->where('subdivision',$sub)->where('phase',$ph));
+                                }
+                            });
+                            break;
+                        case 'lot_number':
+                            $optionsQuery->whereIn('lot_number', $values);
+                            break;
+                        case 'supervisor':
+                            $optionsQuery->whereHas('supervisor', fn($q)=>$q->whereIn('id',$values));
+                            break;
+                        case 'phase':
+                            $optionsQuery->whereIn('phase', $values);
+                            break;
+                    }
+                }
+
+                switch ($column) {
+                    case 'builder':
+                        $filters[$column] = $optionsQuery->clone()
+                            ->join('builders','lots.builder_id','=','builders.id')
+                            ->select('builders.id','builders.name')
+                            ->distinct()
+                            ->orderBy('builders.name','asc')
+                            ->get()
+                            ->map(fn($b)=>['value'=>$b->id,'label'=>$b->name])
+                            ->toArray();
+                        break;
+                    case 'subdivision':
+                        $filters[$column] = $optionsQuery->clone()
+                            ->select('subdivision','phase')
+                            ->groupBy('subdivision','phase')
+                            ->orderBy('subdivision','asc')
+                            ->get()
+                            ->map(fn($i)=>['value'=>$i->subdivision.'|'.$i->phase,'label'=>$i->subdivision.($i->phase ? " ({$i->phase})" : '')])
+                            ->toArray();
+                        break;
+                    case 'lot_number':
+                        $filters[$column] = $optionsQuery->clone()
+                            ->distinct()
+                            ->orderBy('lot_number','asc')
+                            ->pluck('lot_number')
+                            ->toArray();
+                        break;
+                    case 'supervisor':
+                        $filters[$column] = $optionsQuery->clone()
+                            ->join('supervisors','lots.supervisor_id','=','supervisors.id')
+                            ->select('supervisors.id','supervisors.name')
+                            ->distinct()
+                            ->orderBy('supervisors.name','asc')
+                            ->get()
+                            ->map(fn($s)=>['value'=>$s->id,'label'=>$s->name])
+                            ->toArray();
+                        break;
+                    case 'phase':
+                        $filters[$column] = $optionsQuery->clone()
+                            ->select('phase')
+                            ->distinct()
+                            ->orderBy('phase','asc')
+                            ->pluck('phase')
+                            ->toArray();
+                        break;
+                }
             }
-            if (!empty($this->selectedLots)) {
-                $query->whereIn('lot_number', $this->selectedLots);
-            }
 
-            // For re-populating select options
-            $builders = $query->clone()
-                ->join('builders', 'lots.builder_id', '=', 'builders.id')
-                ->select('builders.id','builders.name')
-                ->distinct()
-                ->orderby('builders.name', 'asc')
-                ->get()
-                ->map(fn($b) => [
-                    'value' => $b->id,
-                    'label' => $b->name,
-                ])
-                ->toArray();
-
-            $subdivisions = $query->clone()
-                ->select('subdivision', 'phase')
-                ->groupBy('subdivision', 'phase')
-                ->orderby('subdivision', 'asc')
-                ->get()
-                ->map(function ($item) {
-                    return [
-                        'value' => $item['subdivision'] . '|' . $item['phase'],
-                        'label' => $item['subdivision'] . ($item['phase'] ? " ({$item['phase']})" : ""),
-                    ];
-                })
-                ->toArray();
-
-            $lots = $query->clone()
-                ->distinct()
-                ->orderby('lot_number', 'asc')
-                ->pluck('lot_number');
-
-            // Dispatch the filter data as a browser event (for the dropdowns):
-            $this->dispatch('filters-updated',
-                builders: $builders,
-                subdivisions: $subdivisions,
-                lots: $lots
-            );
+            $this->dispatch('filters-updated', $filters);
             $this->resetPage();
         }
 
@@ -318,27 +346,21 @@
         public function mount()
         {
 
-            if (!empty($this->selectedBuilders) && !is_numeric($this->selectedBuilders[0])) {
-                $this->selectedBuilders = \App\Models\Builder::whereIn('name', $this->selectedBuilders)
-                    ->pluck('id')
-                    ->toArray();
-            }
-
             $this->columns = [
                 // Fixed columns (always selected)
-                ['id' => 1, 'label' => 'Builder', 'value' => 'builder', 'group' => 'fixed', 'selected' => true, 'sortable' => true, 'editable'=> false],
-                ['id' => 2, 'label' => 'Subdivision', 'value' => 'subdivision', 'group' => 'fixed', 'selected' => true, 'sortable' => true, 'editable'=> false],
-                ['id' => 3, 'label' => 'Lot', 'value' => 'lot_number', 'group' => 'fixed', 'selected' => true, 'sortable' => true, 'editable'=> false],
+                ['id' => 1, 'label' => 'Builder', 'value' => 'builder', 'group' => 'fixed', 'selected' => true, 'sortable' => true, 'editable'=> false, 'filterable' => true],
+                ['id' => 2, 'label' => 'Subdivision', 'value' => 'subdivision', 'group' => 'fixed', 'selected' => true, 'sortable' => true, 'editable'=> false, 'filterable' => true],
+                ['id' => 3, 'label' => 'Lot', 'value' => 'lot_number', 'group' => 'fixed', 'selected' => true, 'sortable' => true, 'editable'=> false, 'filterable' => true],
                 // Active columns (user can toggle visibility)
-                ['id' => 4, 'label' => 'Stories', 'value' => 'stories', 'group' => 'active', 'selected' => false, 'sortable' => false, 'editable'=> true],
+                ['id' => 4, 'label' => 'Stories', 'value' => 'stories', 'group' => 'active', 'selected' => false, 'sortable' => false, 'editable'=> true, 'filterable' => false],
                 ['id' => 5, 'label' => 'Last Completed Task', 'value' => 'last_completed_date', 'group' => 'active', 'selected' => true, 'sortable' => true, 'editable'=> false],
                 ['id' => 6, 'label' => 'Standard Tasks', 'value' => 'standard_po', 'group' => 'active', 'selected' => true, 'sortable' => false, 'editable'=> false],
                 ['id' => 7, 'label' => 'EPOs', 'value' => 'epo', 'group' => 'active', 'selected' => true, 'sortable' => false, 'editable'=> false],
                 // Additional columns hidden by default
-                ['id' => 8,  'label' => 'Address',            'value' => 'address',            'group' => 'active', 'selected' => false, 'sortable' => true,  'editable'=> true],
-                ['id' => 9,  'label' => 'Phase',              'value' => 'phase',              'group' => 'active', 'selected' => false, 'sortable' => true,  'editable'=> true],
-                ['id' => 10, 'label' => 'Supervisor',         'value' => 'supervisor',         'group' => 'active', 'selected' => false, 'sortable' => true,  'editable'=> true],
-                ['id' => 11, 'label' => 'SQ FT',              'value' => 'floor_area',         'group' => 'active', 'selected' => false, 'sortable' => true,  'editable'=> true],
+                ['id' => 8,  'label' => 'Address',            'value' => 'address',            'group' => 'active', 'selected' => false, 'sortable' => true,  'editable'=> true, 'filterable' => false],
+                ['id' => 9,  'label' => 'Phase',              'value' => 'phase',              'group' => 'active', 'selected' => false, 'sortable' => true,  'editable'=> true, 'filterable' => true],
+                ['id' => 10, 'label' => 'Supervisor',         'value' => 'supervisor',         'group' => 'active', 'selected' => false, 'sortable' => true,  'editable'=> true, 'filterable' => true],
+                ['id' => 11, 'label' => 'SQ FT',              'value' => 'floor_area',         'group' => 'active', 'selected' => false, 'sortable' => true,  'editable'=> true, 'filterable' => false],
             ];
 
             // Dispatch initial filters when the component loads
