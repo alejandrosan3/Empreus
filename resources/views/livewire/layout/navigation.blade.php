@@ -15,7 +15,7 @@
             </flux:modal.trigger>
 
             <flux:modal name="filters" class="md:w-[48rem] space-y-6">
-                <div class=>
+                <div>
                     <flux:heading size="lg">Filters</flux:heading>
                     <flux:subheading>Set the desired filter. Leave blank to ignore.</flux:subheading>
                 </div>
@@ -24,17 +24,21 @@
                 @if (collect($selectedFilters)->filter()->isNotEmpty())
                     <div class="flex flex-wrap gap-2 mb-2">
                         @foreach($selectedFilters as $key => $vals)
+                            {{ ucfirst(str_replace('_',' ', $key)) }}: 
                             @foreach((array)$vals as $val)
                                 @php
                                     $label = collect($filters[$key] ?? [])
                                         ->firstWhere('value', $val)['label'] ?? $val;
-                                    $color = $filterColors[$key] ?? 'blue';
+                                    $color = $this->filterColors[$key] ?? 'blue';
                                 @endphp
-                                <flux:badge :color="$color">
-                                    {{ ucfirst(str_replace('_',' ', $key)) }}: {{ $label }}
-                                    <flux:badge.close wire:click="removeFilterValue('{{ $key }}','{{ $val }}')" />
-                                </flux:badge>
+                                <flux:tooltip :content="ucfirst(str_replace('_',' ', $key))">
+                                    <flux:badge :color="$color">
+                                        {{ $label }}
+                                        <flux:badge.close wire:click="removeFilterValue('{{ $key }}','{{ $val }}')" />
+                                    </flux:badge>
+                                </flux:tooltip>
                             @endforeach
+                            <flux:separator vertical />
                         @endforeach
                         <flux:badge color="slate" variant="solid">
                             Clear All
@@ -45,7 +49,7 @@
 
                 <div class="grid md:grid-cols-2 gap-4">
                     @foreach($filters as $name => $options)
-                        <flux:select multiple searchable clearable label="{{ ucfirst(str_replace('_',' ', $name)) }}" variant="listbox" indicator="checkbox" placeholder="Select" wire:model="selectedFilters.{{ $name }}" clear="close">
+                        <flux:select multiple searchable clearable :label="ucfirst(str_replace('_',' ', $name))" variant="listbox" indicator="checkbox" placeholder="Select" wire:model="selectedFilters.{{ $name }}" clear="close">
                             @foreach($options as $option)
                                 <flux:select.option value="{{ is_array($option) ? $option['value'] : $option }}">{{ is_array($option) ? $option['label'] : $option }}</flux:select.option>
                             @endforeach
@@ -79,18 +83,27 @@
         @if($showFilters && collect($selectedFilters)->filter()->isNotEmpty())
         <div class="px-4 py-2 flex flex-wrap gap-2 border-b border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900">
             @foreach($selectedFilters as $key => $vals)
+                {{ucfirst(str_replace('_',' ', $key))}}: 
                 @foreach((array)$vals as $val)
                     @php
                         $label = collect($filters[$key] ?? [])
                             ->firstWhere('value', $val)['label'] ?? $val;
-                        $color = $filterColors[$key] ?? 'blue';
+                        $color = $this->filterColors[$key] ?? 'blue';
                     @endphp
-                    <flux:badge :color="$color">
-                        {{ ucfirst(str_replace('_',' ', $key)) }}: {{ $label }}
-                        <flux:badge.close wire:click="removeFilterValue('{{ $key }}','{{ $val }}')" />
-                    </flux:badge>
+                    <flux:tooltip :content="ucfirst(str_replace('_',' ', $key))">
+                        <flux:badge :color="$color">
+                            {{ $label }}
+                            <flux:badge.close wire:click="removeFilterValue('{{ $key }}','{{ $val }}')" />
+                        </flux:badge>
+                    </flux:tooltip>
                 @endforeach
+                <flux:separator vertical />
+
             @endforeach
+            <flux:badge color="slate" variant="solid">
+                Clear All Filters
+                <flux:badge.close wire:click="resetFilters('all')" />
+            </flux:badge>
         </div>
         @endif
     </div>

@@ -32,7 +32,7 @@
         }
 
         #[Computed]
-        public function getFilterColorsProperty(): array
+        public function getFilterColorsProperty()
         {
             return collect($this->columns)
                 ->filter(fn($c) => ($c['filterable'] ?? false))
@@ -47,8 +47,10 @@
         public function filtersUpdated($filterData)
         {
         
-            // Update the filters property with the received data
-            $this->filters = array_merge($this->filters, $filterData);
+            // Update the filters property with the received data (explicitly)
+            foreach ($filterData as $column => $options) {
+                $this->filters[$column] = $options;
+            }
         }
 
 
@@ -58,7 +60,7 @@
          */
         public function applyGlobalFilters()
         {
-            $this->dispatch('global-filters-updated', $this->selectedFilters);
+            $this->dispatch('global-filters-updated', filters:$this->selectedFilters);
         }
 
         public function resetFilters($choice="all")

@@ -135,7 +135,12 @@
                     case 'subdivision':
                         $query->where(function ($q) use ($values) {
                             foreach ($values as $filter) {
-                                [$subdivision, $phase] = explode('|', $filter);
+                                // If Livewire passed the whole option-array, pull out its 'value'
+                                $raw = is_array($filter) ? ($filter['value'] ?? '') : $filter;
+
+                                // Now split on the pipe
+                                [$subdivision, $phase] = explode('|', $raw);
+
                                 $q->orWhere(fn($q2) => $q2->where('subdivision', $subdivision)
                                                     ->where('phase', $phase));
                             }
@@ -160,9 +165,9 @@
          * Updates our local filter arrays, then re-dispatches to recalc the dropdowns.
          */
         #[On('global-filters-updated')]
-        public function handleGlobalFilters(array $data)
+        public function handleGlobalFilters(array $filters)
         {
-            $this->selectedFilters = $data;
+            $this->selectedFilters = $filters;
 
             $this->resetPage();
             $this->dispatchFilters();
@@ -180,22 +185,35 @@
 
             $filters = [];
 
-            foreach (['builder','subdivision','lot_number','supervisor','phase'] as $column) {
+            foreach ($this->columns as $column) {
+                if (empty($column['filterable'])) {
+                    continue;
+                }
+                $colKey = $column['value'];
                 $optionsQuery = clone $query;
 
-                foreach ($this->selectedFilters as $key => $values) {
-                    if ($key === $column || empty($values)) {
+                foreach ($this->selectedFilters as $filterKey => $values) {
+                    if ($filterKey === $colKey || empty($values)) {
                         continue;
                     }
-                    switch ($key) {
+                    switch ($filterKey) {
                         case 'builder':
                             $optionsQuery->whereHas('builder', fn($q) => $q->whereIn('id', $values));
                             break;
                         case 'subdivision':
                             $optionsQuery->where(function ($q) use ($values) {
                                 foreach ($values as $val) {
-                                    [$sub,$ph] = explode('|',$val);
-                                    $q->orWhere(fn($q2)=>$q2->where('subdivision',$sub)->where('phase',$ph));
+                                    // if Livewire gave us the full ['value'=>…,'label'=>…] array, grab its 'value'
+                                    $raw = is_array($val) ? ($val['value'] ?? '') : $val;
+
+                                    // now $raw is guaranteed to be a string like "ARBORS 40 EXP (3A)|3A"
+                                    [$subdivision, $phase] = explode('|', $raw);
+
+                                    // and use _those_ two vars down here:
+                                    $q->orWhere(fn($q2) => $q2
+                                        ->where('subdivision', $subdivision)
+                                        ->where('phase',       $phase)
+                                    );
                                 }
                             });
                             break;
@@ -211,9 +229,9 @@
                     }
                 }
 
-                switch ($column) {
+                switch ($colKey) {
                     case 'builder':
-                        $filters[$column] = $optionsQuery->clone()
+                        $filters[$colKey] = $optionsQuery->clone()
                             ->join('builders','lots.builder_id','=','builders.id')
                             ->select('builders.id','builders.name')
                             ->distinct()
@@ -223,7 +241,7 @@
                             ->toArray();
                         break;
                     case 'subdivision':
-                        $filters[$column] = $optionsQuery->clone()
+                        $filters[$colKey] = $optionsQuery->clone()
                             ->select('subdivision','phase')
                             ->groupBy('subdivision','phase')
                             ->orderBy('subdivision','asc')
@@ -232,14 +250,14 @@
                             ->toArray();
                         break;
                     case 'lot_number':
-                        $filters[$column] = $optionsQuery->clone()
+                        $filters[$colKey] = $optionsQuery->clone()
                             ->distinct()
                             ->orderBy('lot_number','asc')
                             ->pluck('lot_number')
                             ->toArray();
                         break;
                     case 'supervisor':
-                        $filters[$column] = $optionsQuery->clone()
+                        $filters[$colKey] = $optionsQuery->clone()
                             ->join('supervisors','lots.supervisor_id','=','supervisors.id')
                             ->select('supervisors.id','supervisors.name')
                             ->distinct()
@@ -249,7 +267,7 @@
                             ->toArray();
                         break;
                     case 'phase':
-                        $filters[$column] = $optionsQuery->clone()
+                        $filters[$colKey] = $optionsQuery->clone()
                             ->select('phase')
                             ->distinct()
                             ->orderBy('phase','asc')
@@ -358,7 +376,7 @@
                 ['id' => 7, 'label' => 'EPOs', 'value' => 'epo', 'group' => 'active', 'selected' => true, 'sortable' => false, 'editable'=> false],
                 // Additional columns hidden by default
                 ['id' => 8,  'label' => 'Address',            'value' => 'address',            'group' => 'active', 'selected' => false, 'sortable' => true,  'editable'=> true, 'filterable' => false],
-                ['id' => 9,  'label' => 'Phase',              'value' => 'phase',              'group' => 'active', 'selected' => false, 'sortable' => true,  'editable'=> true, 'filterable' => true, 'color' => 'indigo'],
+                ['id' => 9,  'label' => 'Phase',              'value' => 'phase',              'group' => 'active', 'selected' => false, 'sortable' => true,  'editable'=> true, 'filterable' => false, 'color' => 'indigo'],
                 ['id' => 10, 'label' => 'Supervisor',         'value' => 'supervisor',         'group' => 'active', 'selected' => false, 'sortable' => true,  'editable'=> true, 'filterable' => true, 'color' => 'rose'],
                 ['id' => 11, 'label' => 'SQ FT',              'value' => 'floor_area',         'group' => 'active', 'selected' => false, 'sortable' => true,  'editable'=> true, 'filterable' => false],
             ];
