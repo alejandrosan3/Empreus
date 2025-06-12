@@ -572,24 +572,24 @@ class TaskProgress extends Component
     {
 
         $this->columns = [
-            ['id' => 1,  'label' => 'Builder', 'value' => 'builder', 'group' => 'fixed', 'selected' => true,  'sortable' => true, 'editable' => false, 'filterable' => true],
-            ['id' => 2,  'label' => 'Subdivision', 'value' => 'subdivision', 'group' => 'fixed',  'selected' => true,  'sortable' => true, 'editable' => false, 'filterable' => true],
-            ['id' => 3,  'label' => 'Lot', 'value' => 'lot_number', 'group' => 'fixed',  'selected' => true,  'sortable' => true, 'editable' => false, 'filterable' => true],
-            ['id' => 4,  'label' => 'Task Type', 'value' => 'task_type', 'group' => 'active', 'selected' => true,  'sortable' => true, 'editable' => false, 'filterable' => true],
-            ['id' => 5,  'label' => 'Status', 'value' => 'status', 'group' => 'active', 'selected' => true,  'sortable' => true, 'editable' => true, 'filterable' => true],
+            ['id' => 1,  'label' => 'Builder', 'value' => 'builder', 'group' => 'fixed', 'selected' => true,  'sortable' => true, 'editable' => false, 'filterable' => true, 'color' => 'purple'],
+            ['id' => 2,  'label' => 'Subdivision', 'value' => 'subdivision', 'group' => 'fixed',  'selected' => true,  'sortable' => true, 'editable' => false, 'filterable' => true, 'color' => 'amber'],
+            ['id' => 3,  'label' => 'Lot', 'value' => 'lot_number', 'group' => 'fixed',  'selected' => true,  'sortable' => true, 'editable' => false, 'filterable' => true, 'color' => 'cyan'],
+            ['id' => 4,  'label' => 'Task Type', 'value' => 'task_type', 'group' => 'active', 'selected' => true,  'sortable' => true, 'editable' => false, 'filterable' => true, 'color' => 'green'],
+            ['id' => 5,  'label' => 'Status', 'value' => 'status', 'group' => 'active', 'selected' => true,  'sortable' => true, 'editable' => true, 'filterable' => true, 'color' => 'blue'],
             ['id' => 6,  'label' => 'Stories',         'value' => 'num_of_floors',         'group' => 'active', 'selected' => true,  'sortable' => true, 'editable' => true],
             ['id' => 7,  'label' => 'Notes',           'value' => 'notes',           'group' => 'active', 'selected' => true,  'sortable' => false, 'editable' => true],
             ['id' => 8,  'label' => 'SQ FT',         'value' => 'floor_area',    'group' => 'active', 'selected' => true,  'sortable' => true, 'editable' => true],
-            ['id' => 9,  'label' => 'Supervisor', 'value' => 'supervisor', 'group' => 'active', 'selected' => true,  'sortable' => true, 'editable' => true, 'filterable' => true],
+            ['id' => 9,  'label' => 'Supervisor', 'value' => 'supervisor', 'group' => 'active', 'selected' => true,  'sortable' => true, 'editable' => true, 'filterable' => true, 'color' => 'rose'],
             ['id' => 10, 'label' => 'Purchase Order',  'value' => 'order_number',  'group' => 'active', 'selected' => true,  'sortable' => true, 'editable' => true],
             ['id' => 11, 'label' => 'Planned Start',   'value' => 'scheduled_start_date',   'group' => 'active', 'selected' => true,  'sortable' => true, 'editable' => true],
             ['id' => 12, 'label' => 'Address',         'value' => 'address',         'group' => 'active', 'selected' => false, 'sortable' => true, 'editable' => true],
             ['id' => 13, 'label' => 'Price',           'value' => 'price',           'group' => 'active', 'selected' => true,  'sortable' => true, 'editable' => true],
             ['id' => 14, 'label' => 'Completion Date', 'value' => 'ended_at', 'group' => 'active', 'selected' => true,  'sortable' => true, 'editable' => true],
-            ['id' => 15, 'label' => 'Order Type', 'value' => 'is_extra', 'group' => 'active', 'selected' => true, 'sortable' => true, 'editable' => true, 'filterable' => true],
+            ['id' => 15, 'label' => 'Order Type', 'value' => 'is_extra', 'group' => 'active', 'selected' => true, 'sortable' => true, 'editable' => true, 'filterable' => true, 'color' => 'lime'],
             ['id' => 16, 'label' => 'Start Date',      'value' => 'started_at',       'group' => 'active', 'selected' => false, 'sortable' => true, 'editable' => true],
             ['id' => 17, 'label' => 'Planned End',     'value' => 'scheduled_end_date','group' => 'active', 'selected' => false, 'sortable' => true, 'editable' => true],
-            ['id' => 18, 'label' => 'Phase', 'value' => 'phase', 'group' => 'active', 'selected' => false, 'sortable' => true, 'editable' => true, 'filterable' => true],
+            ['id' => 18, 'label' => 'Phase', 'value' => 'phase', 'group' => 'active', 'selected' => false, 'sortable' => true, 'editable' => true, 'filterable' => true, 'color' => 'indigo'],
         ];
 
         $this->dispatchFilters();

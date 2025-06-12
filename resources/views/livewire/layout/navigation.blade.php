@@ -24,12 +24,17 @@
                 @if (collect($selectedFilters)->filter()->isNotEmpty())
                     <div class="flex flex-wrap gap-2 mb-2">
                         @foreach($selectedFilters as $key => $vals)
-                            @if(!empty($vals))
-                                <flux:badge color="blue">
-                                    {{ ucfirst(str_replace('_',' ', $key)) }}: {{ is_array($vals) ? implode(', ', $vals) : $vals }}
-                                    <flux:badge.close wire:click="resetFilters('{{ $key }}')" />
+                            @foreach((array)$vals as $val)
+                                @php
+                                    $label = collect($filters[$key] ?? [])
+                                        ->firstWhere('value', $val)['label'] ?? $val;
+                                    $color = $filterColors[$key] ?? 'blue';
+                                @endphp
+                                <flux:badge :color="$color">
+                                    {{ ucfirst(str_replace('_',' ', $key)) }}: {{ $label }}
+                                    <flux:badge.close wire:click="removeFilterValue('{{ $key }}','{{ $val }}')" />
                                 </flux:badge>
-                            @endif
+                            @endforeach
                         @endforeach
                         <flux:badge color="slate" variant="solid">
                             Clear All
@@ -74,12 +79,17 @@
         @if($showFilters && collect($selectedFilters)->filter()->isNotEmpty())
         <div class="px-4 py-2 flex flex-wrap gap-2 border-b border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900">
             @foreach($selectedFilters as $key => $vals)
-                @if(!empty($vals))
-                    <flux:badge color="blue">
-                        {{ ucfirst(str_replace('_',' ', $key)) }}: {{ is_array($vals) ? implode(', ', $vals) : $vals }}
-                        <flux:badge.close wire:click="resetFilters('{{ $key }}')" />
+                @foreach((array)$vals as $val)
+                    @php
+                        $label = collect($filters[$key] ?? [])
+                            ->firstWhere('value', $val)['label'] ?? $val;
+                        $color = $filterColors[$key] ?? 'blue';
+                    @endphp
+                    <flux:badge :color="$color">
+                        {{ ucfirst(str_replace('_',' ', $key)) }}: {{ $label }}
+                        <flux:badge.close wire:click="removeFilterValue('{{ $key }}','{{ $val }}')" />
                     </flux:badge>
-                @endif
+                @endforeach
             @endforeach
         </div>
         @endif

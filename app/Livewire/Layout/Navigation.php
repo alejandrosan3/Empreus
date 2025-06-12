@@ -2,6 +2,8 @@
     namespace App\Livewire\Layout;
 
     use Livewire\Component;
+    use Livewire\Attributes\On;
+    use Livewire\Attributes\Computed;
 
     class Navigation extends Component
     {
@@ -10,7 +12,7 @@
         public $currentAddable;
         public $showFilters;
         public $showSearch;
-    public $showColumns;
+        public $showColumns;
 
     // Search input bound via Livewire
     public $searchTerm = '';
@@ -20,6 +22,23 @@
 
         // Selected filter values
         public array $selectedFilters = [];
+
+        public array $columns = [];
+
+        #[On('update-columns')]
+        public function updateColumns($columns = [])
+        {
+            $this->columns = $columns;
+        }
+
+        #[Computed]
+        public function getFilterColorsProperty(): array
+        {
+            return collect($this->columns)
+                ->filter(fn($c) => ($c['filterable'] ?? false))
+                ->mapWithKeys(fn($c) => [$c['value'] => $c['color'] ?? 'blue'])
+                ->all();
+        }
 
         /**
          * Called when the "filters-updated" DOM event is dispatched from LotProgress.
@@ -50,6 +69,25 @@
                 $this->selectedFilters[$choice] = [];
             }
             $this->applyGlobalFilters();
+        }
+
+        /**
+         * Remove a single value from a filter and apply changes.
+         */
+        public function removeFilterValue($key, $value)
+        {
+            if (isset($this->selectedFilters[$key])) {
+                $this->selectedFilters[$key] = array_values(array_filter(
+                    $this->selectedFilters[$key],
+                    fn($v) => (string)$v !== (string)$value
+                ));
+
+                if (empty($this->selectedFilters[$key])) {
+                    unset($this->selectedFilters[$key]);
+                }
+
+                $this->applyGlobalFilters();
+            }
         }
 
         /**
