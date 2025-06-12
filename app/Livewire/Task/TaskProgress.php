@@ -9,6 +9,7 @@ use Livewire\WithPagination;
 use Livewire\Attributes\On;
 use Livewire\Attributes\Computed;
 use Illuminate\Support\Facades\Cache;
+use App\Models\TaskNote;
 
 use Flux\Flux;
 
@@ -128,10 +129,13 @@ class TaskProgress extends Component
             $query->join('status_types', 'tasks.status_type_id', '=', 'status_types.id')
                   ->orderBy('status_types.name', $this->sortDirection);
         } elseif ($this->sortBy === 'notes') {
-            // Sorting by note can be trickier (if tasks can have many notes). For a simple case,
-            // if you want to sort by the description of the first note, you might do a left join.
-            $query->leftJoin('task_notes', 'tasks.id', '=', 'task_notes.task_id')
-                  ->orderBy('task_notes.description', $this->sortDirection);
+            // Sort by the latest note description without duplicating tasks
+            $query->addSelect([
+                'latest_note_description' => TaskNote::select('description')
+                    ->whereColumn('task_id', 'tasks.id')
+                    ->orderByDesc('created_at')
+                    ->limit(1)
+            ])->orderBy('latest_note_description', $this->sortDirection);
         } elseif ($this->sortBy === 'is_extra') {
             // This column is directly on the tasks table
             $query->orderBy('tasks.is_extra', $this->sortDirection);
