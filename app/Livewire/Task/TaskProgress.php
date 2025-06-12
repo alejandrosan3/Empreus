@@ -20,9 +20,8 @@ class TaskProgress extends Component
     public $sortDirection = 'desc';
 
     public $columns = [];
-    public $selectedBuilders = [];
-    public $selectedSubdivisions = [];
-    public $selectedLots = [];
+    // Selected filters keyed by column name
+    public array $selectedFilters = [];
 
     public $searchTerm = '';
 
@@ -147,30 +146,44 @@ class TaskProgress extends Component
 
     private function applyTaskFilters($query): void
     {
-        if (!empty($this->selectedBuilders)) {
-            $query->whereHas('lot.builder', function ($q) {
-                $q->whereIn('id', $this->selectedBuilders);
-            });
-        }
+        foreach ($this->selectedFilters as $column => $values) {
+            if (empty($values)) {
+                continue;
+            }
 
-        if (!empty($this->selectedSubdivisions)) {
-            $query->whereHas('lot', function ($q) {
-                $q->where(function ($q2) {
-                    foreach ($this->selectedSubdivisions as $filter) {
-                        [$subdivision, $phase] = explode('|', $filter);
-                        $q2->orWhere(function ($q3) use ($subdivision, $phase) {
-                            $q3->where('subdivision', $subdivision)
-                                ->where('phase', $phase);
+            switch ($column) {
+                case 'builder':
+                    $query->whereHas('lot.builder', fn($q) => $q->whereIn('id', $values));
+                    break;
+                case 'subdivision':
+                    $query->whereHas('lot', function ($q) use ($values) {
+                        $q->where(function ($q2) use ($values) {
+                            foreach ($values as $filter) {
+                                [$sub, $ph] = explode('|', $filter);
+                                $q2->orWhere(fn($q3) => $q3->where('subdivision', $sub)->where('phase', $ph));
+                            }
                         });
-                    }
-                });
-            });
-        }
-
-        if (!empty($this->selectedLots)) {
-            $query->whereHas('lot', function ($q) {
-                $q->whereIn('lots.lot_number', $this->selectedLots);
-            });
+                    });
+                    break;
+                case 'lot_number':
+                    $query->whereHas('lot', fn($q) => $q->whereIn('lots.lot_number', $values));
+                    break;
+                case 'task_type':
+                    $query->whereIn('task_type_id', $values);
+                    break;
+                case 'status':
+                    $query->whereIn('status_type_id', $values);
+                    break;
+                case 'supervisor':
+                    $query->whereHas('lot.supervisor', fn($q) => $q->whereIn('id', $values));
+                    break;
+                case 'is_extra':
+                    $query->whereIn('is_extra', $values);
+                    break;
+                case 'phase':
+                    $query->whereHas('lot', fn($q) => $q->whereIn('phase', $values));
+                    break;
+            }
         }
     }
 
@@ -354,9 +367,7 @@ class TaskProgress extends Component
     #[On('global-filters-updated')]
     public function handleGlobalFilters(array $data)
     {
-        $this->selectedBuilders    = $data['builders']      ?? [];
-        $this->selectedSubdivisions = $data['subdivisions'] ?? [];
-        $this->selectedLots       = $data['lots']          ?? [];
+        $this->selectedFilters = $data;
 
         $this->resetPage();
         $this->dispatchFilters();
@@ -385,133 +396,133 @@ class TaskProgress extends Component
     public function dispatchFilters()
     {
         $companyId = session('company_id');
-        $ttl       = 300; // cache TTL in seconds
+        $ttl       = 300;
 
-        // Shorthand for your three filter arrays
-        $bFilters = $this->selectedBuilders;
-        $sFilters = $this->selectedSubdivisions;
-        $lFilters = $this->selectedLots;
+        $filters = [];
 
-        //
-        // 1) BUILDERS LIST — cache keyed by [subdivisions, lots]
-        //
-        $builders = Cache::remember(
-            "taskProgress:{$companyId}:builders:" . md5(json_encode([$sFilters, $lFilters])),
-            $ttl,
-            function () use ($sFilters, $lFilters) {
-                $q = Auth::user()->tasksForCurrentCompany();
+        $columns = ['builder','subdivision','lot_number','task_type','status','supervisor','is_extra','phase'];
 
-                // apply only subdivisions & lots filters
-                if (!empty($sFilters)) {
-                    $q->whereHas('lot', fn($q) =>
-                        $q->where(function ($q2) use ($sFilters) {
-                            foreach ($sFilters as $filter) {
-                                [$sub, $ph] = explode('|', $filter);
-                                $q2->orWhere(fn($q3) =>
-                                    $q3->where('subdivision', $sub)
-                                    ->where('phase',       $ph)
-                                );
-                            }
-                        })
-                    );
+        foreach ($columns as $column) {
+            $optionsQuery = Auth::user()->tasksForCurrentCompany();
+
+            foreach ($this->selectedFilters as $key => $values) {
+                if ($key === $column || empty($values)) {
+                    continue;
                 }
-                if (!empty($lFilters)) {
-                    $q->whereHas('lot', fn($q) =>
-                        $q->whereIn('lot_number', $lFilters)
-                    );
+                switch ($key) {
+                    case 'builder':
+                        $optionsQuery->whereHas('lot.builder', fn($q)=>$q->whereIn('id',$values));
+                        break;
+                    case 'subdivision':
+                        $optionsQuery->whereHas('lot', function($q) use ($values){
+                            $q->where(function($q2) use ($values){
+                                foreach ($values as $v){
+                                    [$s,$p]=explode('|',$v);
+                                    $q2->orWhere(fn($qq)=>$qq->where('subdivision',$s)->where('phase',$p));
+                                }
+                            });
+                        });
+                        break;
+                    case 'lot_number':
+                        $optionsQuery->whereHas('lot', fn($q)=>$q->whereIn('lot_number',$values));
+                        break;
+                    case 'task_type':
+                        $optionsQuery->whereIn('task_type_id',$values);
+                        break;
+                    case 'status':
+                        $optionsQuery->whereIn('status_type_id',$values);
+                        break;
+                    case 'supervisor':
+                        $optionsQuery->whereHas('lot.supervisor', fn($q)=>$q->whereIn('id',$values));
+                        break;
+                    case 'is_extra':
+                        $optionsQuery->whereIn('is_extra',$values);
+                        break;
+                    case 'phase':
+                        $optionsQuery->whereHas('lot', fn($q)=>$q->whereIn('phase',$values));
+                        break;
                 }
-
-                return $q->join('lots', 'tasks.lot_id', '=', 'lots.id')
-                        ->join('builders', 'lots.builder_id', '=', 'builders.id')
-                        ->distinct()
-                        ->orderBy('builders.name', 'asc')
-                        ->get(['builders.id', 'builders.name'])
-                        ->map(fn($b) => [
-                            'value' => $b->id,
-                            'label' => $b->name,
-                        ])
-                        ->toArray();
             }
-        );
 
-        //
-        // 2) SUBDIVISIONS LIST — cache keyed by [builders, lots]
-        //
-        $subdivisions = Cache::remember(
-            "taskProgress:{$companyId}:subdivisions:" . md5(json_encode([$bFilters, $lFilters])),
-            $ttl,
-            function () use ($bFilters, $lFilters) {
-                $q = Auth::user()->tasksForCurrentCompany();
-
-                // apply only builders & lots filters
-                if (!empty($bFilters)) {
-                    $q->whereHas('lot.builder', fn($q) =>
-                        $q->whereIn('id', $bFilters)
-                    );
-                }
-                if (!empty($lFilters)) {
-                    $q->whereHas('lot', fn($q) =>
-                        $q->whereIn('lot_number', $lFilters)
-                    );
-                }
-
-                return $q->join('lots', 'tasks.lot_id', '=', 'lots.id')
-                        ->select('lots.subdivision','lots.phase')
-                        ->groupBy('lots.subdivision','lots.phase')
-                        ->orderBy('lots.subdivision','asc')
-                        ->get()
-                        ->map(fn($item) => [
-                            'value' => "{$item->subdivision}|{$item->phase}",
-                            'label' => $item->subdivision.($item->phase ? " ({$item->phase})" : ''),
-                        ])
-                        ->toArray();
+            switch ($column) {
+                case 'builder':
+                    $filters[$column] = Cache::remember("taskProgress:{$companyId}:builders:".md5(json_encode($this->selectedFilters)), $ttl, function() use ($optionsQuery){
+                        return $optionsQuery->clone()->join('lots','tasks.lot_id','=','lots.id')
+                            ->join('builders','lots.builder_id','=','builders.id')
+                            ->distinct()
+                            ->orderBy('builders.name','asc')
+                            ->get(['builders.id','builders.name'])
+                            ->map(fn($b)=>['value'=>$b->id,'label'=>$b->name])
+                            ->toArray();
+                    });
+                    break;
+                case 'subdivision':
+                    $filters[$column] = Cache::remember("taskProgress:{$companyId}:subdivisions:".md5(json_encode($this->selectedFilters)), $ttl, function() use ($optionsQuery){
+                        return $optionsQuery->clone()->join('lots','tasks.lot_id','=','lots.id')
+                            ->select('lots.subdivision','lots.phase')
+                            ->groupBy('lots.subdivision','lots.phase')
+                            ->orderBy('lots.subdivision','asc')
+                            ->get()
+                            ->map(fn($i)=>['value'=>"{$i->subdivision}|{$i->phase}", 'label'=>$i->subdivision.($i->phase ? " ({$i->phase})" : '')])
+                            ->toArray();
+                    });
+                    break;
+                case 'lot_number':
+                    $filters[$column] = Cache::remember("taskProgress:{$companyId}:lots:".md5(json_encode($this->selectedFilters)), $ttl, function() use ($optionsQuery){
+                        return $optionsQuery->clone()->join('lots','tasks.lot_id','=','lots.id')
+                            ->distinct()
+                            ->orderBy('lots.lot_number','asc')
+                            ->pluck('lots.lot_number')
+                            ->toArray();
+                    });
+                    break;
+                case 'task_type':
+                    $filters[$column] = Cache::remember("taskProgress:{$companyId}:taskTypes:".md5(json_encode($this->selectedFilters)), $ttl, function() use ($optionsQuery){
+                        return $optionsQuery->clone()->join('task_types','tasks.task_type_id','=','task_types.id')
+                            ->distinct()->orderBy('task_types.name','asc')
+                            ->get(['task_types.id','task_types.name'])
+                            ->map(fn($t)=>['value'=>$t->id,'label'=>$t->name])
+                            ->toArray();
+                    });
+                    break;
+                case 'status':
+                    $filters[$column] = Cache::remember("taskProgress:{$companyId}:statusTypes:".md5(json_encode($this->selectedFilters)), $ttl, function() use ($optionsQuery){
+                        return $optionsQuery->clone()->join('status_types','tasks.status_type_id','=','status_types.id')
+                            ->distinct()->orderBy('status_types.name','asc')
+                            ->get(['status_types.id','status_types.name'])
+                            ->map(fn($s)=>['value'=>$s->id,'label'=>$s->name])
+                            ->toArray();
+                    });
+                    break;
+                case 'supervisor':
+                    $filters[$column] = Cache::remember("taskProgress:{$companyId}:supervisors:".md5(json_encode($this->selectedFilters)), $ttl, function() use ($optionsQuery){
+                        return $optionsQuery->clone()->join('lots','tasks.lot_id','=','lots.id')
+                            ->join('supervisors','lots.supervisor_id','=','supervisors.id')
+                            ->distinct()->orderBy('supervisors.name','asc')
+                            ->get(['supervisors.id','supervisors.name'])
+                            ->map(fn($s)=>['value'=>$s->id,'label'=>$s->name])
+                            ->toArray();
+                    });
+                    break;
+                case 'is_extra':
+                    $filters[$column] = [
+                        ['value' => 0, 'label' => 'Standard'],
+                        ['value' => 1, 'label' => 'EPO'],
+                    ];
+                    break;
+                case 'phase':
+                    $filters[$column] = Cache::remember("taskProgress:{$companyId}:phases:".md5(json_encode($this->selectedFilters)), $ttl, function() use ($optionsQuery){
+                        return $optionsQuery->clone()->join('lots','tasks.lot_id','=','lots.id')
+                            ->select('lots.phase')
+                            ->distinct()->orderBy('lots.phase','asc')
+                            ->pluck('lots.phase')
+                            ->toArray();
+                    });
+                    break;
             }
-        );
+        }
 
-        //
-        // 3) LOT NUMBERS — cache keyed by [builders, subdivisions]
-        //
-        $lots = Cache::remember(
-            "taskProgress:{$companyId}:lots:" . md5(json_encode([$bFilters, $sFilters])),
-            $ttl,
-            function () use ($bFilters, $sFilters) {
-                $q = Auth::user()->tasksForCurrentCompany();
-
-                // apply only builders & subdivisions filters
-                if (!empty($bFilters)) {
-                    $q->whereHas('lot.builder', fn($q) =>
-                        $q->whereIn('id', $bFilters)
-                    );
-                }
-                if (!empty($sFilters)) {
-                    $q->whereHas('lot', fn($q) =>
-                        $q->where(function ($q2) use ($sFilters) {
-                            foreach ($sFilters as $filter) {
-                                [$sub, $ph] = explode('|', $filter);
-                                $q2->orWhere(fn($q3) =>
-                                    $q3->where('subdivision', $sub)
-                                    ->where('phase',       $ph)
-                                );
-                            }
-                        })
-                    );
-                }
-
-                return $q->join('lots', 'tasks.lot_id', '=', 'lots.id')
-                        ->distinct()
-                        ->orderBy('lots.lot_number','asc')
-                        ->pluck('lots.lot_number')
-                        ->toArray();
-            }
-        );
-
-        // Finally, dispatch exactly as before:
-        $this->dispatch('filters-updated',
-            builders:    $builders,
-            subdivisions:$subdivisions,
-            lots:        $lots,
-        );
-
+        $this->dispatch('filters-updated', filters: $filters);
         $this->resetPage();
     }
 
@@ -559,31 +570,26 @@ class TaskProgress extends Component
      */
     public function mount()
     {
-        if (!empty($this->selectedBuilders) && !is_numeric($this->selectedBuilders[0])) {
-            $this->selectedBuilders = \App\Models\Builder::whereIn('name', $this->selectedBuilders)
-                ->pluck('id')
-                ->toArray();
-        }
 
         $this->columns = [
-            ['id' => 1,  'label' => 'Builder',         'value' => 'builder',         'group' => 'fixed',  'selected' => true,  'sortable' => true, 'editable' => false],
-            ['id' => 2,  'label' => 'Subdivision',     'value' => 'subdivision',     'group' => 'fixed',  'selected' => true,  'sortable' => true, 'editable' => false],
-            ['id' => 3,  'label' => 'Lot',             'value' => 'lot_number',             'group' => 'fixed',  'selected' => true,  'sortable' => true, 'editable' => false],
-            ['id' => 4,  'label' => 'Task Type',       'value' => 'task_type',       'group' => 'active', 'selected' => true,  'sortable' => true, 'editable' => false],
-            ['id' => 5,  'label' => 'Status',          'value' => 'status',          'group' => 'active', 'selected' => true,  'sortable' => true, 'editable' => true],
+            ['id' => 1,  'label' => 'Builder', 'value' => 'builder', 'group' => 'fixed', 'selected' => true,  'sortable' => true, 'editable' => false, 'filterable' => true],
+            ['id' => 2,  'label' => 'Subdivision', 'value' => 'subdivision', 'group' => 'fixed',  'selected' => true,  'sortable' => true, 'editable' => false, 'filterable' => true],
+            ['id' => 3,  'label' => 'Lot', 'value' => 'lot_number', 'group' => 'fixed',  'selected' => true,  'sortable' => true, 'editable' => false, 'filterable' => true],
+            ['id' => 4,  'label' => 'Task Type', 'value' => 'task_type', 'group' => 'active', 'selected' => true,  'sortable' => true, 'editable' => false, 'filterable' => true],
+            ['id' => 5,  'label' => 'Status', 'value' => 'status', 'group' => 'active', 'selected' => true,  'sortable' => true, 'editable' => true, 'filterable' => true],
             ['id' => 6,  'label' => 'Stories',         'value' => 'num_of_floors',         'group' => 'active', 'selected' => true,  'sortable' => true, 'editable' => true],
             ['id' => 7,  'label' => 'Notes',           'value' => 'notes',           'group' => 'active', 'selected' => true,  'sortable' => false, 'editable' => true],
             ['id' => 8,  'label' => 'SQ FT',         'value' => 'floor_area',    'group' => 'active', 'selected' => true,  'sortable' => true, 'editable' => true],
-            ['id' => 9,  'label' => 'Supervisor',      'value' => 'supervisor',      'group' => 'active', 'selected' => true,  'sortable' => true, 'editable' => true],
+            ['id' => 9,  'label' => 'Supervisor', 'value' => 'supervisor', 'group' => 'active', 'selected' => true,  'sortable' => true, 'editable' => true, 'filterable' => true],
             ['id' => 10, 'label' => 'Purchase Order',  'value' => 'order_number',  'group' => 'active', 'selected' => true,  'sortable' => true, 'editable' => true],
             ['id' => 11, 'label' => 'Planned Start',   'value' => 'scheduled_start_date',   'group' => 'active', 'selected' => true,  'sortable' => true, 'editable' => true],
             ['id' => 12, 'label' => 'Address',         'value' => 'address',         'group' => 'active', 'selected' => false, 'sortable' => true, 'editable' => true],
             ['id' => 13, 'label' => 'Price',           'value' => 'price',           'group' => 'active', 'selected' => true,  'sortable' => true, 'editable' => true],
             ['id' => 14, 'label' => 'Completion Date', 'value' => 'ended_at', 'group' => 'active', 'selected' => true,  'sortable' => true, 'editable' => true],
-            ['id' => 15, 'label' => 'Order Type',      'value' => 'is_extra',         'group' => 'active', 'selected' => true,  'sortable' => true, 'editable' => true],
+            ['id' => 15, 'label' => 'Order Type', 'value' => 'is_extra', 'group' => 'active', 'selected' => true, 'sortable' => true, 'editable' => true, 'filterable' => true],
             ['id' => 16, 'label' => 'Start Date',      'value' => 'started_at',       'group' => 'active', 'selected' => false, 'sortable' => true, 'editable' => true],
             ['id' => 17, 'label' => 'Planned End',     'value' => 'scheduled_end_date','group' => 'active', 'selected' => false, 'sortable' => true, 'editable' => true],
-            ['id' => 18, 'label' => 'Phase',           'value' => 'phase',             'group' => 'active', 'selected' => false, 'sortable' => true, 'editable' => true],
+            ['id' => 18, 'label' => 'Phase', 'value' => 'phase', 'group' => 'active', 'selected' => false, 'sortable' => true, 'editable' => true, 'filterable' => true],
         ];
 
         $this->dispatchFilters();

@@ -15,17 +15,11 @@
     // Search input bound via Livewire
     public $searchTerm = '';
 
-        // These lists fill the dropdown options for Builders/Subdivisions/Lots
-        public $filters = [
-            'builders' => [],
-            'subdivisions' => [],
-            'lots' => []
-        ];
+        // Filter options keyed by column name
+        public $filters = [];
 
-        // The user's selected items (multi-select) bound via wire:model
-        public array $selectedBuilders = [];
-        public array $selectedSubdivisions = [];
-        public array $selectedLots = [];
+        // Selected filter values
+        public array $selectedFilters = [];
 
         /**
          * Called when the "filters-updated" DOM event is dispatched from LotProgress.
@@ -44,31 +38,16 @@
          * Dispatches "global-filters-updated" so LotProgress or other components can update.
          */
         public function applyGlobalFilters()
-        {   
-            $this->dispatch('global-filters-updated', [
-                'builders' => $this->selectedBuilders,
-                'subdivisions' => $this->selectedSubdivisions,
-                'lots' => $this->selectedLots,
-            ]);
+        {
+            $this->dispatch('global-filters-updated', $this->selectedFilters);
         }
 
         public function resetFilters($choice="all")
         {
-            switch ($choice) {
-                case "subdivisions":
-                    $this->selectedSubdivisions = [];
-                    break;
-                case "builders":
-                    $this->selectedBuilders = [];
-                    break;
-                case "lots":
-                    $this->selectedLots = [];
-                    break;
-                default:
-                    $this->selectedSubdivisions = [];
-                    $this->selectedBuilders = [];
-                    $this->selectedLots = [];
-                    break;
+            if ($choice === "all") {
+                $this->selectedFilters = [];
+            } else {
+                $this->selectedFilters[$choice] = [];
             }
             $this->applyGlobalFilters();
         }
