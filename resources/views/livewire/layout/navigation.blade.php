@@ -42,7 +42,7 @@
                     @foreach($filters as $name => $options)
                         <flux:select multiple searchable clearable label="{{ ucfirst(str_replace('_',' ', $name)) }}" variant="listbox" indicator="checkbox" placeholder="Select" wire:model="selectedFilters.{{ $name }}" clear="close">
                             @foreach($options as $option)
-                                <flux:select.option value="{{ $option['value'] ?? $option }}">{{ $option['label'] ?? $option }}</flux:select.option>
+                                <flux:select.option value="{{ is_array($option) ? $option['value'] : $option }}">{{ is_array($option) ? $option['label'] : $option }}</flux:select.option>
                             @endforeach
                         </flux:select>
                     @endforeach
