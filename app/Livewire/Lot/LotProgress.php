@@ -259,7 +259,7 @@
                 }
             }
 
-            $this->dispatch('filters-updated', $filters);
+            $this->dispatch('filters-updated', filters: $filters);
             $this->resetPage();
         }
 

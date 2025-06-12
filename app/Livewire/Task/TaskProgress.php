@@ -522,7 +522,7 @@ class TaskProgress extends Component
             }
         }
 
-        $this->dispatch('filters-updated', $filters);
+        $this->dispatch('filters-updated', filters: $filters);
         $this->resetPage();
     }
 

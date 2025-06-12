@@ -1,4 +1,4 @@
-    <div x-on:filters-updated.window="$wire.filtersUpdated($event.detail)">
+    <div x-on:filters-updated.window="$wire.filtersUpdated($event.detail.filters)">
         <flux:navbar class="flex justify-between">
 
             @if($showAddNew)
