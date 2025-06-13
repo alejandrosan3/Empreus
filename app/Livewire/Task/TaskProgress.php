@@ -146,45 +146,7 @@ class TaskProgress extends Component
 
     private function applyTaskFilters($query): void
     {
-        foreach ($this->selectedFilters as $column => $values) {
-            if (empty($values)) {
-                continue;
-            }
-
-            switch ($column) {
-                case 'builder':
-                    $query->whereHas('lot.builder', fn($q) => $q->whereIn('id', $values));
-                    break;
-                case 'subdivision':
-                    $query->whereHas('lot', function ($q) use ($values) {
-                        $q->where(function ($q2) use ($values) {
-                            foreach ($values as $filter) {
-                                [$sub, $ph] = explode('|', $filter);
-                                $q2->orWhere(fn($q3) => $q3->where('subdivision', $sub)->where('phase', $ph));
-                            }
-                        });
-                    });
-                    break;
-                case 'lot_number':
-                    $query->whereHas('lot', fn($q) => $q->whereIn('lots.lot_number', $values));
-                    break;
-                case 'task_type':
-                    $query->whereIn('task_type_id', $values);
-                    break;
-                case 'status':
-                    $query->whereIn('status_type_id', $values);
-                    break;
-                case 'supervisor':
-                    $query->whereHas('lot.supervisor', fn($q) => $q->whereIn('id', $values));
-                    break;
-                case 'is_extra':
-                    $query->whereIn('is_extra', $values);
-                    break;
-                case 'phase':
-                    $query->whereHas('lot', fn($q) => $q->whereIn('phase', $values));
-                    break;
-            }
-        }
+        \App\Repositories\FilterRepository::applyFilters($query, $this->selectedFilters);
     }
 
     #[Computed]
@@ -402,47 +364,11 @@ class TaskProgress extends Component
 
         $columns = ['builder','subdivision','lot_number','task_type','status','supervisor','is_extra','phase'];
 
-        foreach ($columns as $column) {
-            $optionsQuery = Auth::user()->tasksForCurrentCompany();
+        $baseQuery = Auth::user()->tasksForCurrentCompany();
 
-            foreach ($this->selectedFilters as $key => $values) {
-                if ($key === $column || empty($values)) {
-                    continue;
-                }
-                switch ($key) {
-                    case 'builder':
-                        $optionsQuery->whereHas('lot.builder', fn($q)=>$q->whereIn('id',$values));
-                        break;
-                    case 'subdivision':
-                        $optionsQuery->whereHas('lot', function($q) use ($values){
-                            $q->where(function($q2) use ($values){
-                                foreach ($values as $v){
-                                    [$s,$p]=explode('|',$v);
-                                    $q2->orWhere(fn($qq)=>$qq->where('subdivision',$s)->where('phase',$p));
-                                }
-                            });
-                        });
-                        break;
-                    case 'lot_number':
-                        $optionsQuery->whereHas('lot', fn($q)=>$q->whereIn('lot_number',$values));
-                        break;
-                    case 'task_type':
-                        $optionsQuery->whereIn('task_type_id',$values);
-                        break;
-                    case 'status':
-                        $optionsQuery->whereIn('status_type_id',$values);
-                        break;
-                    case 'supervisor':
-                        $optionsQuery->whereHas('lot.supervisor', fn($q)=>$q->whereIn('id',$values));
-                        break;
-                    case 'is_extra':
-                        $optionsQuery->whereIn('is_extra',$values);
-                        break;
-                    case 'phase':
-                        $optionsQuery->whereHas('lot', fn($q)=>$q->whereIn('phase',$values));
-                        break;
-                }
-            }
+        foreach ($columns as $column) {
+            $optionsQuery = clone $baseQuery;
+            \App\Repositories\FilterRepository::applyFilters($optionsQuery, $this->selectedFilters, $column);
 
             switch ($column) {
                 case 'builder':

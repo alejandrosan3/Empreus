@@ -123,35 +123,7 @@
 
         private function applyLotFilters($query): void
         {
-            foreach ($this->selectedFilters as $column => $values) {
-                if (empty($values)) {
-                    continue;
-                }
-
-                switch ($column) {
-                    case 'builder':
-                        $query->whereHas('builder', fn($q) => $q->whereIn('id', $values));
-                        break;
-                    case 'subdivision':
-                        $query->where(function ($q) use ($values) {
-                            foreach ($values as $filter) {
-                                [$subdivision, $phase] = explode('|', $filter);
-                                $q->orWhere(fn($q2) => $q2->where('subdivision', $subdivision)
-                                                    ->where('phase', $phase));
-                            }
-                        });
-                        break;
-                    case 'lot_number':
-                        $query->whereIn('lot_number', $values);
-                        break;
-                    case 'supervisor':
-                        $query->whereHas('supervisor', fn($q) => $q->whereIn('id', $values));
-                        break;
-                    case 'phase':
-                        $query->whereIn('phase', $values);
-                        break;
-                }
-            }
+            \App\Repositories\FilterRepository::applyFilters($query, $this->selectedFilters);
         }
 
 
@@ -176,40 +148,13 @@
         #[On('company-updated')]
         public function dispatchFilters()
         {
-            $query = Auth::user()->lotsForCurrentCompany();
+            $baseQuery = Auth::user()->lotsForCurrentCompany();
 
             $filters = [];
 
             foreach (['builder','subdivision','lot_number','supervisor','phase'] as $column) {
-                $optionsQuery = clone $query;
-
-                foreach ($this->selectedFilters as $key => $values) {
-                    if ($key === $column || empty($values)) {
-                        continue;
-                    }
-                    switch ($key) {
-                        case 'builder':
-                            $optionsQuery->whereHas('builder', fn($q) => $q->whereIn('id', $values));
-                            break;
-                        case 'subdivision':
-                            $optionsQuery->where(function ($q) use ($values) {
-                                foreach ($values as $val) {
-                                    [$sub,$ph] = explode('|',$val);
-                                    $q->orWhere(fn($q2)=>$q2->where('subdivision',$sub)->where('phase',$ph));
-                                }
-                            });
-                            break;
-                        case 'lot_number':
-                            $optionsQuery->whereIn('lot_number', $values);
-                            break;
-                        case 'supervisor':
-                            $optionsQuery->whereHas('supervisor', fn($q)=>$q->whereIn('id',$values));
-                            break;
-                        case 'phase':
-                            $optionsQuery->whereIn('phase', $values);
-                            break;
-                    }
-                }
+                $optionsQuery = clone $baseQuery;
+                \App\Repositories\FilterRepository::applyFilters($optionsQuery, $this->selectedFilters, $column);
 
                 switch ($column) {
                     case 'builder':
