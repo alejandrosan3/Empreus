@@ -480,7 +480,7 @@ class TaskProgress extends Component
                     $filters[$colKey] = Cache::remember("taskProgress:{$companyId}:lots:".md5(json_encode($this->selectedFilters)), $ttl, function() use ($optionsQuery){
                         return $optionsQuery->clone()->join('lots','tasks.lot_id','=','lots.id')
                             ->distinct()
-                            ->orderBy('lots.lot_number','asc')
+                            ->orderByRaw('CAST(lots.lot_number AS UNSIGNED) ASC, lots.lot_number ASC')
                             ->pluck('lots.lot_number')
                             ->toArray();
                     });

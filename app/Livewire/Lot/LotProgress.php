@@ -252,7 +252,7 @@
                     case 'lot_number':
                         $filters[$colKey] = $optionsQuery->clone()
                             ->distinct()
-                            ->orderBy('lot_number','asc')
+                            ->orderByRaw('CAST(lots.lot_number AS UNSIGNED) ASC, lots.lot_number ASC')
                             ->pluck('lot_number')
                             ->toArray();
                         break;
