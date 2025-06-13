@@ -1,17 +1,19 @@
 <?php
 
-    namespace App\Livewire\Lot;
+namespace App\Livewire\Lot;
 
-    use App\Models\Lot;
-    use Illuminate\Support\Facades\Auth;
-    use Livewire\Component;
-    use Livewire\WithPagination;
-    use Livewire\Attributes\On;
-    use Livewire\Attributes\Computed;
+use App\Models\Lot;
+use Livewire\Component;
+use Livewire\WithPagination;
+use Livewire\Attributes\On;
+use Livewire\Attributes\Computed;
+use App\Repositories\LotProgressRepository;
 
-    class LotProgress extends Component
-    {
-        use WithPagination;
+class LotProgress extends Component
+{
+    use WithPagination;
+
+        public LotProgressRepository $repository;
 
         // Sort-related
         public $sortBy = 'id';
@@ -77,82 +79,14 @@
          */
         public function getLotsProperty()
         {
-            if ($this->searchTerm !== '') {
-                return Lot::search($this->searchTerm)
-                    ->query(function ($query) {
-                        $query->where('company_id', session('company_id'));
-                        $this->applyLotFilters($query);
-                    })
-                    ->paginate(20);
-            }
-
-            $query = Auth::user()->lotsForCurrentCompany();
-
-            $this->applyLotFilters($query);
-
-            // Sorting logic
-            if ($this->sortBy === 'builder') {
-                $query
-                    ->join('builders', 'lots.builder_id', '=', 'builders.id')
-                    ->orderBy('builders.name', $this->sortDirection);
-            } elseif ($this->sortBy === 'status') {
-                $query
-                    ->join('status_types', 'lots.status_type_id', '=', 'status_types.id')
-                    ->orderBy('status_types.name', $this->sortDirection);
-            } elseif ($this->sortBy === 'lot_number') {
-                $query->orderByRaw("CAST(lot_number AS UNSIGNED) {$this->sortDirection}, lot_number ASC");
-            } elseif ($this->sortBy === 'supervisor') {
-                $query
-                    ->join('supervisors', 'lots.supervisor_id', '=', 'supervisors.id')
-                    ->orderBy('supervisors.name', $this->sortDirection);
-            } elseif ($this->sortBy === 'last_completed_date') {
-                $query
-                    ->select('lots.*')
-                    ->selectRaw('(SELECT MAX(t.ended_at)
-                                  FROM tasks t
-                                  WHERE t.lot_id = lots.id
-                                 ) as last_completed_date')
-                    ->groupBy('lots.id')
-                    ->orderBy('last_completed_date', $this->sortDirection);
-            } else {
-                $query->orderBy($this->sortBy, $this->sortDirection);
-            }
-
-            return $query->paginate(20);
+            return $this->repository->getLots(
+                $this->selectedFilters,
+                $this->sortBy,
+                $this->sortDirection,
+                $this->searchTerm
+            );
         }
 
-        private function applyLotFilters($query): void
-        {
-            foreach ($this->selectedFilters as $column => $values) {
-                if (empty($values)) {
-                    continue;
-                }
-
-                switch ($column) {
-                    case 'builder':
-                        $query->whereHas('builder', fn($q) => $q->whereIn('id', $values));
-                        break;
-                    case 'subdivision':
-                        $query->where(function ($q) use ($values) {
-                            foreach ($values as $filter) {
-                                [$subdivision, $phase] = explode('|', $filter);
-                                $q->orWhere(fn($q2) => $q2->where('subdivision', $subdivision)
-                                                    ->where('phase', $phase));
-                            }
-                        });
-                        break;
-                    case 'lot_number':
-                        $query->whereIn('lot_number', $values);
-                        break;
-                    case 'supervisor':
-                        $query->whereHas('supervisor', fn($q) => $q->whereIn('id', $values));
-                        break;
-                    case 'phase':
-                        $query->whereIn('phase', $values);
-                        break;
-                }
-            }
-        }
 
 
         /**
@@ -176,88 +110,7 @@
         #[On('company-updated')]
         public function dispatchFilters()
         {
-            $query = Auth::user()->lotsForCurrentCompany();
-
-            $filters = [];
-
-            foreach (['builder','subdivision','lot_number','supervisor','phase'] as $column) {
-                $optionsQuery = clone $query;
-
-                foreach ($this->selectedFilters as $key => $values) {
-                    if ($key === $column || empty($values)) {
-                        continue;
-                    }
-                    switch ($key) {
-                        case 'builder':
-                            $optionsQuery->whereHas('builder', fn($q) => $q->whereIn('id', $values));
-                            break;
-                        case 'subdivision':
-                            $optionsQuery->where(function ($q) use ($values) {
-                                foreach ($values as $val) {
-                                    [$sub,$ph] = explode('|',$val);
-                                    $q->orWhere(fn($q2)=>$q2->where('subdivision',$sub)->where('phase',$ph));
-                                }
-                            });
-                            break;
-                        case 'lot_number':
-                            $optionsQuery->whereIn('lot_number', $values);
-                            break;
-                        case 'supervisor':
-                            $optionsQuery->whereHas('supervisor', fn($q)=>$q->whereIn('id',$values));
-                            break;
-                        case 'phase':
-                            $optionsQuery->whereIn('phase', $values);
-                            break;
-                    }
-                }
-
-                switch ($column) {
-                    case 'builder':
-                        $filters[$column] = $optionsQuery->clone()
-                            ->join('builders','lots.builder_id','=','builders.id')
-                            ->select('builders.id','builders.name')
-                            ->distinct()
-                            ->orderBy('builders.name','asc')
-                            ->get()
-                            ->map(fn($b)=>['value'=>$b->id,'label'=>$b->name])
-                            ->toArray();
-                        break;
-                    case 'subdivision':
-                        $filters[$column] = $optionsQuery->clone()
-                            ->select('subdivision','phase')
-                            ->groupBy('subdivision','phase')
-                            ->orderBy('subdivision','asc')
-                            ->get()
-                            ->map(fn($i)=>['value'=>$i->subdivision.'|'.$i->phase,'label'=>$i->subdivision.($i->phase ? " ({$i->phase})" : '')])
-                            ->toArray();
-                        break;
-                    case 'lot_number':
-                        $filters[$column] = $optionsQuery->clone()
-                            ->distinct()
-                            ->orderBy('lot_number','asc')
-                            ->pluck('lot_number')
-                            ->toArray();
-                        break;
-                    case 'supervisor':
-                        $filters[$column] = $optionsQuery->clone()
-                            ->join('supervisors','lots.supervisor_id','=','supervisors.id')
-                            ->select('supervisors.id','supervisors.name')
-                            ->distinct()
-                            ->orderBy('supervisors.name','asc')
-                            ->get()
-                            ->map(fn($s)=>['value'=>$s->id,'label'=>$s->name])
-                            ->toArray();
-                        break;
-                    case 'phase':
-                        $filters[$column] = $optionsQuery->clone()
-                            ->select('phase')
-                            ->distinct()
-                            ->orderBy('phase','asc')
-                            ->pluck('phase')
-                            ->toArray();
-                        break;
-                }
-            }
+            $filters = $this->repository->filterOptions($this->selectedFilters);
 
             $this->dispatch('filters-updated', filters: $filters);
             $this->resetPage();
@@ -343,8 +196,9 @@
          * On component mount, dispatch initial filter data so the user sees
          * all possible builders/subdivisions/lots in the UI.
          */
-        public function mount()
+        public function mount(LotProgressRepository $repository)
         {
+            $this->repository = $repository;
 
             $this->columns = [
                 // Fixed columns (always selected)

@@ -3,18 +3,20 @@
 namespace App\Livewire\Task;
 
 use App\Models\Task;
-use Illuminate\Support\Facades\Auth;
 use Livewire\Component;
 use Livewire\WithPagination;
 use Livewire\Attributes\On;
 use Livewire\Attributes\Computed;
 use Illuminate\Support\Facades\Cache;
+use App\Repositories\TaskProgressRepository;
 
 use Flux\Flux;
 
 class TaskProgress extends Component
 {
     use WithPagination;
+
+    public TaskProgressRepository $repository;
 
     public $sortBy = 'id';
     public $sortDirection = 'desc';
@@ -61,130 +63,12 @@ class TaskProgress extends Component
      */
     public function getTasksProperty()
     {
-        $perPage = 20;
-        $page    = request()->get('page', 1);
-
-        $query = Auth::user()->tasksForCurrentCompany()
-        ->with([
-            'lot.builder',            // lot + nested builder
-            'lot.supervisor',         // lot + nested supervisor
-            'taskType',               // one-to-many
-            'statusType',             // one-to-many
-            // load only the latest note
-            'taskNotes' => fn($q) => $q->latest('created_at')->limit(1),
-        ]);
-
-        if ($this->searchTerm !== '') {
-            return Task::search($this->searchTerm)
-                ->query(function ($query) {
-                    $query->where('tasks.company_id', session('company_id'));
-                    $this->applyTaskFilters($query);
-                })
-                ->paginate(20);
-        }
-
-        // Start with tasks for the current company
-        //$query = Auth::user()->tasksForCurrentCompany();
-
-        $this->applyTaskFilters($query);
-
-        // 4. Sorting logic
-        //    We join the lots (and builders if needed) to sort by columns that live on those tables.
-        if ($this->sortBy === 'builder') {
-            // Sorting by builder (which is on the lots->builders relationship)
-            $query->join('lots', 'tasks.lot_id', '=', 'lots.id')
-                  ->join('builders', 'lots.builder_id', '=', 'builders.id')
-                  ->orderBy('builders.name', $this->sortDirection);
-        } elseif ($this->sortBy === 'subdivision') {
-            $query->join('lots', 'tasks.lot_id', '=', 'lots.id')
-                  ->orderBy('lots.subdivision', $this->sortDirection);
-        } elseif ($this->sortBy === 'address') {
-            $query->join('lots', 'tasks.lot_id', '=', 'lots.id')
-                  ->orderBy('lots.address', $this->sortDirection);
-        } elseif ($this->sortBy === 'lot_number') {
-            // If lot_number is mostly numeric but sometimes text, you might use a raw order:
-            $query->join('lots', 'tasks.lot_id', '=', 'lots.id')
-                  ->orderByRaw("CAST(lots.lot_number AS UNSIGNED) {$this->sortDirection}, lots.lot_number ASC");
-        } elseif ($this->sortBy === 'num_of_floors') {
-            $query->join('lots', 'tasks.lot_id', '=', 'lots.id')
-                  ->orderBy('lots.num_of_floors', $this->sortDirection);
-        } elseif ($this->sortBy === 'floor_area') {
-            $query->join('lots', 'tasks.lot_id', '=', 'lots.id')
-                  ->orderBy('lots.floor_area', $this->sortDirection);
-        } elseif ($this->sortBy === 'supervisor') {
-            // Sorting by supervisor name, which we assume comes from the lots->supervisor relationship
-            $query->join('lots', 'tasks.lot_id', '=', 'lots.id')
-                  ->join('supervisors', 'lots.supervisor_id', '=', 'supervisors.id')
-                  ->orderBy('supervisors.name', $this->sortDirection);
-        } elseif ($this->sortBy === 'phase') {
-            $query->join('lots', 'tasks.lot_id', '=', 'lots.id')
-                  ->orderBy('lots.phase', $this->sortDirection);
-        } elseif ($this->sortBy === 'task_type') {
-            // Sorting by task type (from task_types table)
-            $query->join('task_types', 'tasks.task_type_id', '=', 'task_types.id')
-                  ->orderBy('task_types.name', $this->sortDirection);
-        } elseif ($this->sortBy === 'status') {
-            // Sorting by status (from status_types table)
-            $query->join('status_types', 'tasks.status_type_id', '=', 'status_types.id')
-                  ->orderBy('status_types.name', $this->sortDirection);
-        } elseif ($this->sortBy === 'notes') {
-            // Sorting by note can be trickier (if tasks can have many notes). For a simple case,
-            // if you want to sort by the description of the first note, you might do a left join.
-            $query->leftJoin('task_notes', 'tasks.id', '=', 'task_notes.task_id')
-                  ->orderBy('task_notes.description', $this->sortDirection);
-        } elseif ($this->sortBy === 'is_extra') {
-            // This column is directly on the tasks table
-            $query->orderBy('tasks.is_extra', $this->sortDirection);
-        } else {
-            // Default: assume the column is on the tasks table
-            $query->orderBy('tasks.' . $this->sortBy, $this->sortDirection);
-        }
-        
-        // Finally, paginate the result
-        return $query->paginate(20);
-    }
-
-    private function applyTaskFilters($query): void
-    {
-        foreach ($this->selectedFilters as $column => $values) {
-            if (empty($values)) {
-                continue;
-            }
-
-            switch ($column) {
-                case 'builder':
-                    $query->whereHas('lot.builder', fn($q) => $q->whereIn('id', $values));
-                    break;
-                case 'subdivision':
-                    $query->whereHas('lot', function ($q) use ($values) {
-                        $q->where(function ($q2) use ($values) {
-                            foreach ($values as $filter) {
-                                [$sub, $ph] = explode('|', $filter);
-                                $q2->orWhere(fn($q3) => $q3->where('subdivision', $sub)->where('phase', $ph));
-                            }
-                        });
-                    });
-                    break;
-                case 'lot_number':
-                    $query->whereHas('lot', fn($q) => $q->whereIn('lots.lot_number', $values));
-                    break;
-                case 'task_type':
-                    $query->whereIn('task_type_id', $values);
-                    break;
-                case 'status':
-                    $query->whereIn('status_type_id', $values);
-                    break;
-                case 'supervisor':
-                    $query->whereHas('lot.supervisor', fn($q) => $q->whereIn('id', $values));
-                    break;
-                case 'is_extra':
-                    $query->whereIn('is_extra', $values);
-                    break;
-                case 'phase':
-                    $query->whereHas('lot', fn($q) => $q->whereIn('phase', $values));
-                    break;
-            }
-        }
+        return $this->repository->getTasks(
+            $this->selectedFilters,
+            $this->sortBy,
+            $this->sortDirection,
+            $this->searchTerm
+        );
     }
 
     #[Computed]
@@ -395,132 +279,7 @@ class TaskProgress extends Component
 
     public function dispatchFilters()
     {
-        $companyId = session('company_id');
-        $ttl       = 300;
-
-        $filters = [];
-
-        $columns = ['builder','subdivision','lot_number','task_type','status','supervisor','is_extra','phase'];
-
-        foreach ($columns as $column) {
-            $optionsQuery = Auth::user()->tasksForCurrentCompany();
-
-            foreach ($this->selectedFilters as $key => $values) {
-                if ($key === $column || empty($values)) {
-                    continue;
-                }
-                switch ($key) {
-                    case 'builder':
-                        $optionsQuery->whereHas('lot.builder', fn($q)=>$q->whereIn('id',$values));
-                        break;
-                    case 'subdivision':
-                        $optionsQuery->whereHas('lot', function($q) use ($values){
-                            $q->where(function($q2) use ($values){
-                                foreach ($values as $v){
-                                    [$s,$p]=explode('|',$v);
-                                    $q2->orWhere(fn($qq)=>$qq->where('subdivision',$s)->where('phase',$p));
-                                }
-                            });
-                        });
-                        break;
-                    case 'lot_number':
-                        $optionsQuery->whereHas('lot', fn($q)=>$q->whereIn('lot_number',$values));
-                        break;
-                    case 'task_type':
-                        $optionsQuery->whereIn('task_type_id',$values);
-                        break;
-                    case 'status':
-                        $optionsQuery->whereIn('status_type_id',$values);
-                        break;
-                    case 'supervisor':
-                        $optionsQuery->whereHas('lot.supervisor', fn($q)=>$q->whereIn('id',$values));
-                        break;
-                    case 'is_extra':
-                        $optionsQuery->whereIn('is_extra',$values);
-                        break;
-                    case 'phase':
-                        $optionsQuery->whereHas('lot', fn($q)=>$q->whereIn('phase',$values));
-                        break;
-                }
-            }
-
-            switch ($column) {
-                case 'builder':
-                    $filters[$column] = Cache::remember("taskProgress:{$companyId}:builders:".md5(json_encode($this->selectedFilters)), $ttl, function() use ($optionsQuery){
-                        return $optionsQuery->clone()->join('lots','tasks.lot_id','=','lots.id')
-                            ->join('builders','lots.builder_id','=','builders.id')
-                            ->distinct()
-                            ->orderBy('builders.name','asc')
-                            ->get(['builders.id','builders.name'])
-                            ->map(fn($b)=>['value'=>$b->id,'label'=>$b->name])
-                            ->toArray();
-                    });
-                    break;
-                case 'subdivision':
-                    $filters[$column] = Cache::remember("taskProgress:{$companyId}:subdivisions:".md5(json_encode($this->selectedFilters)), $ttl, function() use ($optionsQuery){
-                        return $optionsQuery->clone()->join('lots','tasks.lot_id','=','lots.id')
-                            ->select('lots.subdivision','lots.phase')
-                            ->groupBy('lots.subdivision','lots.phase')
-                            ->orderBy('lots.subdivision','asc')
-                            ->get()
-                            ->map(fn($i)=>['value'=>"{$i->subdivision}|{$i->phase}", 'label'=>$i->subdivision.($i->phase ? " ({$i->phase})" : '')])
-                            ->toArray();
-                    });
-                    break;
-                case 'lot_number':
-                    $filters[$column] = Cache::remember("taskProgress:{$companyId}:lots:".md5(json_encode($this->selectedFilters)), $ttl, function() use ($optionsQuery){
-                        return $optionsQuery->clone()->join('lots','tasks.lot_id','=','lots.id')
-                            ->distinct()
-                            ->orderBy('lots.lot_number','asc')
-                            ->pluck('lots.lot_number')
-                            ->toArray();
-                    });
-                    break;
-                case 'task_type':
-                    $filters[$column] = Cache::remember("taskProgress:{$companyId}:taskTypes:".md5(json_encode($this->selectedFilters)), $ttl, function() use ($optionsQuery){
-                        return $optionsQuery->clone()->join('task_types','tasks.task_type_id','=','task_types.id')
-                            ->distinct()->orderBy('task_types.name','asc')
-                            ->get(['task_types.id','task_types.name'])
-                            ->map(fn($t)=>['value'=>$t->id,'label'=>$t->name])
-                            ->toArray();
-                    });
-                    break;
-                case 'status':
-                    $filters[$column] = Cache::remember("taskProgress:{$companyId}:statusTypes:".md5(json_encode($this->selectedFilters)), $ttl, function() use ($optionsQuery){
-                        return $optionsQuery->clone()->join('status_types','tasks.status_type_id','=','status_types.id')
-                            ->distinct()->orderBy('status_types.name','asc')
-                            ->get(['status_types.id','status_types.name'])
-                            ->map(fn($s)=>['value'=>$s->id,'label'=>$s->name])
-                            ->toArray();
-                    });
-                    break;
-                case 'supervisor':
-                    $filters[$column] = Cache::remember("taskProgress:{$companyId}:supervisors:".md5(json_encode($this->selectedFilters)), $ttl, function() use ($optionsQuery){
-                        return $optionsQuery->clone()->join('lots','tasks.lot_id','=','lots.id')
-                            ->join('supervisors','lots.supervisor_id','=','supervisors.id')
-                            ->distinct()->orderBy('supervisors.name','asc')
-                            ->get(['supervisors.id','supervisors.name'])
-                            ->map(fn($s)=>['value'=>$s->id,'label'=>$s->name])
-                            ->toArray();
-                    });
-                    break;
-                case 'is_extra':
-                    $filters[$column] = [
-                        ['value' => 0, 'label' => 'Standard'],
-                        ['value' => 1, 'label' => 'EPO'],
-                    ];
-                    break;
-                case 'phase':
-                    $filters[$column] = Cache::remember("taskProgress:{$companyId}:phases:".md5(json_encode($this->selectedFilters)), $ttl, function() use ($optionsQuery){
-                        return $optionsQuery->clone()->join('lots','tasks.lot_id','=','lots.id')
-                            ->select('lots.phase')
-                            ->distinct()->orderBy('lots.phase','asc')
-                            ->pluck('lots.phase')
-                            ->toArray();
-                    });
-                    break;
-            }
-        }
+        $filters = $this->repository->filterOptions($this->selectedFilters);
 
         $this->dispatch('filters-updated', filters: $filters);
         $this->resetPage();
@@ -568,8 +327,9 @@ class TaskProgress extends Component
     /**
      * On mount, initialize the columns and dispatch initial filter data.
      */
-    public function mount()
+    public function mount(TaskProgressRepository $repository)
     {
+        $this->repository = $repository;
 
         $this->columns = [
             ['id' => 1,  'label' => 'Builder', 'value' => 'builder', 'group' => 'fixed', 'selected' => true,  'sortable' => true, 'editable' => false, 'filterable' => true],
