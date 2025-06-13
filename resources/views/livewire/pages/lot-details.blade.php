@@ -38,7 +38,8 @@
                     ['label'=>'Status', 'column'=> 'status_type.name'],
                     ['label'=>'Scheduled For', 'column'=>'scheduled_start_date'],
                     ['label'=>'Start Date', 'column'=>'started_at'],
-                    ['label'=>'Completed Date', 'column'=>'ended_at']
+                    ['label'=>'Completed Date', 'column'=>'ended_at'],
+                    ['label'=>'Workers', 'column'=>null]
                 ],
                 'taskGroup' => $taskGroup,
             ])

@@ -28,7 +28,16 @@ class TaskDetails extends Component
             $this->task = $task;
         } elseif ($task_id) {
             // Fetch the lot using the ID from the route
-            $this->task = Task::with(['lot.builder', 'lot.supervisor', 'taskType', 'statusType'])->findOrFail($task_id);
+            $this->task = Task::with([
+                'lot.builder',
+                'lot.supervisor',
+                'taskType',
+                'statusType',
+                'workers',
+                'lot.tasks.taskType',
+                'lot.tasks.statusType',
+                'lot.tasks.workers',
+            ])->findOrFail($task_id);
         } else {
             // Throw an exception if neither parameter is provided
             throw new \Exception('No task provided');

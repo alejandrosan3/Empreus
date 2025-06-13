@@ -6,7 +6,9 @@
     <flux:table>
         <flux:table.columns>
             @foreach ($headers as $header)
-                <flux:table.column sortable :sorted="$sortBy === $header['column']" wire:click="sort( '{{ $header['column'] }}' )" >{{ $header['label'] }}</flux:table.column>
+                <flux:table.column @if(!empty($header['column'])) sortable :sorted="$sortBy === $header['column']" wire:click="sort('{{ $header['column'] }}')" @endif>
+                    {{ $header['label'] }}
+                </flux:table.column>
             @endforeach
         </flux:table.columns>
         <flux:table.rows>
@@ -21,6 +23,9 @@
                     <flux:table.cell>{{ $task->scheduled_start_date ?? '-' }}</flux:table.cell>
                     <flux:table.cell>{{ $task->started_at ?? '-' }}</flux:table.cell>
                     <flux:table.cell>{{ $task->ended_at ?? '-' }}</flux:table.cell>
+                    <flux:table.cell>
+                        <x-user-badges :users="$task->workers" />
+                    </flux:table.cell>
                 </flux:table.row>
             @empty
                 <flux:table.row>
