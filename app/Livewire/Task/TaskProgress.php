@@ -16,8 +16,6 @@ class TaskProgress extends Component
 {
     use WithPagination;
 
-    public TaskProgressRepository $repository;
-
     public $sortBy = 'id';
     public $sortDirection = 'desc';
 
@@ -27,7 +25,7 @@ class TaskProgress extends Component
 
     public $searchTerm = '';
 
-    public array $checkedTasks = [];
+    public $checkedTasks = [];
 
     // For dynamically displaying task details
     public $selectedTask = null;
@@ -36,6 +34,14 @@ class TaskProgress extends Component
         'contentUpdated' => '$refresh',
         'search-tasks' => 'updateSearch',
     ];
+
+
+    protected TaskProgressRepository $repository;
+
+    public function boot(TaskProgressRepository $repo)
+    {
+        $this->repository = $repo;
+    }
 
     /**
      * Sort the table by a given column, toggling sort direction if needed,

@@ -13,8 +13,6 @@ class LotProgress extends Component
 {
     use WithPagination;
 
-        public LotProgressRepository $repository;
-
         // Sort-related
         public $sortBy = 'id';
         public $sortDirection = 'desc';
@@ -24,7 +22,7 @@ class LotProgress extends Component
         public $taskTypes = ['Clean Rough', 'Rough Windows', 'Pressure Wash', 'Floor Machine', 'Reclean #1', 'Reclean #2', 'Final Clean', 'Final Windows'];
 
         // Selected filters keyed by column name
-        public array $selectedFilters = [];
+        public $selectedFilters = [];
 
         public $searchTerm = '';
 
@@ -42,6 +40,13 @@ class LotProgress extends Component
             'contentUpdated' => '$refresh',   // ← built-in Livewire shortcut
             'search-tasks'   => 'updateSearch',
         ];
+
+        protected LotProgressRepository $repository;
+
+        public function boot(LotProgressRepository $repo)
+        {
+            $this->repository = $repo;
+        }
 
         /**
          * Sort the table by a given column, toggling sort direction if needed,
