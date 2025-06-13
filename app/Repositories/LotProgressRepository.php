@@ -84,17 +84,20 @@ class LotProgressRepository
         }
     }
 
-    public function filterOptions(array $selectedFilters): array
+    public function filterOptions(array $selectedFilters, array $columns): array
     {
-        $query = Auth::user()->lotsForCurrentCompany();
-
+        $query   = Auth::user()->lotsForCurrentCompany();
         $filters = [];
 
-        foreach (['builder','subdivision','lot_number','supervisor','phase'] as $column) {
+        foreach ($columns as $column) {
+            if (empty($column['filterable'])) {
+                continue;
+            }
+            $colKey      = $column['value'];
             $optionsQuery = clone $query;
 
             foreach ($selectedFilters as $key => $values) {
-                if ($key === $column || empty($values)) {
+                if ($key === $colKey || empty($values)) {
                     continue;
                 }
                 switch ($key) {
@@ -121,9 +124,9 @@ class LotProgressRepository
                 }
             }
 
-            switch ($column) {
+            switch ($colKey) {
                 case 'builder':
-                    $filters[$column] = $optionsQuery->clone()
+                    $filters[$colKey] = $optionsQuery->clone()
                         ->join('builders','lots.builder_id','=','builders.id')
                         ->select('builders.id','builders.name')
                         ->distinct()
@@ -133,7 +136,7 @@ class LotProgressRepository
                         ->toArray();
                     break;
                 case 'subdivision':
-                    $filters[$column] = $optionsQuery->clone()
+                    $filters[$colKey] = $optionsQuery->clone()
                         ->select('subdivision','phase')
                         ->groupBy('subdivision','phase')
                         ->orderBy('subdivision','asc')
@@ -142,14 +145,14 @@ class LotProgressRepository
                         ->toArray();
                     break;
                 case 'lot_number':
-                    $filters[$column] = $optionsQuery->clone()
+                    $filters[$colKey] = $optionsQuery->clone()
                         ->distinct()
                         ->orderBy('lot_number','asc')
                         ->pluck('lot_number')
                         ->toArray();
                     break;
                 case 'supervisor':
-                    $filters[$column] = $optionsQuery->clone()
+                    $filters[$colKey] = $optionsQuery->clone()
                         ->join('supervisors','lots.supervisor_id','=','supervisors.id')
                         ->select('supervisors.id','supervisors.name')
                         ->distinct()
@@ -159,7 +162,7 @@ class LotProgressRepository
                         ->toArray();
                     break;
                 case 'phase':
-                    $filters[$column] = $optionsQuery->clone()
+                    $filters[$colKey] = $optionsQuery->clone()
                         ->select('phase')
                         ->distinct()
                         ->orderBy('phase','asc')

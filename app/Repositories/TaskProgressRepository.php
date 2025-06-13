@@ -122,18 +122,22 @@ class TaskProgressRepository
         }
     }
 
-    public function filterOptions(array $selectedFilters): array
+    public function filterOptions(array $selectedFilters, array $columns): array
     {
         $companyId = session('company_id');
         $ttl       = 300;
         $filters   = [];
-        $columns   = ['builder','subdivision','lot_number','task_type','status','supervisor','is_extra','phase'];
 
         foreach ($columns as $column) {
+            if (empty($column['filterable'])) {
+                continue;
+            }
+
+            $colKey      = $column['value'];
             $optionsQuery = Auth::user()->tasksForCurrentCompany();
 
             foreach ($selectedFilters as $key => $values) {
-                if ($key === $column || empty($values)) {
+                if ($key === $colKey || empty($values)) {
                     continue;
                 }
                 switch ($key) {
@@ -171,9 +175,9 @@ class TaskProgressRepository
                 }
             }
 
-            switch ($column) {
+            switch ($colKey) {
                 case 'builder':
-                    $filters[$column] = Cache::remember("taskProgress:{$companyId}:builders:".md5(json_encode($selectedFilters)), $ttl, function() use ($optionsQuery){
+                    $filters[$colKey] = Cache::remember("taskProgress:{$companyId}:builders:".md5(json_encode($selectedFilters)), $ttl, function() use ($optionsQuery){
                         return $optionsQuery->clone()->join('lots','tasks.lot_id','=','lots.id')
                             ->join('builders','lots.builder_id','=','builders.id')
                             ->distinct()
@@ -184,7 +188,7 @@ class TaskProgressRepository
                     });
                     break;
                 case 'subdivision':
-                    $filters[$column] = Cache::remember("taskProgress:{$companyId}:subdivisions:".md5(json_encode($selectedFilters)), $ttl, function() use ($optionsQuery){
+                    $filters[$colKey] = Cache::remember("taskProgress:{$companyId}:subdivisions:".md5(json_encode($selectedFilters)), $ttl, function() use ($optionsQuery){
                         return $optionsQuery->clone()->join('lots','tasks.lot_id','=','lots.id')
                             ->select('lots.subdivision','lots.phase')
                             ->groupBy('lots.subdivision','lots.phase')
@@ -195,7 +199,7 @@ class TaskProgressRepository
                     });
                     break;
                 case 'lot_number':
-                    $filters[$column] = Cache::remember("taskProgress:{$companyId}:lots:".md5(json_encode($selectedFilters)), $ttl, function() use ($optionsQuery){
+                    $filters[$colKey] = Cache::remember("taskProgress:{$companyId}:lots:".md5(json_encode($selectedFilters)), $ttl, function() use ($optionsQuery){
                         return $optionsQuery->clone()->join('lots','tasks.lot_id','=','lots.id')
                             ->distinct()
                             ->orderBy('lots.lot_number','asc')
@@ -204,7 +208,7 @@ class TaskProgressRepository
                     });
                     break;
                 case 'task_type':
-                    $filters[$column] = Cache::remember("taskProgress:{$companyId}:taskTypes:".md5(json_encode($selectedFilters)), $ttl, function() use ($optionsQuery){
+                    $filters[$colKey] = Cache::remember("taskProgress:{$companyId}:taskTypes:".md5(json_encode($selectedFilters)), $ttl, function() use ($optionsQuery){
                         return $optionsQuery->clone()->join('task_types','tasks.task_type_id','=','task_types.id')
                             ->distinct()->orderBy('task_types.name','asc')
                             ->get(['task_types.id','task_types.name'])
@@ -213,7 +217,7 @@ class TaskProgressRepository
                     });
                     break;
                 case 'status':
-                    $filters[$column] = Cache::remember("taskProgress:{$companyId}:statusTypes:".md5(json_encode($selectedFilters)), $ttl, function() use ($optionsQuery){
+                    $filters[$colKey] = Cache::remember("taskProgress:{$companyId}:statusTypes:".md5(json_encode($selectedFilters)), $ttl, function() use ($optionsQuery){
                         return $optionsQuery->clone()->join('status_types','tasks.status_type_id','=','status_types.id')
                             ->distinct()->orderBy('status_types.name','asc')
                             ->get(['status_types.id','status_types.name'])
@@ -222,7 +226,7 @@ class TaskProgressRepository
                     });
                     break;
                 case 'supervisor':
-                    $filters[$column] = Cache::remember("taskProgress:{$companyId}:supervisors:".md5(json_encode($selectedFilters)), $ttl, function() use ($optionsQuery){
+                    $filters[$colKey] = Cache::remember("taskProgress:{$companyId}:supervisors:".md5(json_encode($selectedFilters)), $ttl, function() use ($optionsQuery){
                         return $optionsQuery->clone()->join('lots','tasks.lot_id','=','lots.id')
                             ->join('supervisors','lots.supervisor_id','=','supervisors.id')
                             ->distinct()->orderBy('supervisors.name','asc')
@@ -232,13 +236,13 @@ class TaskProgressRepository
                     });
                     break;
                 case 'is_extra':
-                    $filters[$column] = [
+                    $filters[$colKey] = [
                         ['value' => 0, 'label' => 'Standard'],
                         ['value' => 1, 'label' => 'EPO'],
                     ];
                     break;
                 case 'phase':
-                    $filters[$column] = Cache::remember("taskProgress:{$companyId}:phases:".md5(json_encode($selectedFilters)), $ttl, function() use ($optionsQuery){
+                    $filters[$colKey] = Cache::remember("taskProgress:{$companyId}:phases:".md5(json_encode($selectedFilters)), $ttl, function() use ($optionsQuery){
                         return $optionsQuery->clone()->join('lots','tasks.lot_id','=','lots.id')
                             ->select('lots.phase')
                             ->distinct()->orderBy('lots.phase','asc')

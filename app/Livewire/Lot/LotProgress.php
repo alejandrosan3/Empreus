@@ -110,7 +110,7 @@ class LotProgress extends Component
         #[On('company-updated')]
         public function dispatchFilters()
         {
-            $filters = $this->repository->filterOptions($this->selectedFilters);
+            $filters = $this->repository->filterOptions($this->selectedFilters, $this->columns);
 
             $this->dispatch('filters-updated', filters: $filters);
             $this->resetPage();
