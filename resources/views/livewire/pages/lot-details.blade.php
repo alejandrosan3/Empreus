@@ -1,10 +1,6 @@
 <div class="p-4">
-    <flux:button
-    icon="arrow-left"
-    variant="ghost"
-    wire:click="goBack">
-    Back
-</flux:button>
+    <livewire:partials.return-button />
+
     <flux:heading size="xl" class="mb-4">Lot Details <flux:badge color="yellow" inset="top bottom">{{ $lot->company->name }}</flux:badge> </flux:heading>
     <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 gap-4">
         <!-- Builder Details -->

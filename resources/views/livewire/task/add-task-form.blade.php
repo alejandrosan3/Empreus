@@ -1,10 +1,5 @@
 <div class="p-4">
-    <flux:button
-        icon="arrow-left"
-        variant="ghost"
-        wire:click="goBack">
-        Back
-    </flux:button>
+    <livewire:partials.return-button />
 
     @if($errors->any())
     <div class="mb-4 text-red-600">

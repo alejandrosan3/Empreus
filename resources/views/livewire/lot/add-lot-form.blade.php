@@ -1,7 +1,5 @@
 <div class="p-4">
-    <flux:button icon="arrow-left" variant="ghost" wire:click="goBack">
-        Back
-    </flux:button>
+    <livewire:partials.return-button />
 
     {{-- Validation errors (will show once we add rules) --}}
     @if ($errors->any())

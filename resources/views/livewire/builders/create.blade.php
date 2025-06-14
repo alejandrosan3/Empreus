@@ -1,4 +1,6 @@
 <div class="space-y-6 p-4">
+    <livewire:partials.return-button />
+    
     <header>
         <flux:heading size="lg" level="2">{{ __('Create Builder') }}</flux:heading>
     </header>
