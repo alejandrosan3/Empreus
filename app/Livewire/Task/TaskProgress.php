@@ -146,7 +146,7 @@ class TaskProgress extends Component
             // Default: assume the column is on the tasks table
             $query->orderBy('tasks.' . $this->sortBy, $this->sortDirection);
         }
-        
+
         // Finally, paginate the result
         return $query->Paginate(20);
     }

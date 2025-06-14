@@ -95,5 +95,8 @@
 
         @fluxScripts
         @livewireScriptConfig
+        @persist('toast')
+            <flux:toast />
+        @endpersist
     </body>
 </html>

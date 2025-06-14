@@ -107,9 +107,18 @@ class LotImportService
      *
      * @param array $item
      * @return array
+     * @throws Exception
      */
     protected function importItem(array $item): array
     {
+        /**
+         * Trim all string values
+         */
+        $item = array_map(function ($value) {
+            return is_string($value) ? trim($value) : $value;
+        }, $item);
+
+
         /**
          * Find 'pending' status
          */

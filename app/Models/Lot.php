@@ -94,6 +94,12 @@ class Lot extends Model
             ->first();                       // return the first (i.e. newest)
     }
 
+    public function getSupervisorNameAttribute()
+    {
+        $name = $this->lot->supervisor->name ?? '';
+        return \Str::title($name);
+    }
+
     /**
      * Retrieve a distinct list of all subdivisions from the database that are not null, ordered alphabetically.
      *
