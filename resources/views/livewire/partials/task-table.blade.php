@@ -8,6 +8,7 @@
             @foreach ($headers as $header)
                 <flux:table.column sortable :sorted="$sortBy === $header['column']" wire:click="sort( '{{ $header['column'] }}' )" >{{ $header['label'] }}</flux:table.column>
             @endforeach
+            <flux:table.column>Workers</flux:table.column>
         </flux:table.columns>
         <flux:table.rows>
             @forelse ($sortedGroup as $task)
@@ -21,6 +22,7 @@
                     <flux:table.cell>{{ $task->scheduled_start_date ?? '-' }}</flux:table.cell>
                     <flux:table.cell>{{ $task->started_at ?? '-' }}</flux:table.cell>
                     <flux:table.cell>{{ $task->ended_at ?? '-' }}</flux:table.cell>
+                    <flux:table.cell> <livewire:layout.avatar-stack :users="$task->workers" :avSize="'sm'" :key="'row-stack-'.$task->id" /> </flux:table.cell>
                 </flux:table.row>
             @empty
                 <flux:table.row>

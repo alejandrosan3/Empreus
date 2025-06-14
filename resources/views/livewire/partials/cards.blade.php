@@ -4,7 +4,7 @@
       @if($mode === 'view')
         <flux:heading class="my-3" size="lg" level="{{ $item['level'] ?? 3 }}">
           <u>{{ $item['label'] }}:</u>
-          {{ $item['value'] ?? '-' }}
+          {!! $item['value'] ?? '-' !!}
         </flux:heading>
       @else
         @php

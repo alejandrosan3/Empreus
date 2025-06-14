@@ -29,11 +29,12 @@
         @livewire('partials.cards', [
             'items' => [
                 ['label' => 'Supervisor', 'value' => $task->lot->supervisor?->name ?? 'N/A'],
+                ['label' => 'Adress', 'value' => $task->lot->address ?? '-']
                 ['label' => 'Scheduled Start Date', 'value' => $task?->scheduled_start_date ?? "Unscheduled"],
-                ['label' => 'Scheduled End Date', 'value' => $task?->scheduled_end_date ?? "Unscheduled"],
-                ['label' => 'Assigned Group', 'value' => "Coming Soon"],
+                ['label' => 'Workers', 'value' => \Livewire\Livewire::mount('layout.avatar-stack',['users' => $task->workers, 'avSize' =>'sm'])],
             ]
         ])
+
     </div>
 
     <div class="grid grid-cols-1 gap-4 mt-4">

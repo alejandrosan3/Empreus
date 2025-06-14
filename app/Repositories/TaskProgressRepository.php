@@ -202,7 +202,7 @@ class TaskProgressRepository
                     $filters[$colKey] = Cache::remember("taskProgress:{$companyId}:lots:".md5(json_encode($selectedFilters)), $ttl, function() use ($optionsQuery){
                         return $optionsQuery->clone()->join('lots','tasks.lot_id','=','lots.id')
                             ->distinct()
-                            ->orderBy('lots.lot_number','asc')
+                            ->orderByRaw("CAST(lots.lot_number AS UNSIGNED), lots.lot_number ASC")
                             ->pluck('lots.lot_number')
                             ->toArray();
                     });
