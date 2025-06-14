@@ -26,14 +26,14 @@
             ]
         ])
 
-        @livewire('partials.cards', [
-            'items' => [
-                ['label' => 'Supervisor', 'value' => $task->lot->supervisor?->name ?? 'N/A'],
-                ['label' => 'Adress', 'value' => $task->lot->address ?? '-']
-                ['label' => 'Scheduled Start Date', 'value' => $task?->scheduled_start_date ?? "Unscheduled"],
-                ['label' => 'Workers', 'value' => \Livewire\Livewire::mount('layout.avatar-stack',['users' => $task->workers, 'avSize' =>'sm'])],
-            ]
-        ])
+            @livewire('partials.cards', [
+                'items' => [
+                    ['label' => 'Supervisor', 'value' => $task->lot->supervisor?->name ?? 'N/A'],
+                    ['label' => 'Adress', 'value' => $task->lot->address ?? '-'],
+                    ['label' => 'Scheduled Start Date', 'value' => $task?->scheduled_start_date ?? "Unscheduled"],
+                    ['label' => 'Workers', 'value' => \Livewire\Livewire::mount('layout.avatar-stack',['avSize' =>'sm', 'users' => $task->workers])],
+                ]
+            ])
 
     </div>
 
