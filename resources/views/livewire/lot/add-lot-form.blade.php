@@ -131,7 +131,4 @@
         Add Lot
     </flux:button>
 
-    @persist('toast')
-        <flux:toast />
-    @endpersist
 </div>

@@ -18,7 +18,4 @@
         <flux:button wire:click="save" variant="primary"> {{ __('Add Supervisor') }} </flux:button>
     </div>
 
-    @persist('toast')
-        <flux:toast />
-    @endpersist
 </div>

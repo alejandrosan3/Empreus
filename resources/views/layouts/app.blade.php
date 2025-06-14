@@ -95,6 +95,8 @@
 
         @fluxScripts
         @livewireScriptConfig
+        
+        {{-- Main Persistent. there's no need to add it anywhere else in the app --}}
         @persist('toast')
             <flux:toast />
         @endpersist

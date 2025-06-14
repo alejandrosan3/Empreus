@@ -29,7 +29,4 @@
 
     <flux:button variant="primary" class="w-full" wire:click.prevent='save'>Add Task</flux:button>
 
-    @persist('toast')
-        <flux:toast />
-    @endpersist
 </div>
