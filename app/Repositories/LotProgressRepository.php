@@ -147,7 +147,7 @@ class LotProgressRepository
                 case 'lot_number':
                     $filters[$colKey] = $optionsQuery->clone()
                         ->distinct()
-                        ->orderBy('lot_number','asc')
+                        ->orderByRaw("CAST(lot_number AS UNSIGNED), lot_number ASC")
                         ->pluck('lot_number')
                         ->toArray();
                     break;
