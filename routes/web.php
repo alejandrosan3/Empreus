@@ -84,6 +84,11 @@ Route::middleware(['auth', 'verified', SetCurrentCompany::class])
                 ->defaults('label', 'Tasks Progress')
                 ->defaults('icon', 'queue-list');
 
+            Route::get('task-board', \App\Livewire\TaskBoard::class)
+                ->name('task-board')
+                ->defaults('label', 'Tasks Board')
+                ->defaults('icon', 'view-columns');
+
             Route::get('/lots/{lot_id}/details', LotDetails::class)
                 ->name('lot-details')
                 ->defaults('label', 'Lot Details view example')

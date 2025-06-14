@@ -16,4 +16,17 @@ enum StatusType: string
     {
         return array_map(fn(self $status) => $status->value, self::cases());
     }
+
+    public static function labels(): array
+    {
+        return [
+            self::PENDING->value => 'Pending',
+            self::CONFIRMED->value => 'Confirmed',
+            self::IN_PROGRESS->value => 'In Progress',
+            self::COMPLETED->value => 'Completed',
+            self::BLOCKED->value => 'Blocked',
+            self::PAYMENT_PENDING->value => 'Payment Pending',
+            self::CANCELLED->value => 'Cancelled',
+        ];
+    }
 }
