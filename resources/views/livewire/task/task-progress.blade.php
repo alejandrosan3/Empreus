@@ -98,7 +98,7 @@
                                     <flux:menu>
                                         <flux:menu.item
                                             icon="clipboard-document-check"
-                                            href="{{ route('task-details', ['task_id' => $row['id']]) }}" wirse:navigate
+                                            href="{{ route('task-details', ['task_id' => $row['id']]) }}" wire:navigate
                                             wire:navigate
                                         >
                                             Details
