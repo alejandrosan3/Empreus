@@ -48,8 +48,8 @@
                     <flux:profile avatar="https://fluxui.dev/img/demo/user.png" />
 
                     <flux:menu>
-                        <flux:menu.item icon="user-circle" :href="route('profile')">Profile</flux:menu.item>
-                        <flux:menu.item icon="cog-8-tooth" :href="route('profile')">settings</flux:menu.item>
+                        <flux:menu.item icon="user-circle" :href="route('profile')" wire:navigate>Profile</flux:menu.item>
+                        <flux:menu.item icon="cog-8-tooth" :href="route('profile')" wire:navigate>settings</flux:menu.item>
 
                         <flux:menu.separator />
                         <form method="POST" action="{{ route('logout') }}">

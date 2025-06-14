@@ -36,7 +36,7 @@
                                 variant="subtle"
                                 size="xs"
                                 icon="arrow-top-right-on-square"
-                                href="{{ route('task-details', ['task_id' => $task->id]) }}"
+                                href="{{ route('task-details', ['task_id' => $task->id]) }}" wire:navigate
                                 target="_blank"
                                 rel="noopener noreferrer"
                                 title="Open Task details"

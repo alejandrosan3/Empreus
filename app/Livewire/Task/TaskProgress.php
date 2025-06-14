@@ -361,6 +361,7 @@ class TaskProgress extends Component
         $this->dispatchFilters();
         $this->dispatch('update-columns', columns: $this->columns);
     }
+    
 
     public function render()
     {
