@@ -75,6 +75,11 @@
                             No tasks in this status
                         </div>
                     @endforelse
+                    @if($hasMore[$status] ?? false)
+                        <div class="text-center py-2">
+                            <flux:button size="xs" wire:click="loadMore('{{ $status }}')">Load More</flux:button>
+                        </div>
+                    @endif
                     <div class="h-full min-h-[150px] empty-column" aria-hidden="true"></div>
                 </div>
             </div>
@@ -100,7 +105,13 @@
                         const originalStatus = event.from.dataset.status;
 
                         if (originalStatus !== newStatus) {
-                            event.to.closest('[wire\\:id]').__livewire.$wire.updateTaskStatus(taskId, newStatus);
+                            const component = event.to.closest('[wire\\:id]').__livewire;
+                            component.$wire.updateTaskStatus(taskId, newStatus);
+                        }
+
+                        if (event.from.querySelectorAll('.cursor-move').length === 0) {
+                            const component = event.from.closest('[wire\\:id]').__livewire;
+                            component.$wire.loadMore(event.from.dataset.status);
                         }
                     }
                 });

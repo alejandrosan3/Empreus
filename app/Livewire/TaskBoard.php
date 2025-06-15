@@ -18,6 +18,10 @@ class TaskBoard extends Component
 
     public array $tasksById = [];
 
+    public array $loadedCounts = [];
+
+    public array $hasMore = [];
+
 
     public array $statuses = [
         'confirmed' => 'Pending',
@@ -41,13 +45,13 @@ class TaskBoard extends Component
 
     public function loadTasks(): void
     {
-        $this->tasks['confirmed'] = Task::getTasksByStatusForCurrentCompany('confirmed', 50);
-        $this->tasks['in_progress'] = Task::getTasksByStatusForCurrentCompany('in_progress', 50);
-        $this->tasks['completed'] = Task::getTasksByStatusForCurrentCompany('completed', 50);
-        $this->tasks['payment_pending'] = Task::getTasksByStatusForCurrentCompany('payment_pending', 50);
-        $this->tasks['blocked'] = Task::getTasksByStatusForCurrentCompany('blocked', 50);
+        foreach (array_keys($this->getStatuses()) as $status) {
+            $limit = $this->loadedCounts[$status] ?? 5;
+            $tasks = Task::getTasksByStatusForCurrentCompany($status, $limit);
+            $this->tasks[$status] = $tasks;
+            $this->loadedCounts[$status] = $tasks->count();
+            $this->hasMore[$status] = $tasks->count() === $limit;
 
-        foreach ($this->tasks as $taskType => $tasks) {
             foreach ($tasks as $task) {
                 $this->tasksById[$task->id] = $task;
             }
@@ -85,9 +89,31 @@ class TaskBoard extends Component
 
     }
 
+    public function loadMore(string $status, int $count = 15): void
+    {
+        $offset = $this->loadedCounts[$status] ?? 0;
+        $tasks = Task::getTasksByStatusForCurrentCompany($status, $count, $offset);
+
+        foreach ($tasks as $task) {
+            $this->tasks[$status][] = $task;
+            $this->tasksById[$task->id] = $task;
+        }
+
+        $this->loadedCounts[$status] = ($this->loadedCounts[$status] ?? 0) + $tasks->count();
+        $this->hasMore[$status] = $tasks->count() === $count;
+    }
+
     public function mount()
     {
-        $this->loadTasks();
+        foreach (array_keys($this->getStatuses()) as $status) {
+            $this->tasks[$status] = [];
+            $this->loadedCounts[$status] = 0;
+            $this->hasMore[$status] = true;
+        }
+
+        foreach (array_keys($this->getStatuses()) as $status) {
+            $this->loadMore($status, 5);
+        }
     }
 
     public function render()
