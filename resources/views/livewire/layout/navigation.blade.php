@@ -24,6 +24,7 @@
                 @if (collect($selectedFilters)->filter()->isNotEmpty())
                     <div class="flex flex-wrap gap-2 mb-2">
                         @foreach($selectedFilters as $key => $vals)
+                            @continue(empty($vals))
                             {{ ucfirst(str_replace('_',' ', $key)) }}: 
                             @foreach((array)$vals as $val)
                                 @php
@@ -83,6 +84,7 @@
         @if($showFilters && collect($selectedFilters)->filter()->isNotEmpty())
         <div class="px-4 py-2 flex flex-wrap gap-2 border-b border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900">
             @foreach($selectedFilters as $key => $vals)
+                @continue(empty($vals))
                 {{ucfirst(str_replace('_',' ', $key))}}: 
                 @foreach((array)$vals as $val)
                     @php

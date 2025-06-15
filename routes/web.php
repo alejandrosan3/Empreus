@@ -57,12 +57,12 @@ Route::middleware(['auth', 'verified', SetCurrentCompany::class])
             Route::get('supervisors', ListSupervisor::class)
                 ->name('supervisors')
                 ->defaults('label', 'Supervisors')
-                ->defaults('icon', 'user-group');
+                ->defaults('icon', 'user');
 
             Route::get('workers', \App\Livewire\Workers\ListWorker::class)
                 ->name('workers')
                 ->defaults('label', 'Workers')
-                ->defaults('icon', 'user');
+                ->defaults('icon', 'user-group');
 
             Route::get('supervisors/create', CreateSupervisor::class)
                 ->name('supervisor-create')

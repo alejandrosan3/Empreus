@@ -27,9 +27,6 @@ class TaskProgress extends Component
 
     public $checkedTasks = [];
 
-    // For dynamically displaying task details
-    public $selectedTask = null;
-
     protected $listeners = [
         'contentUpdated' => '$refresh',
         'search-tasks' => 'updateSearch',
@@ -291,38 +288,6 @@ class TaskProgress extends Component
         $this->resetPage();
     }
 
-
-    /**
-     * Load task details dynamically or redirect if using route-based navigation.
-     */
-    public function loadDetails($taskId)
-    {
-        if (!$this->isRouteRequest()) {
-            $this->selectedTask = Task::findOrFail($taskId);
-        } else {
-            return redirect()->route('task-details', ['task_id' => $taskId]);
-        }
-    }
-
-    /**
-     * Check if the current request is route-based.
-     */
-    private function isRouteRequest()
-    {
-        if (request()->header('X-Livewire')) {
-            return false;
-        }
-        return request()->routeIs('task-details') || request()->routeIs('task-progress');
-    }
-
-    /**
-     * Reset the selected task to return to the table view.
-     */
-    #[On('back-button-press')]
-    public function resetSelectedTask($selectedTask = null)
-    {
-        $this->selectedTask = $selectedTask;
-    }
 
     #[On('column-list-updated')]
     public function updateColumns($columns)

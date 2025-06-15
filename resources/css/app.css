@@ -45,3 +45,11 @@
     }
   }
 
+/* === Task-board drag styles Customization === */
+.sortable-chosen {
+  @apply opacity-60;
+}
+
+.sortable-ghost {
+  @apply bg-blue-50 dark:bg-blue-950 border border-dashed border-blue-400 dark:border-blue-700 rounded-lg;
+}

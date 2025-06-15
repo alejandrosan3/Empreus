@@ -20,7 +20,7 @@ class TaskBoard extends Component
 
 
     public array $statuses = [
-        'confirmed' => 'Pending',
+        'confirmed' => 'Confirmed',
         'in_progress' => 'In Progress',
         'payment_pending' => 'Payment Pending',
         'completed' => 'Completed',
@@ -30,7 +30,7 @@ class TaskBoard extends Component
     public function getStatuses(): array
     {
         return [
-            \App\Enums\StatusType::CONFIRMED->value => 'Pending',
+            \App\Enums\StatusType::CONFIRMED->value => 'Confirmed',
             \App\Enums\StatusType::IN_PROGRESS->value => 'In Progress',
             \App\Enums\StatusType::PAYMENT_PENDING->value => 'Payment Pending',
             \App\Enums\StatusType::COMPLETED->value => 'Completed',
@@ -74,6 +74,7 @@ class TaskBoard extends Component
 
             $this->loadTasks();
             $this->showSuccess('Task status updated successfully.');
+            
         } catch (Exception $e) {
             \Log::error('Failed to update task status', [
                 'task_id' => $taskId,

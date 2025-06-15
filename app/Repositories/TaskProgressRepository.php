@@ -63,7 +63,7 @@ class TaskProgressRepository
                     $query->whereIn('task_type_id', $values);
                     break;
                 case 'status':
-                    $query->whereIn('status_type_id', $values);
+                    $query->whereIn('tasks.status_type_id', $values);
                     break;
                 case 'supervisor':
                     $query->whereHas('lot.supervisor', fn($q) => $q->whereIn('id', $values));
@@ -161,7 +161,7 @@ class TaskProgressRepository
                         $optionsQuery->whereIn('task_type_id',$values);
                         break;
                     case 'status':
-                        $optionsQuery->whereIn('status_type_id',$values);
+                        $optionsQuery->whereIn('tasks.status_type_id',$values);
                         break;
                     case 'supervisor':
                         $optionsQuery->whereHas('lot.supervisor', fn($q)=>$q->whereIn('id',$values));
