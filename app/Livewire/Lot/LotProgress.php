@@ -113,12 +113,19 @@ class LotProgress extends Component
          * matching the current selection. Then dispatches them in an event for the UI dropdowns.
          */
         #[On('company-updated')]
-        public function dispatchFilters()
+        public function dispatchFilters(bool $resetPage = true)
         {
             $filters = $this->repository->filterOptions($this->selectedFilters, $this->columns);
 
             $this->dispatch('filters-updated', filters: $filters);
-            $this->resetPage();
+            if ($resetPage) {
+                $this->resetPage();
+            }
+        }
+
+        public function hydrate()
+        {
+            $this->dispatchFilters(false);
         }
 
 

@@ -33,15 +33,14 @@ class BulkEditModal extends Component
     public array $supervisors = [];
 
     #[On('bulk-edit-action')]
-    public function openModal($ids=[])
+    public function openModal(array $payload = [])
     {
         $this->resetModal();
-        
-        $this->showModal = true;
-        $this->entity     = $payload['entity'] ?? 'task';
-        $this->recordIds  = $payload['ids']    ?? [];
 
-        $this->showModal  = true;
+        $this->entity   = $payload['entity'] ?? 'task';
+        $this->taskIds  = $payload['ids'] ?? [];
+
+        $this->showModal = true;
     }
 
      public function resetModal()
@@ -49,6 +48,7 @@ class BulkEditModal extends Component
         $this->reset([
             'showModal',
             'recordIds',
+            'taskIds',
             'status_type_id',
             'supervisor_id',
             'address',
