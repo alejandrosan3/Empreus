@@ -88,9 +88,12 @@
                                         {{ Str::title($task->supervisor_name) }}
                                     </dd>
 
-                                    {{-- Last update --}}
-                                    <dt class="sr-only">Last Update</dt>
-                                    <dd>Last updated on {{ $task->updated_at->format('M j, Y') }}</dd>
+
+                                    <dt class="sr-only">Scheduled Start</dt>
+                                    <dd class="flex items-center gap-1 font-bold">
+                                        <flux:icon name="calendar" class="w-4 h-4 text-gray-500" />
+                                        {{ $task->scheduled_start_date ?? '-' }}
+                                    </dd>
                                 </dl>
                             </flux:text>
                         </div>
@@ -100,8 +103,11 @@
                             No tasks in this status
                         </div>
                     @endforelse
-
-                    {{-- Drop target when a column is empty --}}
+                    @if($hasMore[$status] ?? false)
+                        <div class="text-center py-2">
+                            <flux:button size="xs" wire:click="loadMore('{{ $status }}')">Load More</flux:button>
+                        </div>
+                    @endif
                     <div class="h-full min-h-[150px] empty-column" aria-hidden="true"></div>
                 </div> {{-- End Task Cards Container --}}
             </div> {{-- End Status Column Wrapper --}}
@@ -131,10 +137,13 @@
 
                         // Only trigger Livewire update if status actually changed
                         if (originalStatus !== newStatus) {
-                            event.to.closest('[wire\\:id]')
-                                .__livewire
-                                .$wire
-                                .updateTaskStatus(taskId, newStatus);
+                            const component = event.to.closest('[wire\\:id]').__livewire;
+                            component.$wire.updateTaskStatus(taskId, newStatus);
+                        }
+
+                        if (event.from.querySelectorAll('.cursor-move').length === 0) {
+                            const component = event.from.closest('[wire\\:id]').__livewire;
+                            component.$wire.loadMore(event.from.dataset.status);
                         }
                     },
                 });
