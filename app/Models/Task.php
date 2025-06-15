@@ -146,9 +146,10 @@ class Task extends Model
      *
      * @param string $status
      * @param int $limit
+     * @param int $offset
      * @return Collection
      */
-    public static function getTasksByStatusForCurrentCompany(string $status, int $limit = 100)
+    public static function getTasksByStatusForCurrentCompany(string $status, int $limit = 100, int $offset = 0)
     {
         $companyId = session('company_id');
 
@@ -170,6 +171,7 @@ class Task extends Model
             ->where('tasks.company_id', $companyId)
             ->where('status_types.identifier', $status)
             ->orderBy('tasks.scheduled_start_date', 'desc')
+            ->offset($offset)
             ->limit($limit)
             ->get();
     }
