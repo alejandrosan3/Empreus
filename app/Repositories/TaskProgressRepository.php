@@ -112,14 +112,14 @@ class TaskProgressRepository
         } elseif ($sortBy === 'status') {
             $query->join('status_types', 'tasks.status_type_id', '=', 'status_types.id')
                   ->orderBy('status_types.name', $sortDirection);
-        } elseif ($sortBy === 'notes') {
-            $query->leftJoin('task_notes', 'tasks.id', '=', 'task_notes.task_id')
-                  ->orderBy('task_notes.description', $sortDirection);
         } elseif ($sortBy === 'is_extra') {
             $query->orderBy('tasks.is_extra', $sortDirection);
         } else {
             $query->orderBy('tasks.' . $sortBy, $sortDirection);
         }
+
+        // We're adding this so the task ID is always returned correctly after sorting.
+        $query->select('tasks.*');
     }
 
     public function filterOptions(array $selectedFilters, array $columns): array
