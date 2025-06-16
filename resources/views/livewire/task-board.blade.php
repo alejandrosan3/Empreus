@@ -72,14 +72,14 @@
                                     <dt class="sr-only">Address</dt>
                                     <dd class="flex items-center gap-1">
                                         <flux:icon name="map-pin" class="w-4 h-4 text-gray-500" />
-                                        {{ $task->address }}
+                                        {{ $task->lot->address }}
                                     </dd>
 
                                     {{-- Subdivision / Lot --}}
                                     <dt class="sr-only">Subdivision/Lot</dt>
                                     <dd class="flex items-center gap-1">
                                         <flux:icon name="rectangle-stack" class="w-4 h-4 text-gray-500" />
-                                        {{ $task->subdivision }} - {{ $task->lot_number }}
+                                        {{ $task->lot->subdivision }} - {{ $task->lot->lot_number }}
                                     </dd>
 
                                     {{-- Supervisor --}}
