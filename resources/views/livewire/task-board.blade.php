@@ -66,8 +66,8 @@
                             {{-- Card body --}}
                             <flux:heading>{{ $task->task_type_name }}</flux:heading>
 
-                            <flux:text class="text-sm text-gray-600">
-                                <dl class="space-y-1">
+                            <flux:text class="text-sm text-gray-600 dark:text-white/80">
+                                <dl class="space-y-2">
                                     {{-- Address --}}
                                     <dt class="sr-only">Address</dt>
                                     <dd class="flex items-center gap-1">
@@ -87,7 +87,6 @@
                                         <flux:icon name="user" class="w-4 h-4 text-gray-500" />
                                         {{ Str::title($task->supervisor_name) }}
                                     </dd>
-
 
                                     <dt class="sr-only">Scheduled Start</dt>
                                     <dd class="flex items-center gap-1 font-bold">
