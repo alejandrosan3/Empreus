@@ -17,19 +17,19 @@
 
     <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
         <flux:card>
-            <flux:heading size="md">Completed Lots</flux:heading>
+            <flux:heading size="lg">Completed Lots</flux:heading>
             <span class="text-2xl">{{ $statistics['completed'] }}</span>
         </flux:card>
         <flux:card>
-            <flux:heading size="md">Open Lots</flux:heading>
+            <flux:heading size="lg">Open Lots</flux:heading>
             <span class="text-2xl">{{ $statistics['open'] }}</span>
         </flux:card>
         <flux:card>
-            <flux:heading size="md">Lots in Range</flux:heading>
+            <flux:heading size="lg">Lots in Range</flux:heading>
             <span class="text-2xl">{{ $statistics['total'] }}</span>
         </flux:card>
         <flux:card>
-            <flux:heading size="md">Tasks Finished</flux:heading>
+            <flux:heading size="lg">Tasks Finished</flux:heading>
             <span class="text-2xl">{{ $statistics['tasks_finished'] }}</span>
         </flux:card>
     </div>

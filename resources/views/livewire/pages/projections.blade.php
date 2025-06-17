@@ -14,7 +14,7 @@
             <flux:table.column>Start</flux:table.column>
         </flux:table.columns>
         <flux:table.rows>
-            @foreach($tasks as $task)
+            @foreach($this->tasks as $task)
                 <flux:table.row wire:key="task-{{ $task->id }}">
                     <flux:table.cell>{{ $task->lot->builder->name ?? '' }}</flux:table.cell>
                     <flux:table.cell>{{ $task->lot->lot_number }}</flux:table.cell>
