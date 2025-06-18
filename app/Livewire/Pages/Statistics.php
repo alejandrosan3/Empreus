@@ -125,7 +125,9 @@ class Statistics extends Component
 
     public function render()
     {
-        return view('livewire.pages.statistics')
+        return view('livewire.pages.statistics', [
+                'statistics' => $this->statistics,
+            ])
             ->layout('layouts.app');
     }
 }
