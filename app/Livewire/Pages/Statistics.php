@@ -5,13 +5,13 @@ namespace App\Livewire\Pages;
 use Livewire\Component;
 use Livewire\Attributes\Computed;
 use Carbon\Carbon;
+use Flux\DateRange;
 use App\Models\{Lot, Task, Builder, StatusType};
 use Illuminate\Support\Facades\DB;
 
 class Statistics extends Component
 {
-    public string $startDate;
-    public string $endDate;
+    public DateRange $range;
     public array $presets = [];
     public string $selectedPreset = '';
 
@@ -24,8 +24,7 @@ class Statistics extends Component
     protected function applyDefaultRange(): void
     {
         $start = Carbon::now()->startOfWeek()->addWeek();
-        $this->startDate = $start->toDateString();
-        $this->endDate   = $start->copy()->endOfWeek()->toDateString();
+        $this->range = new DateRange($start, $start->copy()->endOfWeek());
     }
 
     protected function initPresets(): void
@@ -53,16 +52,18 @@ class Statistics extends Component
     {
         if (isset($this->presets[$this->selectedPreset])) {
             $preset = $this->presets[$this->selectedPreset];
-            $this->startDate = $preset['start'];
-            $this->endDate   = $preset['end'];
+            $this->range = new DateRange(
+                Carbon::parse($preset['start']),
+                Carbon::parse($preset['end'])
+            );
         }
     }
 
     #[Computed]
     public function getStatisticsProperty(): array
     {
-        $start = Carbon::parse($this->startDate)->startOfDay();
-        $end   = Carbon::parse($this->endDate)->endOfDay();
+        $start = $this->range->start()->startOfDay();
+        $end   = $this->range->end()->endOfDay();
         $companyId = session('company_id');
 
         $completedId = StatusType::where('identifier', 'completed')->value('id');

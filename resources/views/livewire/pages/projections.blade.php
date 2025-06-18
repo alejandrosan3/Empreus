@@ -1,9 +1,7 @@
 <div>
     <flux:card class="mb-4">
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <flux:date-picker label="Start" with-inputs wire:model="startDate" />
-            <flux:date-picker label="End" with-inputs wire:model="endDate" />
-        </div>
+        <flux:heading size="lg">Projections For Next Week</flux:heading>
+        <flux:date-picker mode="range" with-inputs wire:model.live="range" />
     </flux:card>
 
     <flux:table>

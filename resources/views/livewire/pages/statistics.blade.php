@@ -1,8 +1,7 @@
 <div>
     <flux:card class="mb-4">
         <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
-            <flux:date-picker label="Start" with-inputs wire:model="startDate" />
-            <flux:date-picker label="End" with-inputs wire:model="endDate" />
+            <flux:date-picker mode="range" with-inputs wire:model.live="range" />
             <flux:select label="Preset" wire:model.defer="selectedPreset">
                 <option value="">Select Preset</option>
                 @foreach($presets as $key => $preset)
@@ -18,23 +17,23 @@
     <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
         <flux:card>
             <flux:heading size="lg">Completed Lots</flux:heading>
-            <span class="text-2xl">{{ $statistics['completed'] }}</span>
+            <span class="text-2xl">{{ $this->statistics['completed'] }}</span>
         </flux:card>
         <flux:card>
             <flux:heading size="lg">Open Lots</flux:heading>
-            <span class="text-2xl">{{ $statistics['open'] }}</span>
+            <span class="text-2xl">{{ $this->statistics['open'] }}</span>
         </flux:card>
         <flux:card>
             <flux:heading size="lg">Lots in Range</flux:heading>
-            <span class="text-2xl">{{ $statistics['total'] }}</span>
+            <span class="text-2xl">{{ $this->statistics['total'] }}</span>
         </flux:card>
         <flux:card>
             <flux:heading size="lg">Tasks Finished</flux:heading>
-            <span class="text-2xl">{{ $statistics['tasks_finished'] }}</span>
+            <span class="text-2xl">{{ $this->statistics['tasks_finished'] }}</span>
         </flux:card>
     </div>
 
     <flux:card class="mt-4">
-        <flux:chart type="bar" :value="@js($statistics['chart'])" class="w-full h-64" />
+        <flux:chart type="bar" :value="@js($this->statistics['chart'])" class="w-full h-64" />
     </flux:card>
 </div>
