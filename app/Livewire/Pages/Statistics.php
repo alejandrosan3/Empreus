@@ -46,7 +46,12 @@ class Statistics extends Component
             ],
         ];
 
-        $builders = Builder::where('company_id', session('company_id'))->get();
+        $companyId = session('company_id');
+        $builderIds = Lot::where('company_id', $companyId)
+            ->distinct()
+            ->pluck('builder_id');
+
+        $builders = Builder::whereIn('id', $builderIds)->get();
         foreach ($builders as $builder) {
             $key = Str::slug($builder->name);
             $cfg = config("fiscal_years.builders.$key");
