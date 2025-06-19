@@ -72,6 +72,7 @@
             $showSearch  = $showSearch  ?? false;
             $showColumns  = $showColumns  ?? false;
             $showAddNew = $showAddNew ?? false;
+            $currentAddable = $currentAddable ?? null;
         @endphp
 
         <!--  Horizontal Navbar -->
@@ -81,6 +82,7 @@
                 :showSearch="$showSearch"
                 :showAddNew="$showAddNew"
                 :showColumns="$showColumns"
+                :currentAddable="$currentAddable"
             />
         </flux:header>
 
@@ -93,5 +95,10 @@
 
         @fluxScripts
         @livewireScriptConfig
+        
+        {{-- Main Persistent. there's no need to add it anywhere else in the app --}}
+        @persist('toast')
+            <flux:toast />
+        @endpersist
     </body>
 </html>

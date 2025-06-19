@@ -1,9 +1,29 @@
 <div>
-    @if (!$selectedLot)
+    {{-- Modal for hybrid inline editing behavior --}}
+    <livewire:partials.editable-modal />
+
+    {{-- Modal for bulk editing behavior - Not needed right now
+    <livewire:partials.bulk-edit-modal />  --}}
+
+    <flux:checkbox.group x-data="bulkEditCheckboxes()">
+        <div class="h-8 flex items-center">
+            <div x-show="selectedIds.length > 0" x-transition
+                class="transition-opacity duration-300 opacity-0"
+                :class="{ 'opacity-100': selectedIds.length > 0 }"
+            >
+                <flux:button @click="$wire.set('checkedLots', selectedIds); $wire.startBulkEdit()" size="sm">
+                    Bulk Edit
+                </flux:button>
+            </div>
+        </div>
 
         <flux:table :paginate="$lots">
             <!-- Dynamic Table Header -->
             <flux:table.columns>
+                <flux:table.column
+                    class="sticky left-0 z-20 bg-white dark:bg-zinc-800">
+                    <flux:checkbox.all  name="selectLots" />
+                </flux:table.column>
                 @foreach($columns as $column)
                     @if($column['selected'])
                         @if($column['value'] === 'standard_po')
@@ -16,7 +36,7 @@
                             <flux:table.column :sortable="$column['sortable']"
                             :sorted="$column['sortable'] ? $sortBy === $column['value'] : false "
                             wire:click="{{ $column['sortable'] ? 'sort(\'' . $column['value'] . '\')' : '' }}"
-                            class="bg-white dark:bg-zinc-800 {{ $column['group'] == 'fixed' ? 'sticky' : '' }}"
+                            class="bg-white dark:bg-zinc-800 {{ $column['group'] == 'fixed' ? 'sticky z-10' : '' }}"
                             data-fixed-index=" {{ $column['group'] == 'fixed' ? $loop->index : '' }}">
                                 {{ $column['label'] }}
                             </flux:table.column>
@@ -33,45 +53,76 @@
             <flux:table.rows>
                 @foreach ($lots as $lot)
                     <flux:table.row :key="$lot->id">
+                        <flux:table.cell
+                            class="sticky left-0 z-20 bg-white dark:bg-zinc-800">
+                            <flux:checkbox
+                                x-data="{ id: {{ $lot->id }} }"
+                                name="selectLots"
+                                value="{{ $lot->id }}"
+                                x-bind:checked="selectedIds.includes(id)"
+                                @change="e => {
+                                    if (e.target.checked) selectedIds.push(id);
+                                    else selectedIds = selectedIds.filter(i => i !== id);
+                                }"
+                            />
+                        </flux:table.cell>
                         @foreach($columns as $column)
                             @if($column['selected'])
                                 @switch($column['value'])
                                     @case('builder')
                                         <flux:table.cell
-                                        class="bg-white dark:bg-zinc-800 {{ $column['group'] == 'fixed' ? 'sticky' : '' }}"
-                                        data-fixed-index=" {{ $column['group'] == 'fixed' ? $loop->index : '' }}" >
+                                        class="bg-white dark:bg-zinc-800 {{ $column['group'] == 'fixed' ? 'sticky z-10' : '' }}"
+                                        data-fixed-index=" {{ $column['group'] == 'fixed' ? $loop->index : '' }}"
+                                            >
                                             {{ $lot->builder->name }}
                                         </flux:table.cell>
                                         @break
 
                                     @case('subdivision')
                                         <flux:table.cell
-                                        class="bg-white dark:bg-zinc-800 {{ $column['group'] == 'fixed' ? 'sticky' : '' }}"
-                                        data-fixed-index=" {{ $column['group'] == 'fixed' ? $loop->index : '' }}">
+                                        class="bg-white dark:bg-zinc-800 {{ $column['group'] == 'fixed' ? 'sticky z-10' : '' }}"
+                                        data-fixed-index=" {{ $column['group'] == 'fixed' ? $loop->index : '' }}"
+                                            >
                                             {{ $lot->subdivision . ($lot->phase ? " ({$lot->phase})" : "") }}
                                         </flux:table.cell>
                                         @break
 
                                     @case('lot_number')
                                         <flux:table.cell
-                                        class="bg-white dark:bg-zinc-800 {{ $column['group'] == 'fixed' ? 'sticky' : '' }}"
-                                        data-fixed-index=" {{ $column['group'] == 'fixed' ? $loop->index : '' }}">
+                                        class="bg-white dark:bg-zinc-800 {{ $column['group'] == 'fixed' ? 'sticky z-10' : '' }}"
+                                        data-fixed-index=" {{ $column['group'] == 'fixed' ? $loop->index : '' }}"
+                                            >
                                             {{ $lot->lot_number }}
                                         </flux:table.cell>
                                         @break
 
                                     @case('stories')
+                                        @php
+                                            $raw = $lot->num_of_floors ?? '';
+                                        @endphp
                                         <flux:table.cell
-                                        class="bg-white dark:bg-zinc-800 {{ $column['group'] == 'fixed' ? 'sticky' : '' }}"
-                                        data-fixed-index=" {{ $column['group'] == 'fixed' ? $loop->index : '' }}">
+                                        class="bg-white dark:bg-zinc-800 {{ $column['group'] == 'fixed' ? 'sticky z-10' : '' }}"
+                                        data-fixed-index=" {{ $column['group'] == 'fixed' ? $loop->index : '' }}"
+                                        x-on:dblclick="
+                                            $dispatch('editField', {
+                                                fieldId:        {{ $lot->id }},
+                                                currentValue:   '{{ $raw }}',
+                                                fieldType:      'input',
+                                                optionKey:      '',
+                                                modelClass:     '{{ addslashes(\App\Models\Lot::class) }}',
+                                                modelAttribute: 'num_of_floors',
+                                                editable:       true
+                                            })"
+                                        >
                                             {{ $lot->num_of_floors ?? '-' }}
                                         </flux:table.cell>
                                         @break
 
                                     @case('last_completed_date')
                                         <flux:table.cell
-                                        class="bg-white dark:bg-zinc-800 {{ $column['group'] == 'fixed' ? 'sticky' : '' }}"
-                                        data-fixed-index=" {{ $column['group'] == 'fixed' ? $loop->index : '' }}">
+                                        class="bg-white dark:bg-zinc-800 {{ $column['group'] == 'fixed' ? 'sticky z-10' : '' }}"
+                                        data-fixed-index=" {{ $column['group'] == 'fixed' ? $loop->index : '' }}"
+                                            >
                                             @php
                                                 $lastCompleted = $lot->getLastCompletedTask();
                                             @endphp
@@ -83,10 +134,93 @@
                                         </flux:table.cell>
                                         @break
 
+                                    @case('address')
+                                        @php $raw = $lot->address ?? ''; @endphp
+                                        <flux:table.cell
+                                        class="bg-white dark:bg-zinc-800 {{ $column['group'] == 'fixed' ? 'sticky z-10' : '' }}"
+                                        data-fixed-index=" {{ $column['group'] == 'fixed' ? $loop->index : '' }}"
+                                        x-on:dblclick="
+                                            $dispatch('editField', {
+                                                fieldId:        {{ $lot->id }},
+                                                currentValue:   '{{ $raw }}',
+                                                fieldType:      'input',
+                                                optionKey:      '',
+                                                modelClass:     '{{ addslashes(\App\Models\Lot::class) }}',
+                                                modelAttribute: 'address',
+                                                editable:       true
+                                            })"
+                                        >
+                                            {{ $lot->address ?? '-' }}
+                                        </flux:table.cell>
+                                        @break
+
+                                    @case('phase')
+                                        @php $raw = $lot->phase ?? ''; @endphp
+                                        <flux:table.cell
+                                        class="bg-white dark:bg-zinc-800 {{ $column['group'] == 'fixed' ? 'sticky z-10' : '' }}"
+                                        data-fixed-index=" {{ $column['group'] == 'fixed' ? $loop->index : '' }}"
+                                        x-on:dblclick="
+                                            $dispatch('editField', {
+                                                fieldId:        {{ $lot->id }},
+                                                currentValue:   '{{ $raw }}',
+                                                fieldType:      'input',
+                                                optionKey:      '',
+                                                modelClass:     '{{ addslashes(\App\Models\Lot::class) }}',
+                                                modelAttribute: 'phase',
+                                                editable:       true
+                                            })"
+                                        >
+                                            {{ $lot->phase ?? '-' }}
+                                        </flux:table.cell>
+                                        @break
+
+                                    @case('supervisor')
+                                        @php $raw = $lot->supervisor_id ?? ''; @endphp
+                                        <flux:table.cell
+                                        class="bg-white dark:bg-zinc-800 {{ $column['group'] == 'fixed' ? 'sticky z-10' : '' }}"
+                                        data-fixed-index=" {{ $column['group'] == 'fixed' ? $loop->index : '' }}"
+                                        x-on:dblclick="
+                                            $dispatch('editField', {
+                                                fieldId:        {{ $lot->id }},
+                                                currentValue:   '{{ $raw }}',
+                                                fieldType:      'select',
+                                                optionKey:      'supervisors',
+                                                modelClass:     '{{ addslashes(\App\Models\Lot::class) }}',
+                                                modelAttribute: 'supervisor_id',
+                                                editable:       true
+                                            })"
+                                        >
+                                            {{ $lot->supervisor->name ?? '-' }}
+                                        </flux:table.cell>
+                                        @break
+
+
+                                    @case('floor_area')
+                                        @php $raw = $lot->floor_area ?? ''; @endphp
+                                        <flux:table.cell
+                                        class="bg-white dark:bg-zinc-800 {{ $column['group'] == 'fixed' ? 'sticky z-10' : '' }}"
+                                        data-fixed-index=" {{ $column['group'] == 'fixed' ? $loop->index : '' }}"
+                                        x-on:dblclick="
+                                            $dispatch('editField', {
+                                                fieldId:        {{ $lot->id }},
+                                                currentValue:   '{{ $raw }}',
+                                                fieldType:      'input',
+                                                optionKey:      '',
+                                                modelClass:     '{{ addslashes(\App\Models\Lot::class) }}',
+                                                modelAttribute: 'floor_area',
+                                                editable:       true
+                                            })"
+                                        >
+                                            {{ $lot->floor_area ?? '-' }}
+                                        </flux:table.cell>
+                                        @break
+
+
                                     @case('epo')
                                         <flux:table.cell
-                                        class="bg-white dark:bg-zinc-800{{ $column['group'] == 'fixed' ? 'sticky' : '' }}"
-                                        data-fixed-index=" {{ $column['group'] == 'fixed' ? $loop->index : '' }}">
+                                        class="bg-white dark:bg-zinc-800{{ $column['group'] == 'fixed' ? 'sticky z-10' : '' }}"
+                                        data-fixed-index=" {{ $column['group'] == 'fixed' ? $loop->index : '' }}"
+                                            >
                                             @php
                                                 $epoCount = $this->epoCount($lot);
                                             @endphp
@@ -120,15 +254,15 @@
                                     @case('standard_po')
                                         @foreach ($taskTypes as $taskType)
                                             <flux:table.cell
-                                            class="bg-white dark:bg-zinc-800 {{ $column['group'] == 'fixed' ? 'sticky' : '' }}"
+                                            class="bg-white dark:bg-zinc-800 {{ $column['group'] == 'fixed' ? 'sticky z-10' : '' }}"
                                             data-fixed-index=" {{ $column['group'] == 'fixed' ? $loop->index : '' }}">
                                                 @if($task = $lot->getTaskByTypeName($taskType))
                                                     @if($task->status->isCompleted())
                                                         <flux:tooltip content="Completed on: {{ $task->ended_at }}">
-                                                            <flux:checkbox checked disabled />
+                                                            <flux:icon.check-circle  variant="mini" variant="solid" class="text-green-500 dark:text-green-300" />
                                                         </flux:tooltip>
                                                     @else
-                                                        <flux:checkbox disabled />
+                                                        <flux:icon.clock variant="mini" variant="solid" class="text-grey-500 dark:text-grey-300" />
                                                     @endif
                                                 @else
                                                     -
@@ -148,7 +282,7 @@
                             <flux:dropdown>
                                 <flux:button icon="ellipsis-horizontal" variant="ghost" size="sm" />
                                 <flux:menu>
-                                    <flux:menu.item icon="clipboard-document-check" wire:click="loadDetails({{ $lot->id }})">
+                                    <flux:menu.item icon="clipboard-document-check" href="{{ route('lot-details', ['lot_id' => $lot->id]) }}"  wire:navigate>
                                         Details
                                     </flux:menu.item>
                                 </flux:menu>
@@ -159,18 +293,27 @@
         </flux:table.rows>
 
         </flux:table>
-    @else
-        <!-- Render the ContentDetails component dynamically -->
-        <div>
-            @livewire('pages.lot-details', ['lot' => $selectedLot])
-        </div>
-    @endif
+    </flux:checkbox.group>
 
 </div>
 
 
 <script>
-    let ticking = false;
+    /* BULKD EDIT BEHAVIOR */
+    document.addEventListener('alpine:init', () => {
+        Alpine.data('bulkEditCheckboxes', () => ({
+            selectedIds: [],
+            allIds: @js($lots->pluck('id')),   // collection to plain array
+
+            /* reacts to the master checkbox */
+            toggleAll(e) {
+                this.selectedIds = e.detail.all ? this.allIds : [];
+            }
+        }));
+    });
+
+    /* STICKY COLS BEHAVIOR */
+        let ticking = false;
 
     function onScroll() {
         if (!ticking) {
@@ -221,3 +364,4 @@
 
 
 </script>
+

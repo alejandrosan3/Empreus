@@ -1,195 +1,186 @@
 <div>
-    @if (!$selectedTask)
+    {{-- Modal for hybrid inline editing behavior --}}
+    <livewire:partials.editable-modal />
 
-        {{-- Modal for hybrid inline editing behavior --}}
-        <livewire:partials.editable-modal />
-    
-        {{-- Modal for bulk editing behavior --}}
-        <livewire:partials.bulk-edit-modal />
+    {{-- Modal for bulk editing behavior --}}
+    <livewire:partials.bulk-edit-modal />
 
-        <flux:checkbox.group x-data="bulkEditCheckboxes()">
-            <div class="h-8 flex items-center">
-                <div x-show="selectedIds.length > 0" x-transition
-                    class="transition-opacity duration-300 opacity-0"
-                    :class="{ 'opacity-100': selectedIds.length > 0 }"
-                >
-                    <flux:button @click="$wire.set('checkedTasks', selectedIds); $wire.startBulkEdit()" size="sm">
-                        Bulk Edit
-                    </flux:button>
-                </div>
-            </div>
-
-            <div
-                class="overflow-x-auto"         {{-- ensures horizontal scroll --}}
-                x-data="stickyTable()"           {{-- mount our Alpine component --}}
-                x-init="init()"                  {{-- call init() on load --}}
-                x-ref="tableContainer"           {{-- reference for scroll & query --}}
+    <flux:checkbox.group x-data="bulkEditCheckboxes()">
+        <div class="h-8 flex items-center">
+            <div x-show="selectedIds.length > 0" x-transition
+                class="transition-opacity duration-300 opacity-0"
+                :class="{ 'opacity-100': selectedIds.length > 0 }"
             >
-                <flux:table :paginate="$tasks->onEachSide(1)">
-                    <!-- Table Header -->
-                    <flux:table.columns>
-                        <!-- checkbox "Select-All" Column -->
-                        <flux:table.column class="sticky left-0 z-20 bg-white dark:bg-zinc-800" >
-                            <flux:checkbox.all />
-                        </flux:table.column>
-                        <!-- Fixed Columns -->
-                        @foreach($columns as $column)
-                            @if($column['selected'])
-                                <flux:table.column
-                                    :sortable="$column['sortable']"
-                                    :sorted="$column['sortable'] ? $sortBy === $column['value'] : false"
-                                    wire:click="{{ $column['sortable'] ? 'sort(\'' . $column['value'] . '\')' : '' }}"
-                                    class="bg-white dark:bg-zinc-800 {{ $column['group'] == 'fixed' ? 'sticky' : '' }}"
-                                    data-fixed-index=" {{ $column['group'] == 'fixed' ? $loop->index : '' }}"
-                                >
-                                    {{ $column['label'] }}
-                                </flux:table.column>
-                            @endif
-                        @endforeach
-                        <!-- Actions Column -->
-                        <flux:table.column>Actions</flux:table.column>
-                    </flux:table.columns>
-
-                    <!-- Table Rows -->
-                    <flux:table.rows>
-                        @foreach($flatTasks as $row)
-                            <flux:table.row :key="$row['id']">
-                            <flux:table.cell class="sticky left-0 z-20 bg-white dark:bg-zinc-800">
-                                <flux:checkbox 
-                                    x-data="{ id: {{ $row['id'] }} }"
-                                    value="{{ $row['id'] }}"
-                                    x-bind:checked="selectedIds.includes(id)"
-                                    @change="e => {
-                                        if (e.target.checked) selectedIds.push(id);
-                                        else selectedIds = selectedIds.filter(i => i !== id);
-                                    }"
-                                />
-                            </flux:table.cell>
-                                @foreach($columns as $column)
-                                    @if($column['selected'])
-                                        @php($cell = $row[$column['value']])
-                                        <flux:table.cell
-                                            wire:key="cell-{{ $row['id'] }}-{{ $column['value'] }}"
-                                            x-on:dblclick="
-                                                $dispatch('editField', {
-                                                fieldId: {{ $row['id'] }},
-                                                currentValue: '{{ $cell['rawValue'] }}',
-                                                fieldType: '{{ $cell['fieldType'] }}',
-                                                optionKey: '{{ $cell['optionKey'] }}',
-                                                modelClass: '{{ addslashes($cell['modelClass']) }}',
-                                                modelAttribute: '{{ $cell['modelAttribute'] }}',
-                                                editable: {{ $cell['editable'] ? 'true' : 'false' }}
-                                                })"
-                                            class="bg-white dark:bg-zinc-800 {{ $column['group']=='fixed'?'sticky':'' }}"
-                                            data-fixed-index="{{ $column['group']=='fixed'? $loop->index : '' }}"
-                                        >
-                                            
-                                            @if ($column['value'] === 'status')
-                                                <flux:badge color="{{ $cell['color'] }}"> {{ $cell['display'] }} </flux:badge>
-                                            @else
-                                                {{ $cell['display'] }}
-                                            @endif
-                                        </flux:table.cell>
-                                    @endif
-                                @endforeach
-
-                                <!-- Actions Cell -->
-                                <flux:table.cell>
-                                    <flux:dropdown>
-                                        <flux:button icon="ellipsis-horizontal" variant="ghost" size="sm" />
-                                        <flux:menu>
-                                            <flux:menu.item
-                                                icon="clipboard-document-check"
-                                                wire:click="loadDetails({{ $row['id'] }})"
-                                            >
-                                                Details
-                                            </flux:menu.item>
-                                        </flux:menu>
-                                    </flux:dropdown>
-                                </flux:table.cell>
-                            </flux:table.row>
-                        @endforeach
-                    </flux:table.rows>
-                </flux:table>
+                <flux:button @click="$wire.set('checkedTasks', selectedIds); $wire.startBulkEdit()" size="sm">
+                    Bulk Edit
+                </flux:button>
             </div>
-            <script>
-                document.addEventListener('alpine:init', () => {
-                    Alpine.data('stickyTable', () => ({
-                    ticking: false,
-                    offsets: [],
+        </div>
 
-                    init() {
-                        // 1) Compute offsets right away
-                        this.updateStickyOffsets();
+        <div
+            class="overflow-x-auto"         {{-- ensures horizontal scroll --}}
+            x-data="stickyTable()"           {{-- mount our Alpine component --}}
+            x-init="init()"                  {{-- call init() on load --}}
+            x-ref="tableContainer"           {{-- reference for scroll & query --}}
+        >
+            <flux:table :paginate="$tasks->onEachSide(1)">
+                <!-- Table Header -->
+                <flux:table.columns>
+                    <!-- checkbox "Select-All" Column -->
+                    <flux:table.column class="sticky left-0 z-20 bg-white dark:bg-zinc-800" data-fixed-index="0">
+                        <flux:checkbox.all />
+                    </flux:table.column>
+                    <!-- Fixed Columns -->
+                    @foreach($columns as $column)
+                        @if($column['selected'])
+                            <flux:table.column
+                                :sortable="$column['sortable']"
+                                :sorted="$column['sortable'] ? $sortBy === $column['value'] : false"
+                                wire:click="{{ $column['sortable'] ? 'sort(\'' . $column['value'] . '\')' : '' }}"
+                                class="bg-white dark:bg-zinc-800 {{ $column['group'] == 'fixed' ? 'sticky' : '' }}"
+                                data-fixed-index=" {{ $column['group'] == 'fixed' ? $loop->index + 1 : '' }}"
+                            >
+                                {{ $column['label'] }}
+                            </flux:table.column>
+                        @endif
+                    @endforeach
+                    <!-- Actions Column -->
+                    <flux:table.column>Actions</flux:table.column>
+                </flux:table.columns>
 
-                        // 2) On horizontal scroll, recalc
-                        this.$refs.tableContainer.addEventListener('scroll', () => this.onScroll());
+                <!-- Table Rows -->
+                <flux:table.rows>
+                    @foreach($flatTasks as $row)
+                        <flux:table.row :key="$row['id']">
+                        <flux:table.cell class="sticky left-0 z-20 bg-white dark:bg-zinc-800" data-fixed-index="0" >
+                            <flux:checkbox 
+                                x-data="{ id: {{ $row['id'] }} }"
+                                value="{{ $row['id'] }}"
+                                x-bind:checked="selectedIds.includes(id)"
+                                @change="e => {
+                                    if (e.target.checked) selectedIds.push(id);
+                                    else selectedIds = selectedIds.filter(i => i !== id);
+                                }"
+                            />
+                        </flux:table.cell>
+                            @foreach($columns as $column)
+                                @if($column['selected'])
+                                    @php($cell = $row[$column['value']])
+                                    <flux:table.cell
+                                        wire:key="cell-{{ $row['id'] }}-{{ $column['value'] }}"
+                                        x-on:dblclick="
+                                            $dispatch('editField', {
+                                            fieldId: {{ $cell['recordId'] }},
+                                            currentValue: '{{ $cell['rawValue'] }}',
+                                            fieldType: '{{ $cell['fieldType'] }}',
+                                            optionKey: '{{ $cell['optionKey'] }}',
+                                            modelClass: '{{ addslashes($cell['modelClass']) }}',
+                                            modelAttribute: '{{ $cell['modelAttribute'] }}',
+                                            editable: {{ $cell['editable'] ? 'true' : 'false' }}
+                                            })"
+                                        class="bg-white dark:bg-zinc-800 {{ $column['group']=='fixed'?'sticky':'' }}"
+                                        data-fixed-index="{{ $column['group']=='fixed'? $loop->index + 1 : '' }}"
+                                    >
+                                        
+                                        @if ($column['value'] === 'status')
+                                            <flux:badge color="{{ $cell['color'] }}"> {{ $cell['display'] }} </flux:badge>
+                                        @else
+                                            {{ $cell['display'] }}
+                                        @endif
+                                    </flux:table.cell>
+                                @endif
+                            @endforeach
 
-                        // 3) On window resize, recalc
-                        window.addEventListener('resize', () => this.updateStickyOffsets());
-                    },
-
-                    onScroll() {
-                        if (!this.ticking) {
-                        window.requestAnimationFrame(() => {
-                            this.updateStickyOffsets();
-                            this.ticking = false;
-                        });
-                        this.ticking = true;
-                        }
-                    },
-
-                    updateStickyOffsets() {
-                        let offset = 0;
-                        this.offsets = [];
-
-                        // A) HEADER: find every header cell that’s sticky
-                        this.$refs.tableContainer
-                        .querySelectorAll('[data-fixed-index].sticky')
-                        .forEach((col, idx) => {
-                            col.style.left = offset + 'px';
-                            this.offsets[idx] = offset;
-                            offset += col.offsetWidth;
-                        });
-
-                        // B) BODY: for each row’s sticky cells, apply the same offsets
-                        this.$refs.tableContainer
-                        .querySelectorAll('[data-fixed-index].sticky')
-                        .forEach((cell, idx) => {
-                            // data-fixed-index gives us the column index
-                            const left = this.offsets[cell.getAttribute('data-fixed-index')];
-                            if (left !== undefined) {
-                            cell.style.left     = left + 'px';
-                            cell.style.position = 'sticky';
-                            cell.style.top      = '0';
-                            }
-                        });
-                    },
-                    }));
-                });
-            </script>
-
-        </flux:checkbox.group>
-
-
+                            <!-- Actions Cell -->
+                            <flux:table.cell>
+                                <flux:dropdown>
+                                    <flux:button icon="ellipsis-horizontal" variant="ghost" size="sm" />
+                                    <flux:menu>
+                                        <flux:menu.item
+                                            icon="clipboard-document-check"
+                                            href="{{ route('task-details', ['task_id' => $row['id']]) }}"
+                                            wire:navigate
+                                        >
+                                            Details
+                                        </flux:menu.item>
+                                    </flux:menu>
+                                </flux:dropdown>
+                            </flux:table.cell>
+                        </flux:table.row>
+                    @endforeach
+                </flux:table.rows>
+            </flux:table>
+        </div>
         <script>
             document.addEventListener('alpine:init', () => {
-                Alpine.data('bulkEditCheckboxes', () => ({
-                    selectedIds: [],
-                    allIds: @js(array_column($flatTasks, 'id')),
+                Alpine.data('stickyTable', () => ({
+                ticking: false,
+                offsets: [],
 
-                    toggleAll(e) {
-                        this.selectedIds = e.detail.all ? this.allIds : [];
+                init() {
+                    // 1) Compute offsets right away
+                    this.updateStickyOffsets();
+
+                    // 2) On horizontal scroll, recalc
+                    this.$refs.tableContainer.addEventListener('scroll', () => this.onScroll());
+
+                    // 3) On window resize, recalc
+                    window.addEventListener('resize', () => this.updateStickyOffsets());
+                },
+
+                onScroll() {
+                    if (!this.ticking) {
+                    window.requestAnimationFrame(() => {
+                        this.updateStickyOffsets();
+                        this.ticking = false;
+                    });
+                    this.ticking = true;
                     }
+                },
+
+                updateStickyOffsets() {
+                    let offset = 0;
+                    this.offsets = [];
+
+                    // A) HEADER: find every header cell that’s sticky
+                    this.$refs.tableContainer
+                    .querySelectorAll('[data-fixed-index].sticky')
+                    .forEach((col, idx) => {
+                        col.style.left = offset + 'px';
+                        this.offsets[idx] = offset;
+                        offset += col.offsetWidth;
+                    });
+
+                    // B) BODY: for each row’s sticky cells, apply the same offsets
+                    this.$refs.tableContainer
+                    .querySelectorAll('[data-fixed-index].sticky')
+                    .forEach((cell, idx) => {
+                        // data-fixed-index gives us the column index
+                        const left = this.offsets[cell.getAttribute('data-fixed-index')];
+                        if (left !== undefined) {
+                        cell.style.left     = left + 'px';
+                        cell.style.position = 'sticky';
+                        cell.style.top      = '0';
+                        }
+                    });
+                },
                 }));
             });
         </script>
 
+    </flux:checkbox.group>
 
-    @else
-        <!-- If a task is selected, show its details. -->
-        <div>
-            @livewire('pages.task-details', ['task' => $selectedTask])
-        </div>
-    @endif
+
+    <script>
+        document.addEventListener('alpine:init', () => {
+            Alpine.data('bulkEditCheckboxes', () => ({
+                selectedIds: [],
+                allIds: @js(array_column($flatTasks, 'id')),
+
+                toggleAll(e) {
+                    this.selectedIds = e.detail.all ? this.allIds : [];
+                }
+            }));
+        });
+    </script>
 </div>

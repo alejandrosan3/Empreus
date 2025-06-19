@@ -14,17 +14,27 @@ class CompanyUserSeeder extends Seeder
      */
     public function run(): void
     {
-        // Get all user and company IDs
-        $userIds = User::all()->pluck('id');
-        $companyIds = Company::all()->pluck('id');
+        // Get admin user
+        $adminUser = User::where('email', 'admin@demo.com')->first();
+
+        // Get all companies
+        $companies = Company::all();
+
+        // Attach admin to all companies
+        foreach ($companies as $company) {
+            $company->users()->syncWithoutDetaching([$adminUser->id]);
+        }
+
+        // Get remaining users for random assignment
+        $otherUsers = User::where('email', '!=', 'admin@demo.com')->pluck('id');
 
         // Attach random users to random companies
-        foreach ($companyIds as $companyId) {
-            $numUsersToAttach = rand(1, $userIds->count()); // Attach between 1 and all users
-            $usersToAttach = $userIds->random($numUsersToAttach); // Get random user IDs
+        foreach ($companies as $company) {
+            $numUsersToAttach = rand(1, $otherUsers->count()); // Attach between 1 and all other users
+            $usersToAttach = $otherUsers->random($numUsersToAttach); // Get random user IDs
 
-            // Add users to this company
-            Company::find($companyId)->users()->attach($usersToAttach);
+            // Add other users to this company
+            $company->users()->attach($usersToAttach);
         }
     }
 }

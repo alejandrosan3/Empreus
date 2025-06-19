@@ -46,8 +46,16 @@ class DatabaseSeeder extends Seeder
          */
         if (DB::table('users')->count() === 0) {
             User::factory()->create([
-                'name' => 'Demo User',
-                'email' => 'demo@demo.com',
+                'name' => 'Demo Admin',
+                'email' => 'admin@demo.com',
+                'role' => 'admin',
+                'password' => Hash::make('demo'),
+            ]);
+
+            User::factory()->create([
+                'name' => 'Demo Worker',
+                'email' => 'worker@demo.com',
+                'role' => 'worker',
                 'password' => Hash::make('demo'),
             ]);
         }

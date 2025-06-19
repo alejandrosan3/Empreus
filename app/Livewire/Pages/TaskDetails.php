@@ -28,7 +28,7 @@ class TaskDetails extends Component
             $this->task = $task;
         } elseif ($task_id) {
             // Fetch the lot using the ID from the route
-            $this->task = Task::with(['lot.builder', 'lot.supervisor', 'taskType', 'statusType'])->findOrFail($task_id);
+            $this->task = Task::with(['lot.builder', 'lot.supervisor', 'taskType', 'statusType', 'workers'])->findOrFail($task_id);
         } else {
             // Throw an exception if neither parameter is provided
             throw new \Exception('No task provided');
@@ -44,10 +44,6 @@ class TaskDetails extends Component
 
     public function render()
     {
-        //dd($this->tasks);
-        return view('livewire.pages.task-details', [
-            'task' => $this->task,
-
-        ])->layout('layouts.app');
+        return view('livewire.pages.task-details')->layout('layouts.app');
     }
 }

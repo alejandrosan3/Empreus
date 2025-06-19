@@ -1,17 +1,17 @@
 <?php
 
-    namespace App\Livewire\Lot;
+namespace App\Livewire\Lot;
 
-    use App\Models\Lot;
-    use Illuminate\Support\Facades\Auth;
-    use Livewire\Component;
-    use Livewire\WithPagination;
-    use Livewire\Attributes\On;
-    use Livewire\Attributes\Computed;
+use App\Models\Lot;
+use Livewire\Component;
+use Livewire\WithPagination;
+use Livewire\Attributes\On;
+use Livewire\Attributes\Computed;
+use App\Repositories\LotProgressRepository;
 
-    class LotProgress extends Component
-    {
-        use WithPagination;
+class LotProgress extends Component
+{
+    use WithPagination;
 
         // Sort-related
         public $sortBy = 'id';
@@ -21,10 +21,13 @@
         public $columns = [];
         public $taskTypes = ['Clean Rough', 'Rough Windows', 'Pressure Wash', 'Floor Machine', 'Reclean #1', 'Reclean #2', 'Final Clean', 'Final Windows'];
 
-        // These store the user's chosen filters
-        public $selectedBuilders = [];
-        public $selectedSubdivisions = [];
-        public $selectedLots = [];
+        // Selected filters keyed by column name
+        public $selectedFilters = [];
+
+        public $searchTerm = '';
+
+        // multiselected lots get stored here
+        public $checkedLots = [];
 
         // This is a flag used to show either lotprogress or the contentdetails
         public $selectedLot = null;
@@ -33,6 +36,17 @@
         public $epoOverview = "";
         public $epoCount = "";
 
+        protected $listeners = [
+            'contentUpdated' => '$refresh',   // ← built-in Livewire shortcut
+            'search-tasks'   => 'updateSearch',
+        ];
+
+        protected LotProgressRepository $repository;
+
+        public function boot(LotProgressRepository $repo)
+        {
+            $this->repository = $repo;
+        }
 
         /**
          * Sort the table by a given column, toggling sort direction if needed,
@@ -49,64 +63,35 @@
             $this->dispatchFilters();
         }
 
+        /**
+         * function that sends the event to the modal.
+         */
+        public function startBulkEdit(): void
+        {
+            // <livewire:partials.bulk-edit-modal> listens for this
+            $this->dispatch('bulk-edit-action', entity: 'lot', ids: $this->checkedLots);
+        }
+
+        public function updateSearch($query)
+        {
+            $this->searchTerm = $query;
+            $this->resetPage();
+        }
+
 
         /**
          * Computed property for retrieving lots based on selected filters + sort.
          */
         public function getLotsProperty()
         {
-            $query = Auth::user()->lotsForCurrentCompany();
-
-            // Apply filter logic
-            if (!empty($this->selectedBuilders)) {
-                $query->whereHas('builder', function ($q) {
-                    $q->whereIn('name', $this->selectedBuilders);
-                });
-            }
-
-            if (!empty($this->selectedSubdivisions)) {
-                $query->where(function($q) {
-                    foreach ($this->selectedSubdivisions as $filter) {
-                        [$subdivision, $phase] = explode('|', $filter);
-                        $q->orWhere(function($q2) use ($subdivision, $phase) {
-                            $q2->where('subdivision', $subdivision)
-                               ->where('phase', $phase);
-                        });
-                    }
-                });
-            }
-
-            if (!empty($this->selectedLots)) {
-                $query->whereIn('lot_number', $this->selectedLots);
-            }
-
-            // Sorting logic
-            if ($this->sortBy === 'builder') {
-                $query
-                    ->join('builders', 'lots.builder_id', '=', 'builders.id')
-                    ->orderBy('builders.name', $this->sortDirection);
-            } elseif ($this->sortBy === 'status') {
-                $query
-                    ->join('status_types', 'lots.status_type_id', '=', 'status_types.id')
-                    ->orderBy('status_types.name', $this->sortDirection);
-            }elseif ($this->sortBy === 'lot_number') {
-                $query->orderByRaw("CAST(lot_number AS UNSIGNED) {$this->sortDirection}, lot_number ASC");
-            } elseif ($this->sortBy === 'last_completed_date') {
-
-                $query
-                    ->select('lots.*')
-                    ->selectRaw('(SELECT MAX(t.ended_at)
-                                  FROM tasks t
-                                  WHERE t.lot_id = lots.id
-                                 ) as last_completed_date')
-                    ->groupBy('lots.id')
-                    ->orderBy('last_completed_date', $this->sortDirection);
-            } else {
-                $query->orderBy($this->sortBy, $this->sortDirection);
-            }
-
-            return $query->paginate(20);
+            return $this->repository->getLots(
+                $this->selectedFilters,
+                $this->sortBy,
+                $this->sortDirection,
+                $this->searchTerm
+            );
         }
+
 
 
         /**
@@ -114,11 +99,9 @@
          * Updates our local filter arrays, then re-dispatches to recalc the dropdowns.
          */
         #[On('global-filters-updated')]
-        public function handleGlobalFilters(array $data)
+        public function handleGlobalFilters(array $filters)
         {
-            $this->selectedBuilders    = $data['builders']      ?? [];
-            $this->selectedSubdivisions = $data['subdivisions'] ?? [];
-            $this->selectedLots       = $data['lots']          ?? [];
+            $this->selectedFilters = $filters;
 
             $this->resetPage();
             $this->dispatchFilters();
@@ -132,60 +115,9 @@
         #[On('company-updated')]
         public function dispatchFilters()
         {
-            $query = Auth::user()->lotsForCurrentCompany();
+            $filters = $this->repository->filterOptions($this->selectedFilters, $this->columns);
 
-            if (!empty($this->selectedBuilders)) {
-                $query->whereHas('builder', function ($q) {
-                    $q->whereIn('name', $this->selectedBuilders);
-                });
-            }
-            if (!empty($this->selectedSubdivisions)) {
-                $query->where(function($q) {
-                    foreach ($this->selectedSubdivisions as $filter) {
-                        // split the composite value
-                        [$subdivision, $phase] = explode('|', $filter);
-                        $q->orWhere(function($q2) use ($subdivision, $phase) {
-                            $q2->where('subdivision', $subdivision)
-                               ->where('phase', $phase);
-                        });
-                    }
-                });
-            }
-            if (!empty($this->selectedLots)) {
-                $query->whereIn('lot_number', $this->selectedLots);
-            }
-
-            // For re-populating select options
-            $builders = $query->clone()
-                ->join('builders', 'lots.builder_id', '=', 'builders.id')
-                ->distinct()
-                ->orderby('builders.name', 'asc')
-                ->pluck('builders.name');
-
-            $subdivisions = $query->clone()
-                ->select('subdivision', 'phase')
-                ->groupBy('subdivision', 'phase')
-                ->orderby('subdivision', 'asc')
-                ->get()
-                ->map(function ($item) {
-                    return [
-                        'value' => $item['subdivision'] . '|' . $item['phase'],
-                        'label' => $item['subdivision'] . ($item['phase'] ? " ({$item['phase']})" : ""),
-                    ];
-                })
-                ->toArray();
-
-            $lots = $query->clone()
-                ->distinct()
-                ->orderby('lot_number', 'asc')
-                ->pluck('lot_number');
-
-            // Dispatch the filter data as a browser event (for the dropdowns):
-            $this->dispatch('filters-updated',
-                builders: $builders,
-                subdivisions: $subdivisions,
-                lots: $lots
-            );
+            $this->dispatch('filters-updated', filters: $filters);
             $this->resetPage();
         }
 
@@ -269,19 +201,25 @@
          * On component mount, dispatch initial filter data so the user sees
          * all possible builders/subdivisions/lots in the UI.
          */
-        public function mount()
+        public function mount(LotProgressRepository $repository)
         {
+            $this->repository = $repository;
 
             $this->columns = [
                 // Fixed columns (always selected)
-                ['id' => 1, 'label' => 'Builder', 'value' => 'builder', 'group' => 'fixed', 'selected' => true, 'sortable' => true],
-                ['id' => 2, 'label' => 'Subdivision', 'value' => 'subdivision', 'group' => 'fixed', 'selected' => true, 'sortable' => true],
-                ['id' => 3, 'label' => 'Lot', 'value' => 'lot_number', 'group' => 'fixed', 'selected' => true, 'sortable' => true],
+                ['id' => 1, 'label' => 'Builder', 'value' => 'builder', 'group' => 'fixed', 'selected' => true, 'sortable' => true, 'editable'=> false, 'filterable' => true, 'color' => 'purple'],
+                ['id' => 2, 'label' => 'Subdivision', 'value' => 'subdivision', 'group' => 'fixed', 'selected' => true, 'sortable' => true, 'editable'=> false, 'filterable' => true, 'color' => 'amber'],
+                ['id' => 3, 'label' => 'Lot', 'value' => 'lot_number', 'group' => 'fixed', 'selected' => true, 'sortable' => true, 'editable'=> false, 'filterable' => true, 'color' => 'cyan'],
                 // Active columns (user can toggle visibility)
-                ['id' => 4, 'label' => 'Stories', 'value' => 'stories', 'group' => 'active', 'selected' => false, 'sortable' => false],
-                ['id' => 5, 'label' => 'Last Completed Task', 'value' => 'last_completed_date', 'group' => 'active', 'selected' => true, 'sortable' => true],
-                ['id' => 6, 'label' => 'Standard Tasks', 'value' => 'standard_po', 'group' => 'active', 'selected' => true, 'sortable' => false],
-                ['id' => 7, 'label' => 'EPOs', 'value' => 'epo', 'group' => 'active', 'selected' => true, 'sortable' => false],
+                ['id' => 4, 'label' => 'Stories', 'value' => 'stories', 'group' => 'active', 'selected' => false, 'sortable' => false, 'editable'=> true, 'filterable' => false],
+                ['id' => 5, 'label' => 'Last Completed Task', 'value' => 'last_completed_date', 'group' => 'active', 'selected' => true, 'sortable' => true, 'editable'=> false],
+                ['id' => 6, 'label' => 'Standard Tasks', 'value' => 'standard_po', 'group' => 'active', 'selected' => true, 'sortable' => false, 'editable'=> false],
+                ['id' => 7, 'label' => 'EPOs', 'value' => 'epo', 'group' => 'active', 'selected' => true, 'sortable' => false, 'editable'=> false],
+                // Additional columns hidden by default
+                ['id' => 8,  'label' => 'Address',            'value' => 'address',            'group' => 'active', 'selected' => false, 'sortable' => true,  'editable'=> true, 'filterable' => false],
+                ['id' => 9,  'label' => 'Phase',              'value' => 'phase',              'group' => 'active', 'selected' => false, 'sortable' => true,  'editable'=> true, 'filterable' => false, 'color' => 'indigo'],
+                ['id' => 10, 'label' => 'Supervisor',         'value' => 'supervisor',         'group' => 'active', 'selected' => false, 'sortable' => true,  'editable'=> true, 'filterable' => true, 'color' => 'rose'],
+                ['id' => 11, 'label' => 'SQ FT',              'value' => 'floor_area',         'group' => 'active', 'selected' => false, 'sortable' => true,  'editable'=> true, 'filterable' => false],
             ];
 
             // Dispatch initial filters when the component loads
@@ -310,9 +248,11 @@
                 'lots' => $this->lots,
             ])->layout('layouts.app',[
                 'showFilters' => true,
-                'showSearch'  => false,
+                'showSearch'  => true,
                 'showColumns' => true,
-                'showAddNew' => false,]);
+                'showAddNew' => true,
+                'currentAddable'  => 'lot',
+            ]);
         }
 
     }

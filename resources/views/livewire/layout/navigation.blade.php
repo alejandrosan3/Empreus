@@ -1,11 +1,9 @@
-    <div x-on:filters-updated.window="$wire.filtersUpdated($event.detail)">
+    <div x-on:filters-updated.window="$wire.filtersUpdated($event.detail.filters)">
         <flux:navbar class="flex justify-between">
 
             @if($showAddNew)
             <!-- "Add new element" button -->
-            <flux:tooltip content="Add new X">
-                <flux:button icon="plus"></flux:button>
-            </flux:tooltip>
+                <x-add-button :type="$currentAddable" />
             @endif
 
             @if($showFilters)
@@ -16,44 +14,49 @@
                 </flux:tooltip>
             </flux:modal.trigger>
 
-            <flux:modal name="filters" class="md:w-96 space-y-6">
-                <div class=>
+            <flux:modal name="filters" class="md:w-[48rem] space-y-6">
+                <div>
                     <flux:heading size="lg">Filters</flux:heading>
                     <flux:subheading>Set the desired filter. Leave blank to ignore.</flux:subheading>
                 </div>
 
-                <!-- Reset all filters section -->
-
-                @if ( !empty( $selectedBuilders ) || !empty( $selectedSubdivisions ) || !empty( $selectedLots ) )
-                    <div class="filter-alert bg-slate-100 dark:bg-zinc-600 w-full">
-                    <flux:button variant="ghost" icon="x-mark" wire:click="resetFilters('all')" class="dark:text-black">Remove All Filters</flux:button>
+                <!-- Display currently applied filters -->
+                @if (collect($selectedFilters)->filter()->isNotEmpty())
+                    <div class="flex flex-wrap gap-2 mb-2">
+                        @foreach($selectedFilters as $key => $vals)
+                            @continue(empty($vals))
+                            {{ ucfirst(str_replace('_',' ', $key)) }}: 
+                            @foreach((array)$vals as $val)
+                                @php
+                                    $label = collect($filters[$key] ?? [])
+                                        ->firstWhere('value', $val)['label'] ?? $val;
+                                    $color = $this->filterColors[$key] ?? 'blue';
+                                @endphp
+                                <flux:tooltip :content="ucfirst(str_replace('_',' ', $key))">
+                                    <flux:badge :color="$color">
+                                        {{ $label }}
+                                        <flux:badge.close wire:click="removeFilterValue('{{ $key }}','{{ $val }}')" />
+                                    </flux:badge>
+                                </flux:tooltip>
+                            @endforeach
+                            <flux:separator vertical />
+                        @endforeach
+                        <flux:badge color="slate" variant="solid">
+                            Clear All
+                            <flux:badge.close wire:click="resetFilters('all')" />
+                        </flux:badge>
                     </div>
                 @endif
 
-                <!-- Builders Select -->
-
-                <flux:select multiple searchable clearable  label="Builders" variant="listbox" indicator="checkbox" placeholder="Select the Builders" wire:model="selectedBuilders" clear="close">
-                    @if ( !empty( $selectedBuilders ) ) <flux:button variant="ghost" icon="x-mark"  wire:click="resetFilters('builders')">Remove Filter</flux:button> @endif
-                    @foreach($filters['builders'] ?? [] as $builder)
-                        <flux:select.option>{{ $builder }}</flux:select.option>
+                <div class="grid md:grid-cols-2 gap-4">
+                    @foreach($filters as $name => $options)
+                        <flux:select multiple searchable clearable :label="ucfirst(str_replace('_',' ', $name))" variant="listbox" indicator="checkbox" placeholder="Select" wire:model="selectedFilters.{{ $name }}" clear="close">
+                            @foreach($options as $option)
+                                <flux:select.option value="{{ is_array($option) ? $option['value'] : $option }}">{{ is_array($option) ? $option['label'] : $option }}</flux:select.option>
+                            @endforeach
+                        </flux:select>
                     @endforeach
-                </flux:select>
-
-                <!-- Subdivision's Select -->
-                <flux:select multiple searchable clearable label="Subdivisions" variant="listbox" indicator="checkbox" placeholder="Select the Subdivisions" wire:model="selectedSubdivisions" clear="close">
-                    @if ( !empty( $selectedSubdivisions ) ) <flux:button variant="ghost" icon="x-mark" wire:click="resetFilters('subdivisions')">Remove Filter</flux:button> @endif
-                    @foreach($filters['subdivisions'] ?? [] as $subd)
-                        <flux:select.option value="{{ $subd['value'] }}">{{ $subd['label'] }}</flux:select.option>
-                    @endforeach
-                </flux:select>
-
-                <!-- Lot Number Input -->
-                <flux:select multiple searchable clearable label="Lot #" variant="listbox" indicator="checkbox" placeholder="Select the Lot(s)" wire:model="selectedLots" clear="close">
-                    @if ( !empty( $selectedLots ) ) <flux:button variant="ghost" icon="x-mark" wire:click="resetFilters('lots')">Remove Filter</flux:button> @endif
-                    @foreach($filters['lots'] ?? [] as $lot)
-                        <flux:select.option>{{ $lot }}</flux:select.option>
-                    @endforeach
-                </flux:select>
+                </div>
 
                 <div class="flex">
                     <flux:spacer />
@@ -63,8 +66,14 @@
             @endif
 
             @if($showSearch)
-            <!-- "Search" Input -->
-            <flux:input placeholder="Search..." icon="magnifying-glass" class="mx-8" />
+            <!-- "Search" Input handled by Livewire -->
+            <flux:input
+                wire:model.defer="searchTerm"
+                wire:keydown.enter.prevent="submitSearch"
+                placeholder="Search..."
+                icon="magnifying-glass"
+                class="mx-8"
+            />
             @endif
 
             @if($showColumns)
@@ -72,4 +81,31 @@
             <livewire:layout.edit-columns-dropdown />
             @endif
         </flux:navbar>
+        @if($showFilters && collect($selectedFilters)->filter()->isNotEmpty())
+        <div class="px-4 py-2 flex flex-wrap gap-2 border-b border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900">
+            @foreach($selectedFilters as $key => $vals)
+                @continue(empty($vals))
+                {{ucfirst(str_replace('_',' ', $key))}}: 
+                @foreach((array)$vals as $val)
+                    @php
+                        $label = collect($filters[$key] ?? [])
+                            ->firstWhere('value', $val)['label'] ?? $val;
+                        $color = $this->filterColors[$key] ?? 'blue';
+                    @endphp
+                    <flux:tooltip :content="ucfirst(str_replace('_',' ', $key))">
+                        <flux:badge :color="$color">
+                            {{ $label }}
+                            <flux:badge.close wire:click="removeFilterValue('{{ $key }}','{{ $val }}')" />
+                        </flux:badge>
+                    </flux:tooltip>
+                @endforeach
+                <flux:separator vertical />
+
+            @endforeach
+            <flux:badge color="slate" variant="solid">
+                Clear All Filters
+                <flux:badge.close wire:click="resetFilters('all')" />
+            </flux:badge>
+        </div>
+        @endif
     </div>

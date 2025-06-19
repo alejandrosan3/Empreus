@@ -5,6 +5,10 @@ namespace App\Livewire\Builders;
 use Livewire\Component;
 use App\Models\Builder;
 
+use App\Services\CacheInvalidationService;
+
+use Flux\Flux;
+
 class CreateBuilder extends Component
 {
     public $name;
@@ -14,29 +18,37 @@ class CreateBuilder extends Component
 
     protected $rules = [
         'name' => 'required|string|max:255',
-        'email' => 'required|email|unique:builders,email|max:255',
+        'email' => 'nullable|email|unique:builders,email|max:255',
         'address' => 'nullable|string|max:255',
         'phone' => 'nullable|numeric|digits:10',
     ];
 
-    public function store()
+    public function save()
     {
-        $this->validate();
+        $validated = $this->validate();
 
-        Builder::create([
-            'name'  => $this->name,
-            'email' => $this->email,
-            'address' => $this->address,
-            'phone' => $this->phone,
-        ]);
-
-        session()->flash('message', 'Builder created successfully.');
+        try {
+            Builder::create($validated);
+            CacheInvalidationService::forNewBuilder(session('company_id'));
+            Flux::toast(
+                text:'Builder created successfully.',
+                heading:'Success!',
+                variant:'success'
+            );
+        } catch (\Illuminate\Database\QueryException $e) {
+            Flux::toast(
+                text:'A builder with that name already exists.',
+                heading:'Duplicate!',
+                variant:'warning'
+            );
+            return;
+        }
 
         return redirect()->route('builders');
     }
 
-    public function render()
+    public function render()    
     {
-        return view('livewire.builders.create')->extends('builders');
+        return view('livewire.builders.create')->layout('layouts.app');
     }
 }

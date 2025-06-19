@@ -1,11 +1,7 @@
 <div class="p-4">
-    <flux:button
-    icon="arrow-left"
-    variant="ghost"
-    wire:click="goBack">
-    Back
-</flux:button>
-    <flux:heading size="xl" class="mb-4">Task Detail <flux:badge color="yellow" inset="top bottom">{{ $task->lot->company->name }}</flux:badge> </flux:heading>
+    <livewire:partials.return-button />
+
+    <flux:heading size="xl" class="mb-4">Task Detail <flux:badge :color="$task->statusType->color" inset="top bottom">{{ $task->statusType->name }}</flux:badge> </flux:heading>
     <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
         <!-- Builder Details -->
         @livewire('partials.cards', [
@@ -19,21 +15,22 @@
 
         @livewire('partials.cards', [
             'items' => [
-                ['label' => 'Name', 'value' => $task->taskType?->name ?? 'Missing Task Name'],
+                ['label' => 'Task Name', 'value' => $task->taskType?->name ?? 'Missing Task Name'],
                 ['label' => 'Order Number', 'value' => $task?->order_number ?? '-'],
-                ['label' => 'price', 'value' => $task?->price ?? '-'],
                 ['label' => 'Order Type', 'value' => $task->is_extra ? "EPO" : "PO"],
+                ['label' => 'price', 'value' => $task?->price ?? '-'],
             ]
         ])
 
-        @livewire('partials.cards', [
-            'items' => [
-                ['label' => 'Supervisor', 'value' => $task->lot->supervisor?->name ?? 'N/A'],
-                ['label' => 'Scheduled Start Date', 'value' => $task?->scheduled_start_date ?? "Unscheduled"],
-                ['label' => 'Scheduled End Date', 'value' => $task?->scheduled_end_date ?? "Unscheduled"],
-                ['label' => 'Assigned Group', 'value' => "Coming Soon"],
-            ]
-        ])
+            @livewire('partials.cards', [
+                'items' => [
+                    ['label' => 'Supervisor', 'value' => $task->lot->supervisor?->name ?? 'N/A'],
+                    ['label' => 'Adress', 'value' => $task->lot->address ?? '-'],
+                    ['label' => 'Scheduled Start Date', 'value' => $task?->scheduled_start_date ?? "Unscheduled"],
+                    ['label' => 'Workers', 'value' => \Livewire\Livewire::mount('layout.avatar-stack',['avSize' =>'sm', 'users' => $task->workers])],
+                ]
+            ])
+
     </div>
 
     <div class="grid grid-cols-1 gap-4 mt-4">

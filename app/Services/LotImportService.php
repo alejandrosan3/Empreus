@@ -14,6 +14,7 @@ use Carbon\Carbon;
 use Illuminate\Support\Facades\Validator;
 use Exception;
 use Illuminate\Support\Facades\Log;
+use App\Services\CacheInvalidationService;
 
 class LotImportService
 {
@@ -93,6 +94,7 @@ class LotImportService
             'is_extra' => 'required|boolean',
             'price' => 'nullable|max:12',
             'order_number' => 'nullable',
+            'workers' => 'nullable',
         ]);
 
         if ($validator->fails()) {
@@ -105,9 +107,18 @@ class LotImportService
      *
      * @param array $item
      * @return array
+     * @throws Exception
      */
     protected function importItem(array $item): array
     {
+        /**
+         * Trim all string values
+         */
+        $item = array_map(function ($value) {
+            return is_string($value) ? trim($value) : $value;
+        }, $item);
+
+
         /**
          * Find 'pending' status
          */
@@ -144,6 +155,14 @@ class LotImportService
             ['name' => $item['builder']]
         );
 
+        $builderHadLots = Lot::where('company_id', $company->id)
+            ->where('builder_id', $builder->id)
+            ->exists();
+
+        if ($builder->wasRecentlyCreated || ! $builderHadLots) {
+            CacheInvalidationService::forNewBuilder($company->id);
+        }
+
         /**
          * Find or create Supervisor
          */
@@ -151,6 +170,9 @@ class LotImportService
         $supervisor = Supervisor::firstOrCreate(
             ['name' => $supervisorName]
         );
+        if ($supervisor->wasRecentlyCreated) {
+            CacheInvalidationService::forNewSupervisor($company->id);
+        }
 
         /**
          * Process Lot
@@ -161,6 +183,11 @@ class LotImportService
             'subdivision' => $item['subdivision'],
             'lot_number' => $item['lot_number'],
         ];
+
+        $subdivisionExists = Lot::where('company_id', $company->id)
+            ->where('builder_id', $builder->id)
+            ->where('subdivision', $item['subdivision'] ?? null)
+            ->exists();
 
         $lot = Lot::updateOrCreate(
             $lotData,
@@ -175,6 +202,18 @@ class LotImportService
                 'num_of_floors' => $item['num_of_floors'] ?? 1,
             ]
         );
+
+        if ($lot->wasRecentlyCreated) {
+            CacheInvalidationService::forNewLot(
+                $company->id,
+                $builder->id,
+                $lot->subdivision
+            );
+
+            if (! $subdivisionExists) {
+                CacheInvalidationService::forNewSubdivision($company->id, $builder->id);
+            }
+        }
 
         /**
          * Process Lot Task
@@ -214,6 +253,39 @@ class LotImportService
                     ...$taskNoteFindParams,
                     'description' => $item['notes'],
                 ]);
+            }
+        }
+
+        /**
+         * Process Workers
+         *
+         * Registers an account for each worker and attach worker to the Task
+         */
+        if (!empty($item['workers'])) {
+            foreach ($item['workers'] as $workerName) {
+
+                if (empty($workerName)) {
+                    continue;
+                }
+
+                $workerEmailName = trim(preg_replace('/\s+/', '.', $workerName));
+
+                $worker = \App\Models\User::firstOrCreate(
+                    [
+                        'name' => $workerName,
+                        'role' => 'worker',
+                        'email' => strtolower($workerEmailName) . '@demo.com',
+                    ],
+                    [
+                        'password' => \Hash::make('demo'),
+                        'email_verified_at' => now(),
+                    ]
+                );
+
+                if (!$lotTask->workers()->where('user_id', $worker->id)->exists()) {
+                    $lotTask->workers()->attach($worker->id);
+                }
+
             }
         }
 

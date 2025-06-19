@@ -15,6 +15,12 @@ class ListBuilder extends Component
     public $sortBy = 'id';
     public $sortDirection = 'desc';
     public $columns = [];
+    public $searchTerm = '';
+
+    protected $listeners = [
+        'search-tasks' => 'updateSearch',
+        'contentUpdated' => '$refresh',
+    ];
     
     public function mount()
     {
@@ -26,14 +32,6 @@ class ListBuilder extends Component
             Schema::getColumnListing((new Builder)->getTable()),
             fn ($column) => !in_array($column, ['id', 'created_at', 'updated_at'])
         );
-
-        /* EXAMPLE: Beautify display names
-
-            $this->columnLabels = [
-                'name' => 'Builder Name',
-                'email' => 'Email Address',
-            ];
-        */
         
     }
 
@@ -49,16 +47,30 @@ class ListBuilder extends Component
         }
     }
 
+    public function updateSearch($query)
+    {
+        $this->searchTerm = $query;
+        $this->resetPage();
+    }
+
     #[\Livewire\Attributes\Computed]
     public function getBuildersProperty()
     {
-        return Builder::query()
-            ->orderBy($this->sortBy, $this->sortDirection)
+        if ($this->searchTerm !== '') {
+            return Builder::search($this->searchTerm)->paginate(20);
+        }
+
+        return Builder::orderBy($this->sortBy, $this->sortDirection)
             ->paginate(20);
     }
 
     public function render()
     {
-        return view('livewire.builders.list')->layout('layouts.app');
+        return view('livewire.builders.list')
+        ->layout('layouts.app', [
+            'showAddNew' => true,
+            'showSearch' => true,
+            'currentAddable'  => 'builder',
+        ]);
     }
 }

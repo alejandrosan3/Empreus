@@ -50,7 +50,7 @@ class ProcessLotImportFile implements ShouldQueue
         Log::info("Total lots found in file: " . count($items));
 
         // Chunking the data to dispatch jobs in manageable sizes
-        $chunks = array_chunk($items, 500);
+        $chunks = array_chunk($items, config('IMPORTER_BATCH_SIZE', 100));
 
         Bus::batch(
             collect($chunks)->map(fn ($chunk) => new ProcessLotImport($chunk))

@@ -40,17 +40,7 @@ class EditableModal extends Component
     }
 
     public function editField($fieldId, $currentValue, $fieldType = 'input', $optionKey = null, $modelClass = null, $modelAttribute = 'content', $editable=true)
-    {
-        $this->reset([
-            'fieldValue',
-            'fieldId',
-            'fieldType',
-            'selectOptions',
-            'modelClass',
-            'modelAttribute',
-            'editable',
-          ]);
-           
+    { 
         $companyId = session('company_id');
         if(!$editable){
             $this->notEditableActions();
@@ -112,14 +102,15 @@ class EditableModal extends Component
                 // numbers
                 'num_of_floors'    => 'required|integer',
                 'floor_area'       => 'required|numeric',
+                'price'            => 'required|numeric',
 
                 // dates (optional—you can skip if you’re certain the picker always gives valid Y-m-d)
-                'scheduled_start_date',
-                'ended_at',
-                "started_at",
-                "scheduled_end_date"         => 'nullable|date',
+                'scheduled_start_date' => 'nullable|date',
+                'ended_at'            => 'nullable|date',
+                "started_at"           => 'nullable|date',
+                "scheduled_end_date"   => 'nullable|date',
+                'phase'               => 'nullable|string',
 
-                default            => 'required',
             },
         ];
     }
@@ -163,7 +154,9 @@ class EditableModal extends Component
             return;
         }
         $model = $this->modelClass;
+        
         $record = $model::findOrFail($this->fieldId);
+        
 
         // transform empty String to null for select fields
         $value = $this->fieldValue;
@@ -197,6 +190,15 @@ class EditableModal extends Component
 
         $this->dispatch('contentUpdated');
 
+        $this->reset([
+            'fieldValue',
+            'fieldId',
+            'fieldType',
+            'selectOptions',
+            'modelClass',
+            'modelAttribute',
+            'editable',
+          ]);
         return;
     }
 

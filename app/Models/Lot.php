@@ -6,10 +6,11 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Laravel\Scout\Searchable;
 
 class Lot extends Model
 {
-    use HasFactory;
+    use HasFactory, Searchable;
 
     /**
      * @var array
@@ -57,6 +58,10 @@ class Lot extends Model
         return $this->statusType();
     }
 
+    /**
+     * @param $taskTypeName
+     * @return bool
+     */
     public function hasTaskType($taskTypeName): bool
     {
         return $this->tasks->contains(function ($task) use ($taskTypeName) {
@@ -64,6 +69,10 @@ class Lot extends Model
         });
     }
 
+    /**
+     * @param $taskTypeName
+     * @return false|Task
+     */
     public function getTaskByTypeName($taskTypeName)
     {
         // Use the first() method to find the first task with the specified type name
@@ -72,6 +81,11 @@ class Lot extends Model
         }) ?: false;
     }
 
+    /**
+     * Get the last completed task for this lot.
+     *
+     * @return Task|null
+     */
     public function getLastCompletedTask()
     {
         // "last" means the largest ended_at value
@@ -81,4 +95,42 @@ class Lot extends Model
             ->first();                       // return the first (i.e. newest)
     }
 
+    public function getSupervisorNameAttribute()
+    {
+        $name = $this->lot->supervisor->name ?? '';
+        return \Str::title($name);
+    }
+
+    /**
+     * Retrieve a distinct list of all subdivisions from the database that are not null, ordered alphabetically.
+     *
+     * @return array An array of unique subdivisions.
+     */
+    public static function getAllSubdivisions(): array
+    {
+        return self::query()
+            ->select('subdivision')
+            ->distinct()
+            ->whereNotNull('subdivision')
+            ->orderBy('subdivision')
+            ->pluck('subdivision')
+            ->toArray();
+    }
+
+    /**
+     * Data for Meilisearch indexing.
+     */
+    public function toSearchableArray(): array
+    {
+        $this->loadMissing(['builder', 'supervisor']);
+
+        return [
+            'id'         => $this->id,
+            'lot_number' => $this->lot_number,
+            'address'    => $this->address,
+            'subdivision'=> $this->subdivision,
+            'builder'    => $this->builder->name ?? null,
+            'supervisor' => $this->supervisor->name ?? null,
+        ];
+    }
 }

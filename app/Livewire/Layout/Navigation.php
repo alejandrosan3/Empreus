@@ -2,26 +2,43 @@
     namespace App\Livewire\Layout;
 
     use Livewire\Component;
+    use Livewire\Attributes\On;
+    use Livewire\Attributes\Computed;
 
     class Navigation extends Component
     {
         public $title;
         public $showAddNew;
+        public $currentAddable;
         public $showFilters;
         public $showSearch;
         public $showColumns;
 
-        // These lists fill the dropdown options for Builders/Subdivisions/Lots
-        public $filters = [
-            'builders' => [],
-            'subdivisions' => [],
-            'lots' => []
-        ];
+    // Search input bound via Livewire
+    public $searchTerm = '';
 
-        // The user's selected items (multi-select) bound via wire:model
-        public array $selectedBuilders = [];
-        public array $selectedSubdivisions = [];
-        public array $selectedLots = [];
+        // Filter options keyed by column name
+        public $filters = [];
+
+        // Selected filter values
+        public array $selectedFilters = [];
+
+        public array $columns = [];
+
+        #[On('update-columns')]
+        public function updateColumns($columns = [])
+        {
+            $this->columns = $columns;
+        }
+
+        #[Computed]
+        public function getFilterColorsProperty()
+        {
+            return collect($this->columns)
+                ->filter(fn($c) => ($c['filterable'] ?? false))
+                ->mapWithKeys(fn($c) => [$c['value'] => $c['color'] ?? 'blue'])
+                ->all();
+        }
 
         /**
          * Called when the "filters-updated" DOM event is dispatched from LotProgress.
@@ -30,8 +47,10 @@
         public function filtersUpdated($filterData)
         {
         
-            // Update the filters property with the received data
-            $this->filters = array_merge($this->filters, $filterData);
+            // Update the filters property with the received data (explicitly)
+            foreach ($filterData as $column => $options) {
+                $this->filters[$column] = $options;
+            }
         }
 
 
@@ -40,41 +59,54 @@
          * Dispatches "global-filters-updated" so LotProgress or other components can update.
          */
         public function applyGlobalFilters()
-        {   
-            $this->dispatch('global-filters-updated', [
-                'builders' => $this->selectedBuilders,
-                'subdivisions' => $this->selectedSubdivisions,
-                'lots' => $this->selectedLots,
-            ]);
+        {
+            $this->dispatch('global-filters-updated', filters:$this->selectedFilters);
         }
 
         public function resetFilters($choice="all")
         {
-            switch ($choice) {
-                case "subdivisions":
-                    $this->selectedSubdivisions = [];
-                    break;
-                case "builders":
-                    $this->selectedBuilders = [];
-                    break;
-                case "lots":
-                    $this->selectedLots = [];
-                    break;
-                default:
-                    $this->selectedSubdivisions = [];
-                    $this->selectedBuilders = [];
-                    $this->selectedLots = [];
-                    break;
+            if ($choice === "all") {
+                $this->selectedFilters = [];
+            } else {
+                $this->selectedFilters[$choice] = [];
             }
             $this->applyGlobalFilters();
         }
 
-        public function mount($showAddNew=false, $showFilters=false, $showSearch=false, $showColumns=false)
+        /**
+         * Remove a single value from a filter and apply changes.
+         */
+        public function removeFilterValue($key, $value)
+        {
+            if (isset($this->selectedFilters[$key])) {
+                $this->selectedFilters[$key] = array_values(array_filter(
+                    $this->selectedFilters[$key],
+                    fn($v) => (string)$v !== (string)$value
+                ));
+
+                if (empty($this->selectedFilters[$key])) {
+                    unset($this->selectedFilters[$key]);
+                }
+
+                $this->applyGlobalFilters();
+            }
+        }
+
+        /**
+         * Dispatch the search query so pages can react.
+         */
+        public function submitSearch()
+        {
+            $this->dispatch('search-tasks', query: $this->searchTerm);
+        }
+
+        public function mount($showAddNew=false, $showFilters=false, $showSearch=false, $showColumns=false, $currentAddable="task" )
         {
             $this->showAddNew = $showAddNew;
             $this->showFilters = $showFilters;
             $this->showSearch = $showSearch;
             $this->showColumns = $showColumns;
+            $this->currentAddable = $currentAddable;
         }
     
         public function render()

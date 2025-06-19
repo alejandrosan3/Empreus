@@ -30,8 +30,5 @@
             </div>
         </div>
     </flux:modal>
-    {{-- Notification with success or fail message --}}
-    @persist('toast')
-        <flux:toast />
-    @endpersist
+    
 </div>

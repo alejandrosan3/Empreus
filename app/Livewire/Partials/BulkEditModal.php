@@ -15,6 +15,9 @@ class BulkEditModal extends Component
     public array $taskIds = [];
     public $showModal = false;
 
+    public string $entity   = 'task';
+    public  $recordIds = [];
+
     // Editable fields
     public $status_type_id;
     public $supervisor_id;
@@ -30,11 +33,13 @@ class BulkEditModal extends Component
     public array $supervisors = [];
 
     #[On('bulk-edit-action')]
-    public function openModal($ids=[])
+    public function openModal(string $entity='tasks', array $ids=[])
     {
         $this->resetModal();
-        $this->showModal = true;
-        $this->taskIds = $ids;
+        $this->entity     = $entity;
+        $this->taskIds  = $ids;
+
+        $this->showModal  = true;
     }
 
      public function resetModal()
@@ -61,7 +66,7 @@ class BulkEditModal extends Component
         /**
          * Set Lot fields to update
          */
-        if (!empty($this->supervisor_id) && is_int($this->supervisor_id)) {
+        if (!empty($this->supervisor_id)) {
             $lotFields['supervisor_id'] = $this->supervisor_id;
         }
 
@@ -73,7 +78,7 @@ class BulkEditModal extends Component
          * Set task fields to update
          */
 
-        if (!empty($this->status_type_id) && is_int($this->status_type_id)) {
+        if (!empty($this->status_type_id)) {
             $taskFields['status_type_id'] = $this->status_type_id;
         }
 
