@@ -8,6 +8,7 @@ use Carbon\Carbon;
 use Flux\DateRange;
 use App\Models\{Lot, Task, Builder, StatusType};
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 
 class Statistics extends Component
 {
@@ -29,9 +30,12 @@ class Statistics extends Component
 
     protected function initPresets(): void
     {
-        $fyStart = Carbon::now()->month < 10
-            ? Carbon::create(Carbon::now()->year - 1, 10, 1)
-            : Carbon::create(Carbon::now()->year, 10, 1);
+        $cfg = config('fiscal_years.company');
+        $startMonth = $cfg['start_month'] ?? 1;
+        $startDay = $cfg['start_day'] ?? 1;
+        $fyStart = now()->month < $startMonth || (now()->month == $startMonth && now()->day < $startDay)
+            ? Carbon::create(now()->year - 1, $startMonth, $startDay)
+            : Carbon::create(now()->year, $startMonth, $startDay);
         $fyEnd = $fyStart->copy()->addYear()->subDay();
 
         $this->presets = [
@@ -40,12 +44,24 @@ class Statistics extends Component
                 'start' => $fyStart->toDateString(),
                 'end'   => $fyEnd->toDateString(),
             ],
-            'dry_fy' => [
-                'label' => 'Dry Fiscal Year',
-                'start' => $fyStart->toDateString(),
-                'end'   => $fyEnd->toDateString(),
-            ],
         ];
+
+        $builders = Builder::where('company_id', session('company_id'))->get();
+        foreach ($builders as $builder) {
+            $key = Str::slug($builder->name);
+            $cfg = config("fiscal_years.builders.$key");
+            $bm = $cfg['start_month'] ?? $startMonth;
+            $bd = $cfg['start_day'] ?? $startDay;
+            $bStart = now()->month < $bm || (now()->month == $bm && now()->day < $bd)
+                ? Carbon::create(now()->year - 1, $bm, $bd)
+                : Carbon::create(now()->year, $bm, $bd);
+            $bEnd = $bStart->copy()->addYear()->subDay();
+            $this->presets['builder_'.$builder->id] = [
+                'label' => $builder->name.' Fiscal Year',
+                'start' => $bStart->toDateString(),
+                'end'   => $bEnd->toDateString(),
+            ];
+        }
     }
 
     public function applyPreset(): void
@@ -84,31 +100,27 @@ class Statistics extends Component
             ->whereBetween('ended_at', [$start, $end])
             ->count();
 
-        $categories = [];
-        $series = [];
+        $completedRevenue = Task::where('company_id', $companyId)
+            ->whereNotNull('ended_at')
+            ->whereBetween('ended_at', [$start, $end])
+            ->sum('price');
 
-        $builders = Builder::whereHas('lots', fn($q) => $q->where('company_id', $companyId))->get();
+        $projectedRevenue = Task::where('company_id', $companyId)
+            ->whereBetween('scheduled_start_date', [$start, $end])
+            ->sum('price');
 
-        foreach ($builders as $builder) {
-            $counts = Lot::where('company_id', $companyId)
-                ->where('builder_id', $builder->id)
-                ->whereBetween('created_at', [$start, $end])
-                ->select('subdivision', DB::raw('count(*) as c'))
-                ->groupBy('subdivision')
-                ->pluck('c', 'subdivision')
-                ->toArray();
+        $closedLotsBySubdivision = [];
+        $rows = Lot::where('company_id', $companyId)
+            ->where('status_type_id', $completedId)
+            ->whereBetween('created_at', [$start, $end])
+            ->with('builder')
+            ->select('builder_id', 'subdivision', DB::raw('count(*) as c'))
+            ->groupBy('builder_id', 'subdivision')
+            ->get();
 
-            $categories = array_unique(array_merge($categories, array_keys($counts)));
-            $series[$builder->name] = $counts;
-        }
-
-        $categories = array_values($categories);
-        $chartSeries = [];
-        foreach ($series as $name => $data) {
-            $chartSeries[] = [
-                'name' => $name,
-                'data' => array_map(fn($cat) => $data[$cat] ?? 0, $categories),
-            ];
+        foreach ($rows as $row) {
+            $builderName = $row->builder->name ?? 'Unknown';
+            $closedLotsBySubdivision[$builderName][$row->subdivision] = $row->c;
         }
 
         return [
@@ -116,10 +128,9 @@ class Statistics extends Component
             'open' => $openLots,
             'total' => $totalRangeLots,
             'tasks_finished' => $tasksFinished,
-            'chart' => [
-                'categories' => $categories,
-                'series' => $chartSeries,
-            ],
+            'completed_revenue' => $completedRevenue,
+            'projected_revenue' => $projectedRevenue,
+            'subdivisions' => $closedLotsBySubdivision,
         ];
     }
 
