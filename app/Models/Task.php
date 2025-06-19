@@ -170,7 +170,7 @@ class Task extends Model
             ->join('builders', 'lots.builder_id', '=', 'builders.id')
             ->where('tasks.company_id', $companyId)
             ->where('status_types.identifier', $status)
-            ->orderBy('tasks.scheduled_start_date', 'desc')
+            ->orderBy('tasks.scheduled_start_date', 'asc')
             ->offset($offset)
             ->limit($limit)
             ->get();

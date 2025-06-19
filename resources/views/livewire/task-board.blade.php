@@ -66,28 +66,14 @@
                             {{-- Card body --}}
                             <flux:heading>{{ $task->task_type_name }}</flux:heading>
 
-                            <flux:text class="text-sm text-gray-600">
-                                <dl class="space-y-1">
-                                    {{-- Address --}}
-                                    <dt class="sr-only">Address</dt>
-                                    <dd class="flex items-center gap-1">
-                                        <flux:icon name="map-pin" class="w-4 h-4 text-gray-500" />
-                                        {{ $task->address }}
-                                    </dd>
-
+                            <flux:text class="text-sm text-gray-600 dark:text-white/80">
+                                <dl class="space-y-2">
                                     {{-- Subdivision / Lot --}}
                                     <dt class="sr-only">Subdivision/Lot</dt>
                                     <dd class="flex items-center gap-1">
                                         <flux:icon name="rectangle-stack" class="w-4 h-4 text-gray-500" />
-                                        {{ $task->subdivision }} - {{ $task->lot_number }}
+                                        {{ $task->lot->subdivision }} - {{ $task->lot->lot_number }}
                                     </dd>
-
-                                    {{-- Supervisor --}}
-                                    <dd class="flex items-center gap-1">
-                                        <flux:icon name="user" class="w-4 h-4 text-gray-500" />
-                                        {{ Str::title($task->supervisor_name) }}
-                                    </dd>
-
 
                                     <dt class="sr-only">Scheduled Start</dt>
                                     <dd class="flex items-center gap-1 font-bold">

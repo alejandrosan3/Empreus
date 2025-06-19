@@ -89,6 +89,11 @@ Route::middleware(['auth', 'verified', SetCurrentCompany::class])
                 ->defaults('label', 'Tasks Board')
                 ->defaults('icon', 'view-columns');
 
+            Route::get('task-calendar', \App\Livewire\Task\TaskCalendar::class)
+                ->name('task-calendar')
+                ->defaults('label', 'Tasks Calendar')
+                ->defaults('icon', 'calendar');
+
             Route::get('/lots/{lot_id}/details', LotDetails::class)
                 ->name('lot-details')
                 ->defaults('label', 'Lot Details view example')
