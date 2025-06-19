@@ -8,7 +8,6 @@ use Carbon\Carbon;
 use Flux\DateRange;
 use App\Models\{Lot, Task, Builder, StatusType};
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Str;
 
 class Statistics extends Component
 {
@@ -46,21 +45,20 @@ class Statistics extends Component
             ],
         ];
 
-        $companyId = session('company_id');
-        $builderIds = Lot::where('company_id', $companyId)
-            ->distinct()
-            ->pluck('builder_id');
+        $builderConfigs = config('fiscal_years.builders', []);
+        foreach ($builderConfigs as $slug => $bcfg) {
+            $builder = Builder::whereRaw('LOWER(REPLACE(name, " ", "-")) = ?', [$slug])->first();
+            if (! $builder) {
+                continue;
+            }
 
-        $builders = Builder::whereIn('id', $builderIds)->get();
-        foreach ($builders as $builder) {
-            $key = Str::slug($builder->name);
-            $cfg = config("fiscal_years.builders.$key");
-            $bm = $cfg['start_month'] ?? $startMonth;
-            $bd = $cfg['start_day'] ?? $startDay;
+            $bm = $bcfg['start_month'] ?? $startMonth;
+            $bd = $bcfg['start_day'] ?? $startDay;
             $bStart = now()->month < $bm || (now()->month == $bm && now()->day < $bd)
                 ? Carbon::create(now()->year - 1, $bm, $bd)
                 : Carbon::create(now()->year, $bm, $bd);
             $bEnd = $bStart->copy()->addYear()->subDay();
+
             $this->presets['builder_'.$builder->id] = [
                 'label' => $builder->name.' Fiscal Year',
                 'start' => $bStart->toDateString(),
