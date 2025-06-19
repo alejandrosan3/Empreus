@@ -96,12 +96,14 @@
                                 <flux:dropdown>
                                     <flux:button icon="ellipsis-horizontal" variant="ghost" size="sm" />
                                     <flux:menu>
-                                        <flux:menu.item
-                                            icon="clipboard-document-check"
-                                            href="{{ route('task-details', ['task_id' => $row['id']]) }}"
-                                            wire:navigate
-                                        >
+                                        {{-- TASK DETAILS --}}
+                                        <flux:menu.item icon="clipboard-document-check" href="{{ route('task-details', ['task_id' => $row['id']]) }}" wire:navigate >
                                             Details
+                                        </flux:menu.item>
+                                        
+                                        {{-- DUPLICATE --}}
+                                        <flux:menu.item icon="document-duplicate" wire:click="duplicateTask({{ $row['id'] }})" >
+                                            Duplicate
                                         </flux:menu.item>
                                     </flux:menu>
                                 </flux:dropdown>

@@ -9,12 +9,13 @@ use Livewire\Attributes\On;
 use Livewire\Attributes\Computed;
 use Illuminate\Support\Facades\Cache;
 use App\Repositories\TaskProgressRepository;
+use App\Traits\WithToast;
 
 use Flux\Flux;
 
 class TaskProgress extends Component
 {
-    use WithPagination;
+    use WithPagination, WithToast;
 
     public $sortBy = 'id';
     public $sortDirection = 'desc';
@@ -293,6 +294,26 @@ class TaskProgress extends Component
     public function updateColumns($columns)
     {
         $this->columns = $columns;
+    }
+
+    /**
+     * Create a copy of the current task.
+     *
+     */
+    public function duplicateTask(int $taskId): void
+    {
+        try {
+            $original = Task::findOrFail($taskId);
+            $copy     = $original->duplicate();
+
+            $this->showSuccess(
+                "Task #{$original->taskType->name} was duplicated successfully"
+            );
+
+            $this->dispatch('contentUpdated');
+        } catch (\Throwable $e) {
+            $this->showError("Could not duplicate Task: {$e->getMessage()}");
+        }
     }
 
     /**

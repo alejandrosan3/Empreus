@@ -8,10 +8,11 @@ use Livewire\WithPagination;
 use Livewire\Attributes\On;
 use Livewire\Attributes\Computed;
 use App\Repositories\LotProgressRepository;
+use App\Traits\WithToast;
 
 class LotProgress extends Component
 {
-    use WithPagination;
+    use WithPagination, WithToast;
 
         // Sort-related
         public $sortBy = 'id';
@@ -194,6 +195,25 @@ class LotProgress extends Component
         public function updateColumns($columns)
         {
             $this->columns = $columns;
+        }
+
+        /**
+        ** Duplicate a Lot by its ID.
+        */
+        public function duplicateLot(int $lotId): void
+        {
+            try {
+                $original = Lot::findOrFail($lotId);
+                $copy     = $original->duplicate();
+
+                $this->showSuccess(
+                    "Lot #{$original->lot_number} duplicated as ID {$copy->id}"
+                );
+
+                $this->dispatch('contentUpdated');
+            } catch (\Throwable $e) {
+                $this->showError("Could not duplicate Lot: {$e->getMessage()}");
+            }
         }
 
 

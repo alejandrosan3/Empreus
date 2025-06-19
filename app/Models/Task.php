@@ -10,10 +10,11 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Casts\Attribute;
+use App\Traits\Duplicatable;
 
 class Task extends Model
 {
-    use HasFactory, Searchable;
+    use HasFactory, Searchable, Duplicatable;
 
     protected $fillable = [
         'lot_id',
