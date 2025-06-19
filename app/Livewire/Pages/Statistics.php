@@ -29,19 +29,13 @@ class Statistics extends Component
 
     protected function initPresets(): void
     {
-        $cfg = config('fiscal_years.company');
-        $startMonth = $cfg['start_month'] ?? 1;
-        $startDay = $cfg['start_day'] ?? 1;
-        $fyStart = now()->month < $startMonth || (now()->month == $startMonth && now()->day < $startDay)
-            ? Carbon::create(now()->year - 1, $startMonth, $startDay)
-            : Carbon::create(now()->year, $startMonth, $startDay);
-        $fyEnd = $fyStart->copy()->addYear()->subDay();
+        $company = config('fiscal_years.company');
 
         $this->presets = [
             'company_fy' => [
                 'label' => 'Company Fiscal Year',
-                'start' => $fyStart->toDateString(),
-                'end'   => $fyEnd->toDateString(),
+                'start' => $company['start'],
+                'end'   => $company['end'],
             ],
         ];
 
@@ -52,17 +46,10 @@ class Statistics extends Component
                 continue;
             }
 
-            $bm = $bcfg['start_month'] ?? $startMonth;
-            $bd = $bcfg['start_day'] ?? $startDay;
-            $bStart = now()->month < $bm || (now()->month == $bm && now()->day < $bd)
-                ? Carbon::create(now()->year - 1, $bm, $bd)
-                : Carbon::create(now()->year, $bm, $bd);
-            $bEnd = $bStart->copy()->addYear()->subDay();
-
             $this->presets['builder_'.$builder->id] = [
                 'label' => $builder->name.' Fiscal Year',
-                'start' => $bStart->toDateString(),
-                'end'   => $bEnd->toDateString(),
+                'start' => $bcfg['start'],
+                'end'   => $bcfg['end'],
             ];
         }
     }
