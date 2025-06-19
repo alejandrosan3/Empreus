@@ -107,21 +107,10 @@
                                 <flux:heading>{{ $task->task_type_name }}</flux:heading>
                                 <flux:text class="text-sm text-gray-600 dark:text-white/80">
                                     <dl class="space-y-2">
-                                        <dt class="sr-only">Address</dt>
-                                        <dd class="flex items-center gap-1">
-                                            <flux:icon name="map-pin" class="w-4 h-4 text-gray-500" />
-                                            {{ $task->address }}
-                                        </dd>
-
                                         <dt class="sr-only">Subdivision/Lot</dt>
                                         <dd class="flex items-center gap-1">
                                             <flux:icon name="home" class="w-4 h-4 text-gray-500" />
                                             {{ $task->subdivision }} - {{ $task->lot_number }}
-                                        </dd>
-
-                                        <dd class="flex items-center gap-1">
-                                            <flux:icon name="user" class="w-4 h-4 text-gray-500" />
-                                            {{ Str::title($task->supervisor_name) }}
                                         </dd>
                                     </dl>
 

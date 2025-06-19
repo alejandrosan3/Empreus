@@ -68,24 +68,11 @@
 
                             <flux:text class="text-sm text-gray-600 dark:text-white/80">
                                 <dl class="space-y-2">
-                                    {{-- Address --}}
-                                    <dt class="sr-only">Address</dt>
-                                    <dd class="flex items-center gap-1">
-                                        <flux:icon name="map-pin" class="w-4 h-4 text-gray-500" />
-                                        {{ $task->lot->address }}
-                                    </dd>
-
                                     {{-- Subdivision / Lot --}}
                                     <dt class="sr-only">Subdivision/Lot</dt>
                                     <dd class="flex items-center gap-1">
                                         <flux:icon name="rectangle-stack" class="w-4 h-4 text-gray-500" />
                                         {{ $task->lot->subdivision }} - {{ $task->lot->lot_number }}
-                                    </dd>
-
-                                    {{-- Supervisor --}}
-                                    <dd class="flex items-center gap-1">
-                                        <flux:icon name="user" class="w-4 h-4 text-gray-500" />
-                                        {{ Str::title($task->supervisor_name) }}
                                     </dd>
 
                                     <dt class="sr-only">Scheduled Start</dt>
