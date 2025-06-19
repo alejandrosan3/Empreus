@@ -34,6 +34,6 @@
     </div>
 
     <flux:card class="mt-4">
-        <flux:chart type="bar" :value="@js($statistics['chart'])" class="w-full h-64" />
+        <flux:chart type="bar" :value='@json($statistics["chart"])' class="w-full h-64" />
     </flux:card>
 </div>
