@@ -5,6 +5,9 @@
     {{-- Modal for bulk editing behavior --}}
     <livewire:partials.bulk-edit-modal />
 
+    {{-- Modal for duplicating tasks --}}
+    <livewire:task.duplicate-task-form />
+
     <flux:checkbox.group x-data="bulkEditCheckboxes()">
         <div class="h-8 flex items-center">
             <div x-show="selectedIds.length > 0" x-transition
@@ -102,6 +105,12 @@
                                             wire:navigate
                                         >
                                             Details
+                                        </flux:menu.item>
+                                        <flux:menu.item
+                                            icon="document-duplicate"
+                                            x-on:click.prevent="$dispatch('open-duplicate-task', { id: {{ $row['id'] }} })"
+                                        >
+                                            Duplicate
                                         </flux:menu.item>
                                     </flux:menu>
                                 </flux:dropdown>

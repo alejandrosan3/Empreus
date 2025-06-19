@@ -2,6 +2,9 @@
     {{-- Modal for hybrid inline editing behavior --}}
     <livewire:partials.editable-modal />
 
+    {{-- Modal for duplicating lots --}}
+    <livewire:lot.duplicate-lot-form />
+
     {{-- Modal for bulk editing behavior - Not needed right now
     <livewire:partials.bulk-edit-modal />  --}}
 
@@ -284,6 +287,12 @@
                                 <flux:menu>
                                     <flux:menu.item icon="clipboard-document-check" href="{{ route('lot-details', ['lot_id' => $lot->id]) }}"  wire:navigate>
                                         Details
+                                    </flux:menu.item>
+                                    <flux:menu.item
+                                        icon="document-duplicate"
+                                        x-on:click.prevent="$dispatch('open-duplicate-lot', { id: {{ $lot->id }} })"
+                                    >
+                                        Duplicate
                                     </flux:menu.item>
                                 </flux:menu>
                             </flux:dropdown>
