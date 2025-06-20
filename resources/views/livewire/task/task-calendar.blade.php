@@ -92,6 +92,9 @@
                                             <flux:badge color="blue" size="sm" title="Extra Purchase Order">EPO</flux:badge>
                                         @endif
                                         <flux:badge color="yellow" size="sm" title="Builder name">{{ $task->builder_name }}</flux:badge>
+                                            <flux:badge color="green" size="sm" title="Floor Area">
+                                                {{ $task->floor_area_category }}
+                                            </flux:badge>
                                     </div>
                                     <flux:button
                                         variant="subtle"

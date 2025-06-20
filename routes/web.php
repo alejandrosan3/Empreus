@@ -51,7 +51,7 @@ Route::middleware(['auth', 'verified', SetCurrentCompany::class])
             Route::get('subdivisions', ListSubdivision::class)
                 ->name('subdivisions')
                 ->defaults('label', 'Subdivisions')
-                ->defaults('icon', 'rectangle-stack');
+                ->defaults('icon', 'home');
 
 
             Route::get('supervisors', ListSupervisor::class)

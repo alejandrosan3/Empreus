@@ -119,6 +119,21 @@ class Task extends Model
         return $this->lot->supervisor->name ?? '';
     }
 
+    public function getFloorAreaCategoryAttribute(): string
+    {
+        $floorArea = $this->lot->floor_area;
+
+        if ($floorArea <= 1800) {
+            return 'S';
+        } elseif ($floorArea <= 2250) {
+            return 'M';
+        } elseif ($floorArea <= 3000) {
+            return 'L';
+        } else {
+            return 'XL';
+        }
+    }
+
     public static function getGroupedTasksByStatusForCurrentCompany(array $statuses = [])
     {
         $companyId = session('company_id');
@@ -159,6 +174,7 @@ class Task extends Model
                 'lots.subdivision as subdivision',
                 'lots.lot_number as lot_number',
                 'lots.address as address',
+                'lots.floor_area as floor_area',
                 'task_types.name as task_type_name',
                 'supervisors.name as supervisor_name',
                 'builders.name as builder_name',
