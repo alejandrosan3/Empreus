@@ -3,6 +3,7 @@
 namespace App\Livewire\Task;
 
 use App\Models\Task;
+use App\Models\StatusType;
 use Livewire\Component;
 use Livewire\WithPagination;
 use Livewire\Attributes\On;
@@ -304,7 +305,10 @@ class TaskProgress extends Component
     {
         try {
             $original = Task::findOrFail($taskId);
-            $copy     = $original->duplicate();
+            // Look up the “Pending” status ID
+            $pendingStatusId = StatusType::where('name', 'pending')->value('id');
+            $copy     = $original->duplicate(['status_type_id' => $pendingStatusId]);
+
 
             $this->showSuccess(
                 "Task #{$original->taskType->name} was duplicated successfully"
