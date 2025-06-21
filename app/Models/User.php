@@ -69,13 +69,8 @@ class User extends Authenticatable
     {
         $companyId = session('company_id');
 
-        return Task::where('tasks.company_id', $companyId)
-            ->whereHas('company', function ($query) use ($companyId) {
-                $query->where('companies.id', $companyId)
-                    ->whereHas('users', function ($query) {
-                        $query->where('users.id', $this->id);
-                    });
-            });
+        return Task::query()
+        ->where('tasks.company_id', $companyId);
     }
 
     public function tasks(): BelongsToMany
