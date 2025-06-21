@@ -282,8 +282,13 @@
                             <flux:dropdown>
                                 <flux:button icon="ellipsis-horizontal" variant="ghost" size="sm" />
                                 <flux:menu>
+                                    {{-- LOT DETAILS --}}
                                     <flux:menu.item icon="clipboard-document-check" href="{{ route('lot-details', ['lot_id' => $lot->id]) }}"  wire:navigate>
                                         Details
+                                    </flux:menu.item>
+                                    {{-- DUPLICATE --}}
+                                    <flux:menu.item icon="document-duplicate" wire:click="duplicateLot({{ $lot->id }})" >
+                                        Duplicate
                                     </flux:menu.item>
                                 </flux:menu>
                             </flux:dropdown>

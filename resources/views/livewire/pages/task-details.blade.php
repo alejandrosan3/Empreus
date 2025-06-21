@@ -18,14 +18,14 @@
                 ['label' => 'Task Name', 'value' => $task->taskType?->name ?? 'Missing Task Name'],
                 ['label' => 'Order Number', 'value' => $task?->order_number ?? '-'],
                 ['label' => 'Order Type', 'value' => $task->is_extra ? "EPO" : "PO"],
-                ['label' => 'price', 'value' => $task?->price ?? '-'],
+                ['label' => 'Price', 'value' => '$' . $task?->price ?? '-'],
             ]
         ])
 
             @livewire('partials.cards', [
                 'items' => [
                     ['label' => 'Supervisor', 'value' => $task->lot->supervisor?->name ?? 'N/A'],
-                    ['label' => 'Adress', 'value' => $task->lot->address ?? '-'],
+                    ['label' => 'Address', 'value' => $task->lot->address ?? '-'],
                     ['label' => 'Scheduled Start Date', 'value' => $task?->scheduled_start_date ?? "Unscheduled"],
                     ['label' => 'Workers', 'value' => \Livewire\Livewire::mount('layout.avatar-stack',['avSize' =>'sm', 'users' => $task->workers])],
                 ]

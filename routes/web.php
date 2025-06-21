@@ -51,7 +51,7 @@ Route::middleware(['auth', 'verified', SetCurrentCompany::class])
             Route::get('subdivisions', ListSubdivision::class)
                 ->name('subdivisions')
                 ->defaults('label', 'Subdivisions')
-                ->defaults('icon', 'rectangle-stack');
+                ->defaults('icon', 'home');
 
 
             Route::get('supervisors', ListSupervisor::class)
@@ -108,6 +108,16 @@ Route::middleware(['auth', 'verified', SetCurrentCompany::class])
                 ->name('task-create')
                 ->defaults('label', 'Create Task')
                 ->defaults('icon', 'clipboard-document-check');
+
+            Route::get('statistics', \App\Livewire\Pages\Statistics::class)
+                ->name('statistics')
+                ->defaults('label', 'Statistics')
+                ->defaults('icon', 'chart-bar-square');
+
+            Route::get('projections', \App\Livewire\Pages\Projections::class)
+                ->name('projections')
+                ->defaults('label', 'Projections')
+                ->defaults('icon', 'chart-bar');
         });
 
 

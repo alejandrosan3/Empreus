@@ -3,15 +3,17 @@
 namespace App\Livewire\Lot;
 
 use App\Models\Lot;
+use App\Models\StatusType;
 use Livewire\Component;
 use Livewire\WithPagination;
 use Livewire\Attributes\On;
 use Livewire\Attributes\Computed;
 use App\Repositories\LotProgressRepository;
+use App\Traits\WithToast;
 
 class LotProgress extends Component
 {
-    use WithPagination;
+    use WithPagination, WithToast;
 
         // Sort-related
         public $sortBy = 'id';
@@ -194,6 +196,33 @@ class LotProgress extends Component
         public function updateColumns($columns)
         {
             $this->columns = $columns;
+        }
+
+        /**
+        ** Duplicate a Lot by its ID with its relations.
+        */
+        public function duplicateLot(int $lotId): void
+        {
+            try {
+                $original = Lot::with('tasks')->findOrFail($lotId);
+
+                // find the Pending status ID once
+                $pendingId = StatusType::where('name', 'Pending')->value('id');
+
+                // duplicate the lot + its tasks, overriding each cloned task to Pending
+                $copy = $original->duplicateWith(
+                    overrideAttributes: [],                  // no changes on the lot itself
+                    relations: ['tasks'],          // clone the hasMany tasks
+                    relationOverrides: [
+                        'tasks' => ['status_type_id' => $pendingId],
+                    ]
+                );
+
+                $this->showSuccess("Lot #{$original->id} cloned as #{$copy->id}, tasks set to Pending");
+                $this->dispatch('contentUpdated');
+            } catch (\Throwable $e) {
+                $this->showError("Could not duplicate Lot: {$e->getMessage()}");
+            }
         }
 
 

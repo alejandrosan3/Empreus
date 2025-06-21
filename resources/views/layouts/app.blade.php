@@ -49,7 +49,7 @@
 
                     <flux:menu>
                         <flux:menu.item icon="user-circle" :href="route('profile')">Profile</flux:menu.item>
-                        <flux:menu.item icon="cog-8-tooth" :href="route('profile')">settings</flux:menu.item>
+                        <flux:menu.item icon="cog-8-tooth" :href="route('profile')">Settings</flux:menu.item>
 
                         <flux:menu.separator />
                         <form method="POST" action="{{ route('logout') }}">
@@ -95,7 +95,7 @@
 
         @fluxScripts
         @livewireScriptConfig
-        
+
         {{-- Main Persistent. there's no need to add it anywhere else in the app --}}
         @persist('toast')
             <flux:toast />
