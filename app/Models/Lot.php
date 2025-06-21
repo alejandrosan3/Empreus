@@ -123,15 +123,20 @@ class Lot extends Model
      */
     public function toSearchableArray(): array
     {
-        $this->loadMissing(['builder', 'supervisor']);
+        $this->loadMissing(['builder', 'supervisor', 'statusType']);
 
         return [
-            'id'         => $this->id,
-            'lot_number' => $this->lot_number,
-            'address'    => $this->address,
-            'subdivision'=> $this->subdivision,
-            'builder'    => $this->builder->name ?? null,
-            'supervisor' => $this->supervisor->name ?? null,
+            'id'            => $this->id,
+            'lot_number'    => $this->lot_number,
+            'address'       => $this->address,
+            'subdivision'   => $this->subdivision,
+            'phase'         => $this->phase,
+            'builder'       => $this->builder->name ?? null,
+            'supervisor'    => $this->supervisor->name ?? null,
+            'status'        => $this->statusType->name ?? null,
+            'builder_id'    => $this->builder_id,
+            'supervisor_id' => $this->supervisor_id,
+            'status_id'     => $this->status_type_id,
         ];
     }
 }

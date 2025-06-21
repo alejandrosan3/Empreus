@@ -4,28 +4,66 @@ namespace App\Repositories;
 
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Pagination\LengthAwarePaginator;
+use MeiliSearch\Client;
 use App\Models\Lot;
 
 class LotProgressRepository
 {
-    public function getLots(array $filters, string $sortBy, string $sortDirection, string $searchTerm = '')
+    public function getLots(array $filters, string $sortBy, string $sortDirection, string $searchTerm = ''): LengthAwarePaginator
     {
-        if ($searchTerm !== '') {
-            return Lot::search($searchTerm)
-                ->query(function ($query) use ($filters) {
-                    $query->where('company_id', session('company_id'));
-                    $this->applyLotFilters($query, $filters);
-                })
-                ->paginate(20);
+        $perPage = 20;
+        $page    = request('page', 1);
+
+        $meiliMap = [
+            'builder'    => 'builder_id',
+            'lot_number' => 'lot_number',
+            'supervisor' => 'supervisor_id',
+            'phase'      => 'phase',
+        ];
+
+        $filterClauses = [];
+        foreach ($filters as $key => $vals) {
+            if (empty($vals) || ! isset($meiliMap[$key])) {
+                continue;
+            }
+            $field = $meiliMap[$key];
+            $ors   = array_map(fn($v) => is_numeric($v)
+                ? "{$field} = {$v}"
+                : "{$field} = \"{$v}\"",
+            $vals);
+            $filterClauses[] = '('.implode(' OR ', $ors).')';
         }
 
-        $query = Auth::user()->lotsForCurrentCompany();
+        $client = new Client(
+            config('scout.meilisearch.host'),
+            config('scout.meilisearch.key')
+        );
+        $index = $client->index('lots');
 
-        $this->applyLotFilters($query, $filters);
+        $result = $index->search($searchTerm, [
+            'filter' => $filterClauses,
+            'sort'   => ["{$sortBy}:{$sortDirection}"],
+            'limit'  => $perPage,
+            'offset' => ($page - 1) * $perPage,
+        ]);
 
-        $this->applySort($query, $sortBy, $sortDirection);
+        $data  = $result->toArray();
+        $hits  = $data['hits']   ?? [];
+        $total = $data['nbHits'] ?? count($hits);
 
-        return $query->paginate(20);
+        $ids    = array_column($hits, 'id');
+        $models = Lot::whereIn('id', $ids)
+            ->orderByRaw('FIELD(id, ' . implode(',', $ids) . ')')
+            ->get();
+
+        return new LengthAwarePaginator(
+            $models,
+            $total,
+            $perPage,
+            $page,
+            ['path' => LengthAwarePaginator::resolveCurrentPath()]
+        );
     }
 
     private function applyLotFilters($query, array $filters): void
@@ -86,89 +124,91 @@ class LotProgressRepository
 
     public function filterOptions(array $selectedFilters, array $columns): array
     {
-        $query   = Auth::user()->lotsForCurrentCompany();
-        $filters = [];
+        $client = new Client(
+            config('scout.meilisearch.host'),
+            config('scout.meilisearch.key')
+        );
+        $index = $client->index('lots');
 
-        foreach ($columns as $column) {
-            if (empty($column['filterable'])) {
+        $meiliMap = [
+            'builder'    => 'builder_id',
+            'lot_number' => 'lot_number',
+            'supervisor' => 'supervisor_id',
+            'phase'      => 'phase',
+        ];
+
+        $facetFields = [];
+        foreach ($columns as $col) {
+            if (! empty($col['filterable']) && $col['value'] !== 'subdivision' && isset($meiliMap[$col['value']])) {
+                $facetFields[] = $meiliMap[$col['value']];
+            }
+        }
+
+        $filterClauses = [];
+        foreach ($selectedFilters as $uiKey => $values) {
+            if (empty($values) || ! isset($meiliMap[$uiKey])) {
                 continue;
             }
-            $colKey      = $column['value'];
-            $optionsQuery = clone $query;
+            $field = $meiliMap[$uiKey];
+            $ors = array_map(fn($v) => is_numeric($v)
+                ? "{$field} = {$v}"
+                : "{$field} = \"{$v}\"",
+            $values);
+            $filterClauses[] = '(' . implode(' OR ', $ors) . ')';
+        }
 
-            foreach ($selectedFilters as $key => $values) {
-                if ($key === $colKey || empty($values)) {
-                    continue;
-                }
-                switch ($key) {
-                    case 'builder':
-                        $optionsQuery->whereHas('builder', fn($q) => $q->whereIn('id', $values));
-                        break;
-                    case 'subdivision':
-                        $optionsQuery->where(function ($q) use ($values) {
-                            foreach ($values as $val) {
-                                [$sub,$ph] = explode('|',$val);
-                                $q->orWhere(fn($q2)=>$q2->where('subdivision',$sub)->where('phase',$ph));
-                            }
-                        });
-                        break;
-                    case 'lot_number':
-                        $optionsQuery->whereIn('lot_number', $values);
-                        break;
-                    case 'supervisor':
-                        $optionsQuery->whereHas('supervisor', fn($q)=>$q->whereIn('id',$values));
-                        break;
-                    case 'phase':
-                        $optionsQuery->whereIn('phase', $values);
-                        break;
-                }
+        $searchResult = $index->search('', [
+            'filter' => $filterClauses,
+            'facets' => $facetFields,
+            'limit'  => 0,
+        ]);
+        $facetDist = $searchResult->getFacetDistribution();
+
+        $filters = [];
+        foreach ($columns as $col) {
+            $key = $col['value'];
+
+            if (empty($col['filterable'])) {
+                continue;
             }
 
-            switch ($colKey) {
-                case 'builder':
-                    $filters[$colKey] = $optionsQuery->clone()
-                        ->join('builders','lots.builder_id','=','builders.id')
-                        ->select('builders.id','builders.name')
-                        ->distinct()
-                        ->orderBy('builders.name','asc')
-                        ->get()
-                        ->map(fn($b)=>['value'=>$b->id,'label'=>$b->name])
-                        ->toArray();
-                    break;
-                case 'subdivision':
-                    $filters[$colKey] = $optionsQuery->clone()
-                        ->select('subdivision','phase')
-                        ->groupBy('subdivision','phase')
-                        ->orderBy('subdivision','asc')
-                        ->get()
-                        ->map(fn($i)=>['value'=>$i->subdivision.'|'.$i->phase,'label'=>$i->subdivision.($i->phase ? " ({$i->phase})" : '')])
-                        ->toArray();
-                    break;
-                case 'lot_number':
-                    $filters[$colKey] = $optionsQuery->clone()
-                        ->distinct()
-                        ->orderByRaw("CAST(lot_number AS UNSIGNED), lot_number ASC")
-                        ->pluck('lot_number')
-                        ->toArray();
-                    break;
-                case 'supervisor':
-                    $filters[$colKey] = $optionsQuery->clone()
-                        ->join('supervisors','lots.supervisor_id','=','supervisors.id')
-                        ->select('supervisors.id','supervisors.name')
-                        ->distinct()
-                        ->orderBy('supervisors.name','asc')
-                        ->get()
-                        ->map(fn($s)=>['value'=>$s->id,'label'=>$s->name])
-                        ->toArray();
-                    break;
-                case 'phase':
-                    $filters[$colKey] = $optionsQuery->clone()
-                        ->select('phase')
-                        ->distinct()
-                        ->orderBy('phase','asc')
-                        ->pluck('phase')
-                        ->toArray();
-                    break;
+            if ($key === 'subdivision') {
+                $q = Auth::user()->lotsForCurrentCompany();
+                $other = \Illuminate\Support\Arr::except($selectedFilters, ['subdivision']);
+                $this->applyLotFilters($q, $other);
+
+                $filters[$key] = $q
+                    ->clone()
+                    ->select('subdivision','phase')
+                    ->groupBy('subdivision','phase')
+                    ->orderBy('subdivision','asc')
+                    ->get()
+                    ->map(fn($i) => [
+                        'value' => $i->subdivision.'|'.$i->phase,
+                        'label' => $i->subdivision . ($i->phase ? " ({$i->phase})" : ''),
+                    ])->toArray();
+                continue;
+            }
+
+            if (isset($meiliMap[$key])) {
+                $field   = $meiliMap[$key];
+                $buckets = $facetDist[$field] ?? [];
+                $filters[$key] = [];
+
+                if (in_array($key, ['builder','supervisor'])) {
+                    $modelClass = $key === 'builder'
+                        ? \App\Models\Builder::class
+                        : \App\Models\Supervisor::class;
+                    foreach (array_keys($buckets) as $id) {
+                        $idInt = (int) $id;
+                        $label = optional($modelClass::find($idInt))->name ?? $idInt;
+                        $filters[$key][] = ['value' => $idInt, 'label' => $label];
+                    }
+                } elseif ($key === 'lot_number' || $key === 'phase') {
+                    foreach (array_keys($buckets) as $val) {
+                        $filters[$key][] = ['value' => $val, 'label' => $val];
+                    }
+                }
             }
         }
 
