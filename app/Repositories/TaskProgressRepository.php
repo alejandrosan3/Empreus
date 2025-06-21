@@ -4,36 +4,76 @@ namespace App\Repositories;
 
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
+use MeiliSearch\Client;
+use Illuminate\Pagination\LengthAwarePaginator;
+use Illuminate\Support\Arr;
 use App\Models\Task;
 
 class TaskProgressRepository
 {
-    public function getTasks(array $filters, string $sortBy, string $sortDirection, string $searchTerm = '')
+    public function getTasks(array $selectedFilters, string $sortBy, string $sortDirection, string $searchTerm = ''): LengthAwarePaginator
     {
-        $query = Auth::user()->tasksForCurrentCompany()
-            ->with([
-                'lot.builder',
-                'lot.supervisor',
-                'taskType',
-                'statusType',
-                'taskNotes' => fn($q) => $q->latest('created_at')->limit(1),
-            ]);
+        $perPage = 20;
+        $page    = request('page', 1);
 
-        if ($searchTerm !== '') {
-            return Task::search($searchTerm)
-                ->query(function ($query) use ($filters) {
-                    $query->where('tasks.company_id', session('company_id'));
-                    $this->applyTaskFilters($query, $filters);
-                })
-                ->paginate(20);
+        // Map UI → Meili
+        $meiliMap = [
+            'builder'    => 'builder_id',
+            'task_type'  => 'task_type_id',
+            'status'     => 'status_id',
+            'supervisor' => 'supervisor_id',
+            'lot_number' => 'lot_number',
+        ];
+
+        // Build filters
+        $filterClauses = [];
+        foreach ($selectedFilters as $key => $vals) {
+            if (empty($vals) || ! isset($meiliMap[$key])) {
+                continue;
+            }
+            $field = $meiliMap[$key];
+            $ors   = array_map(fn($v) => is_numeric($v)
+                ? "{$field} = {$v}"
+                : "{$field} = \"{$v}\"",
+            $vals);
+            $filterClauses[] = '('.implode(' OR ', $ors).')';
         }
 
-        $this->applyTaskFilters($query, $filters);
+        // Meili search
+        $client = new Client(
+            config('scout.meilisearch.host'),
+            config('scout.meilisearch.key')
+        );
+        $index = $client->index('tasks');
 
-        $this->applySort($query, $sortBy, $sortDirection);
+        $result = $index->search($searchTerm, [
+            'filter' => $filterClauses,
+            'sort'   => ["{$sortBy}:{$sortDirection}"],
+            'limit'  => $perPage,
+            'offset' => ($page - 1) * $perPage,
+        ]);
 
-        return $query->paginate(20);
+        // Use toArray() to pull hits & total
+        $data  = $result->toArray();
+        $hits  = $data['hits']    ?? [];
+        $total = $data['nbHits']  ?? count($hits);
+
+        // Hydrate and preserve order
+        $ids    = array_column($hits, 'id');
+        $models = \App\Models\Task::whereIn('id', $ids)
+            ->orderByRaw('FIELD(id, ' . implode(',', $ids) . ')')
+            ->get();
+
+        // Return paginator
+        return new LengthAwarePaginator(
+            $models,
+            $total,
+            $perPage,
+            $page,
+            ['path' => LengthAwarePaginator::resolveCurrentPath()]
+        );
     }
+
 
     private function applyTaskFilters($query, array $filters): void
     {
@@ -124,135 +164,136 @@ class TaskProgressRepository
 
     public function filterOptions(array $selectedFilters, array $columns): array
     {
-        $companyId = session('company_id');
-        $ttl       = 300;
-        $filters   = [];
+        // 1) Boot Meili
+        $client = new \MeiliSearch\Client(
+            config('scout.meilisearch.host'),
+            config('scout.meilisearch.key')
+        );
+        $index = $client->index('tasks');
 
-        foreach ($columns as $column) {
-            if (empty($column['filterable'])) {
+        // 2) Build a map from your dynamic column values → Meili fields
+        $meiliMap = [
+            'builder'    => 'builder_id',
+            'task_type'  => 'task_type_id',
+            'status'     => 'status_id',
+            'supervisor' => 'supervisor_id',
+            'lot_number' => 'lot_number',
+            // others (e.g. address) are searchable but not filterable
+        ];
+
+        // 3) Collect just the columns you actually filter on via Meili
+        $facetFields = [];
+        foreach ($columns as $col) {
+            if (
+                ! empty($col['filterable'])
+                && ! in_array($col['value'], ['subdivision','is_extra'])
+                && isset($meiliMap[$col['value']])
+            ) {
+                $facetFields[] = $meiliMap[$col['value']];
+            }
+        }
+
+        // 4) Turn selectedFilters into Meili filter clauses
+        $filterClauses = [];
+        foreach ($selectedFilters as $uiKey => $values) {
+            if (
+                empty($values)
+                || ! isset($meiliMap[$uiKey])
+            ) {
+                continue;
+            }
+            $meiliField = $meiliMap[$uiKey];
+            $ors = array_map(fn($v) => is_numeric($v)
+                ? "{$meiliField} = {$v}"
+                : "{$meiliField} = \"{$v}\""
+            , $values);
+
+            $filterClauses[] = '(' . implode(' OR ', $ors) . ')';
+        }
+
+        // 5) Ask Meili for only those facets
+        $searchResult = $index->search('', [
+            'filter' => $filterClauses,
+            'facets' => $facetFields,
+            'limit'  => 0,
+        ]);
+        $facetDist = $searchResult->getFacetDistribution();
+
+        // 6) Build your filters array by mirroring the $columns order
+        $filters = [];
+        foreach ($columns as $col) {
+            $key = $col['value'];
+
+            if (empty($col['filterable'])) {
                 continue;
             }
 
-            $colKey      = $column['value'];
-            $optionsQuery = Auth::user()->tasksForCurrentCompany();
+            // A) Subdivision: SQL join as before
+            if ($key === 'subdivision') {
+                $q = Auth::user()->tasksForCurrentCompany();
+                $other = Arr::except($selectedFilters, ['subdivision']);
+                $this->applyTaskFilters($q, $other);
 
-            foreach ($selectedFilters as $key => $values) {
-                if ($key === $colKey || empty($values)) {
-                    continue;
-                }
-                switch ($key) {
-                    case 'builder':
-                        $optionsQuery->whereHas('lot.builder', fn($q)=>$q->whereIn('id',$values));
-                        break;
-                    case 'subdivision':
-                        $optionsQuery->whereHas('lot', function($q) use ($values){
-                            $q->where(function($q2) use ($values){
-                                foreach ($values as $v){
-                                    [$s,$p]=explode('|',$v);
-                                    $q2->orWhere(fn($qq)=>$qq->where('subdivision',$s)->where('phase',$p));
-                                }
-                            });
-                        });
-                        break;
-                    case 'lot_number':
-                        $optionsQuery->whereHas('lot', fn($q)=>$q->whereIn('lot_number',$values));
-                        break;
-                    case 'task_type':
-                        $optionsQuery->whereIn('task_type_id',$values);
-                        break;
-                    case 'status':
-                        $optionsQuery->whereIn('tasks.status_type_id',$values);
-                        break;
-                    case 'supervisor':
-                        $optionsQuery->whereHas('lot.supervisor', fn($q)=>$q->whereIn('id',$values));
-                        break;
-                    case 'is_extra':
-                        $optionsQuery->whereIn('is_extra',$values);
-                        break;
-                    case 'phase':
-                        $optionsQuery->whereHas('lot', fn($q)=>$q->whereIn('phase',$values));
-                        break;
-                }
+                $filters[$key] = $q
+                    ->clone()
+                    ->join('lots','tasks.lot_id','=','lots.id')
+                    ->select('lots.subdivision','lots.phase')
+                    ->groupBy('lots.subdivision','lots.phase')
+                    ->orderBy('lots.subdivision','asc')
+                    ->get()
+                    ->map(fn($i)=>[
+                        'value' => "{$i->subdivision}|{$i->phase}",
+                        'label' => $i->subdivision . ($i->phase ? " ({$i->phase})" : ''),
+                    ])->toArray();
+                continue;
             }
 
-            switch ($colKey) {
-                case 'builder':
-                    $filters[$colKey] = Cache::remember("taskProgress:{$companyId}:builders:".md5(json_encode($selectedFilters)), $ttl, function() use ($optionsQuery){
-                        return $optionsQuery->clone()->join('lots','tasks.lot_id','=','lots.id')
-                            ->join('builders','lots.builder_id','=','builders.id')
-                            ->distinct()
-                            ->orderBy('builders.name','asc')
-                            ->get(['builders.id','builders.name'])
-                            ->map(fn($b)=>['value'=>$b->id,'label'=>$b->name])
-                            ->toArray();
-                    });
-                    break;
-                case 'subdivision':
-                    $filters[$colKey] = Cache::remember("taskProgress:{$companyId}:subdivisions:".md5(json_encode($selectedFilters)), $ttl, function() use ($optionsQuery){
-                        return $optionsQuery->clone()->join('lots','tasks.lot_id','=','lots.id')
-                            ->select('lots.subdivision','lots.phase')
-                            ->groupBy('lots.subdivision','lots.phase')
-                            ->orderBy('lots.subdivision','asc')
-                            ->get()
-                            ->map(fn($i)=>['value'=>"{$i->subdivision}|{$i->phase}", 'label'=>$i->subdivision.($i->phase ? " ({$i->phase})" : '')])
-                            ->toArray();
-                    });
-                    break;
-                case 'lot_number':
-                    $filters[$colKey] = Cache::remember("taskProgress:{$companyId}:lots:".md5(json_encode($selectedFilters)), $ttl, function() use ($optionsQuery){
-                        return $optionsQuery->clone()->join('lots','tasks.lot_id','=','lots.id')
-                            ->distinct()
-                            ->orderByRaw("CAST(lots.lot_number AS UNSIGNED), lots.lot_number ASC")
-                            ->pluck('lots.lot_number')
-                            ->toArray();
-                    });
-                    break;
-                case 'task_type':
-                    $filters[$colKey] = Cache::remember("taskProgress:{$companyId}:taskTypes:".md5(json_encode($selectedFilters)), $ttl, function() use ($optionsQuery){
-                        return $optionsQuery->clone()->join('task_types','tasks.task_type_id','=','task_types.id')
-                            ->distinct()->orderBy('task_types.name','asc')
-                            ->get(['task_types.id','task_types.name'])
-                            ->map(fn($t)=>['value'=>$t->id,'label'=>$t->name])
-                            ->toArray();
-                    });
-                    break;
-                case 'status':
-                    $filters[$colKey] = Cache::remember("taskProgress:{$companyId}:statusTypes:".md5(json_encode($selectedFilters)), $ttl, function() use ($optionsQuery){
-                        return $optionsQuery->clone()->join('status_types','tasks.status_type_id','=','status_types.id')
-                            ->distinct()->orderBy('status_types.name','asc')
-                            ->get(['status_types.id','status_types.name'])
-                            ->map(fn($s)=>['value'=>$s->id,'label'=>$s->name])
-                            ->toArray();
-                    });
-                    break;
-                case 'supervisor':
-                    $filters[$colKey] = Cache::remember("taskProgress:{$companyId}:supervisors:".md5(json_encode($selectedFilters)), $ttl, function() use ($optionsQuery){
-                        return $optionsQuery->clone()->join('lots','tasks.lot_id','=','lots.id')
-                            ->join('supervisors','lots.supervisor_id','=','supervisors.id')
-                            ->distinct()->orderBy('supervisors.name','asc')
-                            ->get(['supervisors.id','supervisors.name'])
-                            ->map(fn($s)=>['value'=>$s->id,'label'=>$s->name])
-                            ->toArray();
-                    });
-                    break;
-                case 'is_extra':
-                    $filters[$colKey] = [
-                        ['value' => 0, 'label' => 'Standard'],
-                        ['value' => 1, 'label' => 'EPO'],
-                    ];
-                    break;
-                case 'phase':
-                    $filters[$colKey] = Cache::remember("taskProgress:{$companyId}:phases:".md5(json_encode($selectedFilters)), $ttl, function() use ($optionsQuery){
-                        return $optionsQuery->clone()->join('lots','tasks.lot_id','=','lots.id')
-                            ->select('lots.phase')
-                            ->distinct()->orderBy('lots.phase','asc')
-                            ->pluck('lots.phase')
-                            ->toArray();
-                    });
-                    break;
+            // B) is_extra: static
+            if ($key === 'is_extra') {
+                $filters[$key] = [
+                    ['value'=>0,'label'=>'Standard'],
+                    ['value'=>1,'label'=>'EPO'],
+                ];
+                continue;
+            }
+
+            // C) Everything else: Meili facet
+            if (isset($meiliMap[$key])) {
+                $meiliKey = $meiliMap[$key];
+                $buckets  = $facetDist[$meiliKey] ?? [];
+
+                $filters[$key] = [];
+
+                // relational IDs → lookup labels
+                if (in_array($key, ['builder','task_type','status','supervisor'])) {
+                    $modelClass = match($key) {
+                        'builder'    => \App\Models\Builder::class,
+                        'task_type'  => \App\Models\TaskType::class,
+                        'status'     => \App\Models\StatusType::class,
+                        'supervisor' => \App\Models\Supervisor::class,
+                    };
+
+                    foreach (array_keys($buckets) as $id) {
+                        $idInt = (int)$id;
+                        $label = optional($modelClass::find($idInt))->name ?? $idInt;
+                        $filters[$key][] = ['value'=>$idInt,'label'=>$label];
+                    }
+                }
+                // lot_number is string
+                elseif ($key === 'lot_number') {
+                    foreach (array_keys($buckets) as $val) {
+                        $filters[$key][] = ['value'=>$val,'label'=>$val];
+                    }
+                }
+
+                continue;
             }
         }
 
         return $filters;
     }
+
+
+
+
 }

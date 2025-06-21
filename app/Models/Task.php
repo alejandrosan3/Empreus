@@ -102,6 +102,10 @@ class Task extends Model
             'supervisor'  => $this->lot->supervisor->name ?? null,
             'task_type'   => $this->taskType->name ?? null,
             'status'      => $this->statusType->name ?? null,
+            'builder_id'     => $this->lot->builder_id,
+            'task_type_id'   => $this->task_type_id,
+            'status_id'      => $this->status_type_id,
+            'supervisor_id'  => $this->lot->supervisor_id,
         ];
     }
 
