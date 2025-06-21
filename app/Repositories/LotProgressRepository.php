@@ -41,9 +41,11 @@ class LotProgressRepository
         );
         $index = $client->index('lots');
 
+        $sortField = $meiliMap[$sortBy] ?? $sortBy;
+
         $result = $index->search($searchTerm, [
             'filter' => $filterClauses,
-            'sort'   => ["{$sortBy}:{$sortDirection}"],
+            'sort'   => ["{$sortField}:{$sortDirection}"],
             'limit'  => $perPage,
             'offset' => ($page - 1) * $perPage,
         ]);
