@@ -214,11 +214,27 @@ class TaskProgressRepository
         }
 
         // 5) Ask Meili for only those facets
-        $searchResult = $index->search('', [
-            'filter' => $filterClauses,
-            'facets' => $facetFields,
-            'limit'  => 0,
-        ]);
+        try {
+            $searchResult = $index->search('', [
+                'filter' => $filterClauses,
+                'facets' => $facetFields,
+                'limit'  => 0,
+            ]);
+        } catch (\Meilisearch\Exceptions\ApiException $e) {
+            if (str_contains($e->getMessage(), 'Invalid facet distribution')) {
+                $settings = config('scout.meilisearch.index-settings.tasks', []);
+                if (! empty($settings)) {
+                    $index->updateSettings($settings);
+                }
+                $searchResult = $index->search('', [
+                    'filter' => $filterClauses,
+                    'facets' => $facetFields,
+                    'limit'  => 0,
+                ]);
+            } else {
+                throw $e;
+            }
+        }
         $facetDist = $searchResult->getFacetDistribution();
 
         // 6) Build your filters array by mirroring the $columns order
