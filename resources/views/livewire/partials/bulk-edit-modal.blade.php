@@ -39,10 +39,10 @@
         <flux:separator text="Dates Section" class="my-8" />
 
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
-            <flux:date-picker label="Planned Start Date" wire:model="scheduled_start_date" selectable-header clearable />
-            <flux:date-picker label="Start Date" wire:model="started_at" selectable-header clearable />
-            <flux:date-picker label="Scheduled End Date" wire:model="scheduled_end_date" selectable-header clearable />
-            <flux:date-picker label="End Date" wire:model="ended_at" selectable-header clearable />
+            <flux:date-picker label="Planned Start Date" wire:model="scheduled_start_date" with-today with-inputs clearable />
+            <flux:date-picker label="Start Date" wire:model="started_at" with-today with-inputs clearable />
+            <flux:date-picker label="Scheduled End Date" wire:model="scheduled_end_date" with-today with-inputs clearable />
+            <flux:date-picker label="End Date" wire:model="ended_at" clearable with-today with-inputs />
         </div>
 
         <flux:button wire:click="save" variant="primary">Apply Changes</flux:button>
