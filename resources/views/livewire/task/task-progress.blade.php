@@ -27,7 +27,7 @@
                 <!-- Table Header -->
                 <flux:table.columns>
                     <!-- checkbox "Select-All" Column -->
-                    <flux:table.column class="sticky left-0 z-20 bg-white dark:bg-zinc-800" data-fixed-index="0">
+                    <flux:table.column class="sticky frozen-cell left-0 z-20 bg-white dark:bg-zinc-800" data-fixed-index="0">
                         <flux:checkbox.all />
                     </flux:table.column>
                     <!-- Fixed Columns -->
@@ -37,8 +37,8 @@
                                 :sortable="$column['sortable']"
                                 :sorted="$column['sortable'] ? $sortBy === $column['value'] : false"
                                 wire:click="{{ $column['sortable'] ? 'sort(\'' . $column['value'] . '\')' : '' }}"
-                                class="bg-white dark:bg-zinc-800 {{ $column['group'] == 'fixed' ? 'sticky' : '' }}"
-                                data-fixed-index=" {{ $column['group'] == 'fixed' ? $loop->index + 1 : '' }}"
+                                class="bg-white dark:bg-zinc-800 {{ $column['group'] == 'fixed' ? 'sticky frozen-cell' : '' }}"
+                                data-fixed-index="{{ $column['group'] == 'fixed' ? $loop->index + 1 : '' }}"
                             >
                                 {{ $column['label'] }}
                             </flux:table.column>
@@ -52,7 +52,7 @@
                 <flux:table.rows>
                     @foreach($flatTasks as $row)
                         <flux:table.row :key="$row['id']">
-                        <flux:table.cell class="sticky left-0 z-20 bg-white dark:bg-zinc-800" data-fixed-index="0" >
+                        <flux:table.cell class="sticky frozen-cell left-0 z-20 bg-white dark:bg-zinc-800" data-fixed-index="0" >
                             <flux:checkbox 
                                 x-data="{ id: {{ $row['id'] }} }"
                                 value="{{ $row['id'] }}"
@@ -78,7 +78,7 @@
                                             modelAttribute: '{{ $cell['modelAttribute'] }}',
                                             editable: {{ $cell['editable'] ? 'true' : 'false' }}
                                             })"
-                                        class="bg-white dark:bg-zinc-800 {{ $column['group']=='fixed'?'sticky':'' }}"
+                                        class="bg-white dark:bg-zinc-800 {{ $column['group']=='fixed'?'sticky frozen-cell':'' }}"
                                         data-fixed-index="{{ $column['group']=='fixed'? $loop->index + 1 : '' }}"
                                     >
                                         
@@ -121,13 +121,18 @@
 
                 init() {
                     // 1) Compute offsets right away
-                    this.updateStickyOffsets();
+                    this.updatestickyOffsets();
 
                     // 2) On horizontal scroll, recalc
                     this.$refs.tableContainer.addEventListener('scroll', () => this.onScroll());
 
+
                     // 3) On window resize, recalc
                     window.addEventListener('resize', () => this.updateStickyOffsets());
+
+                    Livewire.on('columnsUpdated', () => {
+                        requestAnimationFrame(() => updateStickyOffsets());
+                    });
                 },
 
                 onScroll() {

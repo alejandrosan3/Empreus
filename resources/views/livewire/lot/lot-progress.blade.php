@@ -21,7 +21,7 @@
             <!-- Dynamic Table Header -->
             <flux:table.columns>
                 <flux:table.column
-                    class="sticky left-0 z-20 bg-white dark:bg-zinc-800">
+                    class="sticky frozen-cell left-0 z-20 bg-white dark:bg-zinc-800">
                     <flux:checkbox.all  name="selectLots" />
                 </flux:table.column>
                 @foreach($columns as $column)
@@ -36,8 +36,8 @@
                             <flux:table.column :sortable="$column['sortable']"
                             :sorted="$column['sortable'] ? $sortBy === $column['value'] : false "
                             wire:click="{{ $column['sortable'] ? 'sort(\'' . $column['value'] . '\')' : '' }}"
-                            class="bg-white dark:bg-zinc-800 {{ $column['group'] == 'fixed' ? 'sticky z-10' : '' }}"
-                            data-fixed-index=" {{ $column['group'] == 'fixed' ? $loop->index : '' }}">
+                            class="bg-white dark:bg-zinc-800 {{ $column['group'] == 'fixed' ? 'sticky z-10 frozen-cell' : '' }}"
+                            data-fixed-index="{{ $column['group'] == 'fixed' ? $loop->index : '' }}">
                                 {{ $column['label'] }}
                             </flux:table.column>
                         @endif
@@ -54,7 +54,7 @@
                 @foreach ($lots as $lot)
                     <flux:table.row :key="$lot->id">
                         <flux:table.cell
-                            class="sticky left-0 z-20 bg-white dark:bg-zinc-800">
+                            class="sticky frozen-cell left-0 z-20 bg-white dark:bg-zinc-800">
                             <flux:checkbox
                                 x-data="{ id: {{ $lot->id }} }"
                                 name="selectLots"
@@ -71,7 +71,7 @@
                                 @switch($column['value'])
                                     @case('builder')
                                         <flux:table.cell
-                                        class="bg-white dark:bg-zinc-800 {{ $column['group'] == 'fixed' ? 'sticky z-10' : '' }}"
+                                        class="bg-white dark:bg-zinc-800 {{ $column['group'] == 'fixed' ? 'sticky z-10 frozen-cell' : '' }}"
                                         data-fixed-index=" {{ $column['group'] == 'fixed' ? $loop->index : '' }}"
                                             >
                                             {{ $lot->builder->name }}
@@ -80,7 +80,7 @@
 
                                     @case('subdivision')
                                         <flux:table.cell
-                                        class="bg-white dark:bg-zinc-800 {{ $column['group'] == 'fixed' ? 'sticky z-10' : '' }}"
+                                        class="bg-white dark:bg-zinc-800 {{ $column['group'] == 'fixed' ? 'sticky z-10 frozen-cell' : '' }}"
                                         data-fixed-index=" {{ $column['group'] == 'fixed' ? $loop->index : '' }}"
                                             >
                                             {{ $lot->subdivision . ($lot->phase ? " ({$lot->phase})" : "") }}
@@ -89,7 +89,7 @@
 
                                     @case('lot_number')
                                         <flux:table.cell
-                                        class="bg-white dark:bg-zinc-800 {{ $column['group'] == 'fixed' ? 'sticky z-10' : '' }}"
+                                        class="bg-white dark:bg-zinc-800 {{ $column['group'] == 'fixed' ? 'sticky z-10 frozen-cell' : '' }}"
                                         data-fixed-index=" {{ $column['group'] == 'fixed' ? $loop->index : '' }}"
                                             >
                                             {{ $lot->lot_number }}
@@ -101,7 +101,7 @@
                                             $raw = $lot->num_of_floors ?? '';
                                         @endphp
                                         <flux:table.cell
-                                        class="bg-white dark:bg-zinc-800 {{ $column['group'] == 'fixed' ? 'sticky z-10' : '' }}"
+                                        class="bg-white dark:bg-zinc-800 {{ $column['group'] == 'fixed' ? 'sticky z-10 frozen-cell' : '' }}"
                                         data-fixed-index=" {{ $column['group'] == 'fixed' ? $loop->index : '' }}"
                                         x-on:dblclick="
                                             $dispatch('editField', {
@@ -120,7 +120,7 @@
 
                                     @case('last_completed_date')
                                         <flux:table.cell
-                                        class="bg-white dark:bg-zinc-800 {{ $column['group'] == 'fixed' ? 'sticky z-10' : '' }}"
+                                        class="bg-white dark:bg-zinc-800 {{ $column['group'] == 'fixed' ? 'sticky z-10 frozen-cell' : '' }}"
                                         data-fixed-index=" {{ $column['group'] == 'fixed' ? $loop->index : '' }}"
                                             >
                                             @php
@@ -137,7 +137,7 @@
                                     @case('address')
                                         @php $raw = $lot->address ?? ''; @endphp
                                         <flux:table.cell
-                                        class="bg-white dark:bg-zinc-800 {{ $column['group'] == 'fixed' ? 'sticky z-10' : '' }}"
+                                        class="bg-white dark:bg-zinc-800 {{ $column['group'] == 'fixed' ? 'sticky z-10 frozen-cell' : '' }}"
                                         data-fixed-index=" {{ $column['group'] == 'fixed' ? $loop->index : '' }}"
                                         x-on:dblclick="
                                             $dispatch('editField', {
@@ -157,7 +157,7 @@
                                     @case('phase')
                                         @php $raw = $lot->phase ?? ''; @endphp
                                         <flux:table.cell
-                                        class="bg-white dark:bg-zinc-800 {{ $column['group'] == 'fixed' ? 'sticky z-10' : '' }}"
+                                        class="bg-white dark:bg-zinc-800 {{ $column['group'] == 'fixed' ? 'sticky z-10 frozen-cell' : '' }}"
                                         data-fixed-index=" {{ $column['group'] == 'fixed' ? $loop->index : '' }}"
                                         x-on:dblclick="
                                             $dispatch('editField', {
@@ -177,7 +177,7 @@
                                     @case('supervisor')
                                         @php $raw = $lot->supervisor_id ?? ''; @endphp
                                         <flux:table.cell
-                                        class="bg-white dark:bg-zinc-800 {{ $column['group'] == 'fixed' ? 'sticky z-10' : '' }}"
+                                        class="bg-white dark:bg-zinc-800 {{ $column['group'] == 'fixed' ? 'sticky z-10 frozen-cell' : '' }}"
                                         data-fixed-index=" {{ $column['group'] == 'fixed' ? $loop->index : '' }}"
                                         x-on:dblclick="
                                             $dispatch('editField', {
@@ -198,7 +198,7 @@
                                     @case('floor_area')
                                         @php $raw = $lot->floor_area ?? ''; @endphp
                                         <flux:table.cell
-                                        class="bg-white dark:bg-zinc-800 {{ $column['group'] == 'fixed' ? 'sticky z-10' : '' }}"
+                                        class="bg-white dark:bg-zinc-800 {{ $column['group'] == 'fixed' ? 'sticky z-10 frozen-cell' : '' }}"
                                         data-fixed-index=" {{ $column['group'] == 'fixed' ? $loop->index : '' }}"
                                         x-on:dblclick="
                                             $dispatch('editField', {
@@ -218,7 +218,7 @@
 
                                     @case('epo')
                                         <flux:table.cell
-                                        class="bg-white dark:bg-zinc-800{{ $column['group'] == 'fixed' ? 'sticky z-10' : '' }}"
+                                        class="bg-white dark:bg-zinc-800 {{ $column['group'] == 'fixed' ? 'sticky z-10 frozen-cell' : '' }}"
                                         data-fixed-index=" {{ $column['group'] == 'fixed' ? $loop->index : '' }}"
                                             >
                                             @php
@@ -254,7 +254,7 @@
                                     @case('standard_po')
                                         @foreach ($taskTypes as $taskType)
                                             <flux:table.cell
-                                            class="bg-white dark:bg-zinc-800 {{ $column['group'] == 'fixed' ? 'sticky z-10' : '' }}"
+                                            class="bg-white dark:bg-zinc-800 {{ $column['group'] == 'fixed' ? 'sticky z-10 frozen-cell' : '' }}"
                                             data-fixed-index=" {{ $column['group'] == 'fixed' ? $loop->index : '' }}">
                                                 @if($task = $lot->getTaskByTypeName($taskType))
                                                     @if($task->status->isCompleted())
@@ -304,7 +304,7 @@
 
 
 <script>
-    /* BULKD EDIT BEHAVIOR */
+    /* BULK EDIT BEHAVIOR */
     document.addEventListener('alpine:init', () => {
         Alpine.data('bulkEditCheckboxes', () => ({
             selectedIds: [],
@@ -366,6 +366,9 @@
         }
     });
     window.addEventListener('resize', updateStickyOffsets);
+    document.addEventListener('refresh-sticky-columns', () => {
+        requestAnimationFrame(updateStickyOffsets);
+    });
 
 
 </script>
