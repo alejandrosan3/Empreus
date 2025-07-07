@@ -77,4 +77,24 @@ class User extends Authenticatable
     {
         return $this->belongsToMany(Task::class);
     }
+
+    /**
+     * The teams this user belongs to (for workers).
+     */
+    public function teams(): BelongsToMany
+    {
+        return $this->belongsToMany(Team::class, 'team_worker', 'worker_id', 'team_id')
+            ->withTimestamps();
+    }
+
+
+    /**
+     * The tasks assigned to this user (for workers).
+     */
+    public function assignedTasks(): BelongsToMany
+    {
+        return $this->belongsToMany(Task::class, 'task_worker', 'worker_id', 'task_id')
+            ->withTimestamps();
+    }
+
 }

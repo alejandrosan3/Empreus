@@ -53,7 +53,7 @@
                     @foreach($flatTasks as $row)
                         <flux:table.row :key="$row['id']">
                         <flux:table.cell class="sticky left-0 z-20 bg-white dark:bg-zinc-800" data-fixed-index="0" >
-                            <flux:checkbox 
+                            <flux:checkbox
                                 x-data="{ id: {{ $row['id'] }} }"
                                 value="{{ $row['id'] }}"
                                 x-bind:checked="selectedIds.includes(id)"
@@ -81,7 +81,7 @@
                                         class="bg-white dark:bg-zinc-800 {{ $column['group']=='fixed'?'sticky':'' }}"
                                         data-fixed-index="{{ $column['group']=='fixed'? $loop->index + 1 : '' }}"
                                     >
-                                        
+
                                         @if ($column['value'] === 'status')
                                             <flux:badge color="{{ $cell['color'] }}"> {{ $cell['display'] }} </flux:badge>
                                         @else
@@ -100,11 +100,17 @@
                                         <flux:menu.item icon="clipboard-document-check" href="{{ route('task-details', ['task_id' => $row['id']]) }}" wire:navigate >
                                             Details
                                         </flux:menu.item>
-                                        
+
                                         {{-- DUPLICATE --}}
                                         <flux:menu.item icon="document-duplicate" wire:click="duplicateTask({{ $row['id'] }})" >
                                             Duplicate
                                         </flux:menu.item>
+
+                                        {{-- WORKERS --}}
+                                        <flux:menu.item icon="user-group" @click="$dispatch('openModal', { taskId: {{ $row['id'] }} })">
+                                            Workers
+                                        </flux:menu.item>
+
                                     </flux:menu>
                                 </flux:dropdown>
                             </flux:table.cell>
@@ -113,6 +119,13 @@
                 </flux:table.rows>
             </flux:table>
         </div>
+
+        {{-- Include ManageTeams component for each task --}}
+        @foreach($flatTasks as $row)
+            <livewire:teams.manage-teams :taskId="$row['id']" :key="'manage-teams-'.$row['id']" />
+        @endforeach
+
+
         <script>
             document.addEventListener('alpine:init', () => {
                 Alpine.data('stickyTable', () => ({
