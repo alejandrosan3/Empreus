@@ -44,7 +44,8 @@
                             <flux:label>Or Select Entire Team</flux:label>
                             <div class="flex gap-2">
                                 <flux:select wire:model.live="selectedTeamId" placeholder="Choose a team..." class="flex-1">
-                                    @foreach($teams as $team)
+                                    <flux:select.option value="">-- Select a team --</flux:select.option>
+                                @foreach($teams as $team)
                                         <flux:select.option value="{{ $team->id }}">
                                             {{ $team->name }} ({{ $team->workers->count() }} workers)
                                         </flux:select.option>
