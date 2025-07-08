@@ -143,9 +143,11 @@
                     // 3) On window resize, recalc
                     window.addEventListener('resize', () => this.updateStickyOffsets());
 
-                    Livewire.on('columnsUpdated', () => {
-                        requestAnimationFrame(() => updateStickyOffsets());
+                     // 4) Watch for DOM changes (column reordering)
+                    const observer = new MutationObserver(() => {
+                        requestAnimationFrame(() => this.updateStickyOffsets());
                     });
+                    observer.observe(this.$refs.tableContainer, { childList: true, subtree: true });
                 },
 
                 onScroll() {

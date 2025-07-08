@@ -363,12 +363,16 @@
         const tableContainer = document.querySelector('.overflow-x-auto');
         if (tableContainer) {
             tableContainer.addEventListener('scroll', onScroll);
+
+            const observer = new MutationObserver(() => {
+                requestAnimationFrame(updateStickyOffsets);
+            });
+            observer.observe(tableContainer, { childList: true, subtree: true });
+
+            updateStickyOffsets();
         }
     });
     window.addEventListener('resize', updateStickyOffsets);
-    document.addEventListener('refresh-sticky-columns', () => {
-        requestAnimationFrame(updateStickyOffsets);
-    });
 
 
 </script>
