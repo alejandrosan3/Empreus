@@ -52,7 +52,7 @@
                 <flux:table.rows>
                     @foreach($flatTasks as $row)
                         <flux:table.row :key="$row['id']">
-                        <flux:table.cell class="sticky left-0 z-20 bg-white dark:bg-zinc-800" data-fixed-index="0" >
+                        <flux:table.cell class="sticky frozen-cell left-0 z-20 bg-white dark:bg-zinc-800" data-fixed-index="0" >
                             <flux:checkbox
                                 x-data="{ id: {{ $row['id'] }} }"
                                 value="{{ $row['id'] }}"
@@ -134,7 +134,7 @@
 
                 init() {
                     // 1) Compute offsets right away
-                    this.updatestickyOffsets();
+                    this.updateStickyOffsets();
 
                     // 2) On horizontal scroll, recalc
                     this.$refs.tableContainer.addEventListener('scroll', () => this.onScroll());
