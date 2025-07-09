@@ -50,21 +50,31 @@
                 </span>
             </flux:button>
 
-            <span class="text-lg font-medium text-gray-700 dark:text-gray-200 ml-2">
-                {{ $currentWeekStart->format('F Y') }}
-            </span>
+            <flux:date-picker wire:model.live="date">
+                <x-slot name="trigger">
+                    <flux:date-picker.input class="text-lg font-medium text-gray-700 dark:text-gray-200 ml-2" />
+                </x-slot>
+            </flux:date-picker>
 
         </div>
 
-        <div class="text-lg font-semibold">
-            {{ $currentWeekStart->format('M j') }} - {{ $currentWeekStart->copy()->endOfWeek()->format('M j, Y') }}
-        </div>
+        <flux:date-picker
+            mode="range"
+            min-range="1"
+            max-range="7"
+            presets="today thisWeek custom"
+            wire:model.live="range"
+        >
+            <x-slot name="trigger">
+                <flux:date-picker.input class="text-lg font-semibold" />
+            </x-slot>
+        </flux:date-picker>
     </div>
 
 
     {{-- Calendar Grid --}}
     <div class="flex flex-col bg-white dark:bg-zinc-900 border border-gray-200 dark:border-white/10 rounded-2xl shadow-sm p-4">
-        <div class="grid grid-cols-7 gap-4">
+        <div class="grid gap-4" style="grid-template-columns: repeat({{ $rangeDays }}, minmax(0, 1fr));">
             {{-- Calendar Header --}}
             @foreach($weekDays as $day)
                 <div class="text-center p-4 {{ $day['isToday'] ? 'bg-blue-50 dark:bg-blue-900/20 rounded-t-lg border-t-2 border-blue-500' : 'bg-gray-50 dark:bg-zinc-800 rounded-t-lg' }}">
