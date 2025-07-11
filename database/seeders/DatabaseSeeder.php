@@ -63,6 +63,28 @@ class DatabaseSeeder extends Seeder
         if (DB::table('company_users')->count() === 0) {
             $this->call(CompanyUserSeeder::class);
         }
+
+        /**
+         * Populate workers if empty
+         */
+        if (DB::table('users')->where('role', 'worker')->count() < 5) {
+            $this->call(WorkerSeeder::class);
+        }
+
+        /**
+         * Populate teams if empty
+         */
+        if (DB::table('teams')->count() === 0) {
+            $this->call(TeamSeeder::class);
+        }
+
+        /**
+         * Populate team_worker pivot table if empty
+         */
+        if (DB::table('team_worker')->count() === 0) {
+            $this->call(TeamWorkerSeeder::class);
+        }
+
         /*
         Builder::factory(50)->create();
 

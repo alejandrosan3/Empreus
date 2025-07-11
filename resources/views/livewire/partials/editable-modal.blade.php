@@ -18,8 +18,7 @@
                 </flux:select>
 
             @elseif($fieldType === 'date')
-                
-                <flux:date-picker class="size-auto" wire:model="fieldValue" label="Select the date" clearable with-inputs />
+                <flux:date-picker class="size-auto" value="{{ $key }}" wire:model="fieldValue" label="Select the date" clearable with-inputs with-today />
                 
             
             @endif
