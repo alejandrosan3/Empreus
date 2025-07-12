@@ -26,8 +26,8 @@ class TaskCalendar extends Component
     public function mount()
     {
         $this->date = Carbon::now()->format('Y-m-d');
-        $this->currentWeekStart = Carbon::parse($this->date)->startOfWeek();
-        $this->range = new DateRange($this->currentWeekStart->copy(), $this->currentWeekStart->copy()->endOfWeek());
+        $this->currentWeekStart = Carbon::parse($this->date)->startOfDay();
+        $this->range = new DateRange($this->currentWeekStart->copy(), $this->currentWeekStart->copy()->addDays($this->rangeDays - 1));
         $this->rangeDays = $this->range->start()->diffInDays($this->range->end()) + 1;
         $this->loadWeekDays();
         $this->loadTasks();
@@ -160,12 +160,25 @@ class TaskCalendar extends Component
         $this->loadTasks();
     }
 
-    public function updatedRange(DateRange $value)
+    public function updatedRange($value)
     {
-        $this->currentWeekStart = $value->start()->copy();
-        $this->rangeDays = $value->start()->diffInDays($value->end()) + 1;
+        if ($value instanceof DateRange) {
+            $range = $value;
+        } elseif (is_string($value)) {
+            [$start, $end] = array_pad(explode('/', $value), 2, null);
+            $start = Carbon::parse($start);
+            $end = Carbon::parse($end ?? $start);
+            $range = new DateRange($start, $end);
+        } elseif (is_array($value) && isset($value['start'], $value['end'])) {
+            $range = new DateRange(Carbon::parse($value['start']), Carbon::parse($value['end']));
+        } else {
+            return;
+        }
+
+        $this->currentWeekStart = $range->start()->copy();
+        $this->rangeDays = $range->start()->diffInDays($range->end()) + 1;
         $this->date = $this->currentWeekStart->format('Y-m-d');
-        $this->range = $value;
+        $this->range = $range;
         $this->loadWeekDays();
         $this->loadTasks();
     }
