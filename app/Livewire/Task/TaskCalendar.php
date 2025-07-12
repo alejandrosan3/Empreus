@@ -5,6 +5,7 @@ namespace App\Livewire\Task;
 use App\Models\Task;
 use App\Traits\WithToast;
 use Carbon\Carbon;
+use Flux\DateRange;
 use Livewire\Component;
 
 class TaskCalendar extends Component
@@ -13,6 +14,9 @@ class TaskCalendar extends Component
     public array $weekDays = [];
     public array $tasksByDay = [];
     public $currentWeekStart;
+    public DateRange $range;
+    public string $date;
+    public int $rangeDays = 7;
 
     protected $listeners = ['taskDateUpdated'];
 
@@ -21,28 +25,37 @@ class TaskCalendar extends Component
 
     public function mount()
     {
-        $this->currentWeekStart = Carbon::now()->startOfWeek();
+        $this->date = Carbon::now()->format('Y-m-d');
+        $this->currentWeekStart = Carbon::parse($this->date)->startOfDay();
+        $this->range = new DateRange($this->currentWeekStart->copy(), $this->currentWeekStart->copy()->addDays($this->rangeDays - 1));
+        $this->rangeDays = $this->range->start()->diffInDays($this->range->end()) + 1;
         $this->loadWeekDays();
         $this->loadTasks();
     }
 
     public function previousWeek()
     {
-        $this->currentWeekStart->subWeek();
+        $this->currentWeekStart->subDays($this->rangeDays);
+        $this->date = $this->currentWeekStart->format('Y-m-d');
+        $this->range = new DateRange($this->currentWeekStart->copy(), $this->currentWeekStart->copy()->addDays($this->rangeDays - 1));
         $this->loadWeekDays();
         $this->loadTasks();
     }
 
     public function nextWeek()
     {
-        $this->currentWeekStart->addWeek();
+        $this->currentWeekStart->addDays($this->rangeDays);
+        $this->date = $this->currentWeekStart->format('Y-m-d');
+        $this->range = new DateRange($this->currentWeekStart->copy(), $this->currentWeekStart->copy()->addDays($this->rangeDays - 1));
         $this->loadWeekDays();
         $this->loadTasks();
     }
 
     public function today()
     {
-        $this->currentWeekStart = Carbon::now()->startOfWeek();
+        $this->currentWeekStart = Carbon::now()->startOfDay();
+        $this->date = $this->currentWeekStart->format('Y-m-d');
+        $this->range = new DateRange($this->currentWeekStart->copy(), $this->currentWeekStart->copy()->addDays($this->rangeDays - 1));
         $this->loadWeekDays();
         $this->loadTasks();
     }
@@ -50,7 +63,7 @@ class TaskCalendar extends Component
     #[Computed]
     public function isCurrentWeek(): bool
     {
-        return $this->currentWeekStart->startOfWeek()->eq(Carbon::now()->startOfWeek());
+        return $this->currentWeekStart->startOfDay()->eq(Carbon::now()->startOfDay());
     }
 
     private function loadWeekDays(): void
@@ -58,7 +71,7 @@ class TaskCalendar extends Component
         $this->weekDays = [];
         $today = Carbon::now()->format('Y-m-d');
 
-        for ($i = 0; $i < 7; $i++) {
+        for ($i = 0; $i < $this->rangeDays; $i++) {
             $date = $this->currentWeekStart->copy()->addDays($i);
             $this->weekDays[] = [
                 'date' => $date->format('Y-m-d'),
@@ -72,8 +85,8 @@ class TaskCalendar extends Component
     private function loadTasks(): void
     {
         $this->tasksByDay = [];
-        $startDate = $this->currentWeekStart;
-        $endDate = $this->currentWeekStart->copy()->endOfWeek();
+        $startDate = $this->currentWeekStart->copy()->startOfDay();
+        $endDate = $this->currentWeekStart->copy()->addDays($this->rangeDays - 1)->endOfDay();
 
         $tasks = Task::query()
             ->select(
@@ -137,6 +150,37 @@ class TaskCalendar extends Component
             ]);
             $this->showError('Failed to re-schedule Task day.');
         }
+    }
+
+    public function updatedDate()
+    {
+        $this->currentWeekStart = Carbon::parse($this->date)->startOfDay();
+        $this->range = new DateRange($this->currentWeekStart->copy(), $this->currentWeekStart->copy()->addDays($this->rangeDays - 1));
+        $this->loadWeekDays();
+        $this->loadTasks();
+    }
+
+    public function updatedRange($value)
+    {
+        if ($value instanceof DateRange) {
+            $range = $value;
+        } elseif (is_string($value)) {
+            [$start, $end] = array_pad(explode('/', $value), 2, null);
+            $start = Carbon::parse($start);
+            $end = Carbon::parse($end ?? $start);
+            $range = new DateRange($start, $end);
+        } elseif (is_array($value) && isset($value['start'], $value['end'])) {
+            $range = new DateRange(Carbon::parse($value['start']), Carbon::parse($value['end']));
+        } else {
+            return;
+        }
+
+        $this->currentWeekStart = $range->start()->copy();
+        $this->rangeDays = $range->start()->diffInDays($range->end()) + 1;
+        $this->date = $this->currentWeekStart->format('Y-m-d');
+        $this->range = $range;
+        $this->loadWeekDays();
+        $this->loadTasks();
     }
 
 
