@@ -7,72 +7,82 @@ use App\Traits\WithToast;
 use Carbon\Carbon;
 use Flux\DateRange;
 use Livewire\Component;
+use Flux\DateRange;
 
 class TaskCalendar extends Component
 {
     use WithToast;
     public array $weekDays = [];
     public array $tasksByDay = [];
-    public $currentWeekStart;
-    public DateRange $range;
+    public $currentRangeStart;
     public string $date;
-    public int $rangeDays = 7;
+    public $rangeDays = 7;
+
+    public DateRange $range;
 
     protected $listeners = ['taskDateUpdated'];
 
-    protected $loadingStates = ['previousWeek', 'nextWeek', 'today', 'taskDateUpdated'];
+    protected $loadingStates = ['previousRange', 'nextRange', 'today', 'taskDateUpdated'];
 
 
     public function mount()
     {
-        $this->date = Carbon::now()->format('Y-m-d');
-        $this->currentWeekStart = Carbon::parse($this->date)->startOfDay();
-        $this->range = new DateRange($this->currentWeekStart->copy(), $this->currentWeekStart->copy()->addDays($this->rangeDays - 1));
-        $this->rangeDays = $this->range->start()->diffInDays($this->range->end()) + 1;
-        $this->loadWeekDays();
+
+        $this->range = DateRange::thisWeek();
+        $this->currentRangeStart = $this->range->copy()->start();
+        $this->loadRangeDays();
         $this->loadTasks();
     }
 
-    public function previousWeek()
+    protected function slideRange(int $direction): void
     {
-        $this->currentWeekStart->subDays($this->rangeDays);
-        $this->date = $this->currentWeekStart->format('Y-m-d');
-        $this->range = new DateRange($this->currentWeekStart->copy(), $this->currentWeekStart->copy()->addDays($this->rangeDays - 1));
-        $this->loadWeekDays();
+        // direction = +1 for next, −1 for previous
+        $this->currentRangeStart->addDays($direction * $this->rangeDays);
+
+        $start = $this->currentRangeStart->copy();
+        $end   = $start->copy()->addDays($this->rangeDays - 1);
+
+        $this->range = new DateRange($start, $end);
+    }
+
+    public function previousRange()
+    {
+        $this->slideRange(-1);
+        $this->loadRangeDays();
         $this->loadTasks();
     }
 
-    public function nextWeek()
+    public function nextRange()
     {
-        $this->currentWeekStart->addDays($this->rangeDays);
-        $this->date = $this->currentWeekStart->format('Y-m-d');
-        $this->range = new DateRange($this->currentWeekStart->copy(), $this->currentWeekStart->copy()->addDays($this->rangeDays - 1));
-        $this->loadWeekDays();
+        $this->slideRange(1);
+        $this->loadRangeDays();
         $this->loadTasks();
     }
 
     public function today()
     {
-        $this->currentWeekStart = Carbon::now()->startOfDay();
-        $this->date = $this->currentWeekStart->format('Y-m-d');
-        $this->range = new DateRange($this->currentWeekStart->copy(), $this->currentWeekStart->copy()->addDays($this->rangeDays - 1));
-        $this->loadWeekDays();
+        // Resets this to the current weekly range
+        $this->currentRangeStart = Carbon::now()->startOfWeek();
+        $this->rangeDays= 7;
+
+        $this->loadRangeDays();
         $this->loadTasks();
     }
 
     #[Computed]
-    public function isCurrentWeek(): bool
+    public function isCurrentRange(): bool
     {
-        return $this->currentWeekStart->startOfDay()->eq(Carbon::now()->startOfDay());
+        return $this->currentRangeStart->copy()->eq(Carbon::now());
     }
 
-    private function loadWeekDays(): void
+    private function loadRangeDays(): void
     {
         $this->weekDays = [];
         $today = Carbon::now()->format('Y-m-d');
 
         for ($i = 0; $i < $this->rangeDays; $i++) {
-            $date = $this->currentWeekStart->copy()->addDays($i);
+            $date = $this->currentRangeStart->copy()->addDays($i);
+
             $this->weekDays[] = [
                 'date' => $date->format('Y-m-d'),
                 'dayName' => $date->format('l'),
@@ -82,11 +92,26 @@ class TaskCalendar extends Component
         }
     }
 
+    // Triggers Whenever $range is updated by the date-picker
+    public function updatedRange()
+    {   
+        
+        // 1) Reset your “anchor” date
+        $this->currentRangeStart = $this->range->copy()->start();
+
+        // 3) Turn the period into an array of Carbon dates, then count them
+        $this->rangeDays = count($this->range->days()->toArray());
+
+        // 4) Rebuild
+        $this->loadRangeDays();
+        $this->loadTasks();
+    }
+
     private function loadTasks(): void
     {
         $this->tasksByDay = [];
-        $startDate = $this->currentWeekStart->copy()->startOfDay();
-        $endDate = $this->currentWeekStart->copy()->addDays($this->rangeDays - 1)->endOfDay();
+        $startDate = $this->range->copy()->start();
+        $endDate   = $this->range->copy()->end();
 
         $tasks = Task::query()
             ->select(

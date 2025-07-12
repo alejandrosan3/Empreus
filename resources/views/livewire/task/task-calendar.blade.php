@@ -4,24 +4,24 @@
     <div class="flex justify-between items-center mb-6 bg-white dark:bg-zinc-900 p-4 rounded-lg shadow">
         <div class="flex items-center gap-2">
             <flux:button
-                wire:click="previousWeek"
+                wire:click="previousRange"
                 icon="chevron-left"
                 variant="subtle"
-                title="Previous Week"
+                title="Previous Range"
                 wire:loading.attr="disabled"
-                wire:target="previousWeek"
+                wire:target="previousRange"
             >
-                <span wire:loading.remove wire:target="previousWeek">
+                <span wire:loading.remove wire:target="previousRange">
                     Previous
                 </span>
-                <span wire:loading wire:target="previousWeek">
+                <span wire:loading wire:target="previousRange">
                     Loading...
                 </span>
             </flux:button>
 
             <flux:button
                 wire:click="today"
-                :disabled="$this->isCurrentWeek()"
+                :disabled="$this->isCurrentRange()"
                 wire:loading.attr="disabled"
                 wire:target="today"
             >
@@ -35,46 +35,43 @@
 
 
             <flux:button
-                wire:click="nextWeek"
+                wire:click="nextRange"
                 icon="chevron-right"
                 variant="subtle"
-                title="Next Week"
+                title="Next Range"
                 wire:loading.attr="disabled"
                 wire:target="nextWeek"
             >
-                <span wire:loading.remove wire:target="nextWeek">
+                <span wire:loading.remove wire:target="nextRange">
                     Next
                 </span>
-                <span wire:loading wire:target="nextWeek">
+                <span wire:loading wire:target="nextRange">
                     Loading...
                 </span>
             </flux:button>
 
-            <flux:date-picker wire:model.live="date">
-                <x-slot name="trigger">
-                    <flux:date-picker.input class="text-lg font-medium text-gray-700 dark:text-gray-200 ml-2" />
-                </x-slot>
-            </flux:date-picker>
+            <span class="text-lg font-medium text-gray-700 dark:text-gray-200 ml-2">
+                {{ $currentRangeStart->format('F Y') }}
+            </span>
 
         </div>
 
-        <flux:date-picker
-            mode="range"
-            min-range="1"
-            max-range="7"
-            presets="today thisWeek custom"
-            wire:model.live="range"
-        >
-            <x-slot name="trigger">
-                <flux:date-picker.input class="text-lg font-semibold" />
-            </x-slot>
-        </flux:date-picker>
+        <div class="text-lg font-semibold">
+            <flux:date-picker
+                    mode="range"
+                    wire:model.live="range"
+                    start-day="1"
+                    presets="today yesterday thisWeek"
+                    min-range="1"
+                    max-range="7"
+                />
+        </div>
     </div>
 
 
     {{-- Calendar Grid --}}
     <div class="flex flex-col bg-white dark:bg-zinc-900 border border-gray-200 dark:border-white/10 rounded-2xl shadow-sm p-4">
-        <div class="grid gap-4" style="grid-template-columns: repeat({{ $rangeDays }}, minmax(0, 1fr));">
+        <div class="grid gap-4" style="grid-template-columns: repeat({{ $rangeDays }}, minmax(0,1fr));">
             {{-- Calendar Header --}}
             @foreach($weekDays as $day)
                 <div class="text-center p-4 {{ $day['isToday'] ? 'bg-blue-50 dark:bg-blue-900/20 rounded-t-lg border-t-2 border-blue-500' : 'bg-gray-50 dark:bg-zinc-800 rounded-t-lg' }}">
