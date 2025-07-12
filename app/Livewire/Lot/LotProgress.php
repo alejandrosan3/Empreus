@@ -232,6 +232,10 @@ class LotProgress extends Component
          */
         public function mount(LotProgressRepository $repository)
         {
+            // If no lot, jump to create view
+            if (Lot::count() === 0) {
+                $this->redirectRoute('lot-create');
+            }
             $this->repository = $repository;
 
             $this->columns = [
