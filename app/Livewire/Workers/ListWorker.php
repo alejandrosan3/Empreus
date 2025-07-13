@@ -60,6 +60,8 @@ class ListWorker extends Component
         return view('livewire.workers.list-worker')
             ->layout('layouts.app', [
                 'showSearch' => true,
+                'showAddNew' => true,
+                'currentAddable'=> 'worker',
             ]);
     }
 }

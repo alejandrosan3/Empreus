@@ -28,5 +28,12 @@ return [
         'livewire'  => 'task.add-task-form',
         'modalName' => 'add-task',
         'route'     => 'task-create'
+    ],
+    'worker' => [
+        'label'     => 'Worker',
+        'icon'      => 'plus',
+        'livewire'  => 'workers.create-worker',
+        'modalName' => 'add-worker',
+        'route'     => 'worker-create'
     ]
 ];
