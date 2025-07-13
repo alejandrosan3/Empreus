@@ -7,7 +7,6 @@ use App\Traits\WithToast;
 use Carbon\Carbon;
 use Flux\DateRange;
 use Livewire\Component;
-use Flux\DateRange;
 
 class TaskCalendar extends Component
 {
@@ -72,7 +71,8 @@ class TaskCalendar extends Component
     #[Computed]
     public function isCurrentRange(): bool
     {
-        return $this->currentRangeStart->copy()->eq(Carbon::now());
+        return $this->currentRangeStart->copy()->eq(Carbon::now()->startOfWeek());
+       
     }
 
     private function loadRangeDays(): void
@@ -85,7 +85,7 @@ class TaskCalendar extends Component
 
             $this->weekDays[] = [
                 'date' => $date->format('Y-m-d'),
-                'dayName' => $date->format('l'),
+                'dayName' => $date->format('D'),
                 'dayNumber' => $date->format('j'),
                 'isToday' => $date->format('Y-m-d') === $today,
             ];
@@ -181,29 +181,6 @@ class TaskCalendar extends Component
     {
         $this->currentWeekStart = Carbon::parse($this->date)->startOfDay();
         $this->range = new DateRange($this->currentWeekStart->copy(), $this->currentWeekStart->copy()->addDays($this->rangeDays - 1));
-        $this->loadWeekDays();
-        $this->loadTasks();
-    }
-
-    public function updatedRange($value)
-    {
-        if ($value instanceof DateRange) {
-            $range = $value;
-        } elseif (is_string($value)) {
-            [$start, $end] = array_pad(explode('/', $value), 2, null);
-            $start = Carbon::parse($start);
-            $end = Carbon::parse($end ?? $start);
-            $range = new DateRange($start, $end);
-        } elseif (is_array($value) && isset($value['start'], $value['end'])) {
-            $range = new DateRange(Carbon::parse($value['start']), Carbon::parse($value['end']));
-        } else {
-            return;
-        }
-
-        $this->currentWeekStart = $range->start()->copy();
-        $this->rangeDays = $range->start()->diffInDays($range->end()) + 1;
-        $this->date = $this->currentWeekStart->format('Y-m-d');
-        $this->range = $range;
         $this->loadWeekDays();
         $this->loadTasks();
     }
