@@ -52,8 +52,9 @@
               label="{{ $label }}"
               wire:model.defer="$parent.{{ $field }}"
               :error="$errors->first($field)"
-              selectable-header
               clearable
+              with-today
+              with-inputs
             />
             @break
 

@@ -83,7 +83,8 @@ class Task extends Model
 
     public function workers(): BelongsToMany
     {
-        return $this->belongsToMany(User::class);
+        return $this->belongsToMany(User::class, 'task_user')
+            ->where('role', 'worker');
     }
 
     /**
