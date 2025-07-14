@@ -88,14 +88,13 @@ class AddLotForm extends Component
 
         $this->builders = Cache::rememberForever(
             "builder_options.{$this->companyId}",
-            fn() => Builder::whereHas('lots', fn($q) => $q->where('company_id', $this->companyId))
-                          ->orderBy('name')
-                          ->get()
-                          ->map(fn($b) => (object)[
-                              'id'   => $b->id,
-                              'name' => $b->name,
-                          ])
-                          ->toArray()
+            fn() => Builder::orderBy('name')
+                        ->get()
+                        ->map(fn($b) => (object)[
+                            'id'   => $b->id,
+                            'name' => $b->name,
+                        ])
+                        ->toArray()
         );
 
         
@@ -164,29 +163,29 @@ class AddLotForm extends Component
     }
 
     public function updatedBuilderId($builderId): void
-    {
-        $this->subdivisions = Cache::rememberForever(
-            "subdivision_options.{$this->companyId}.{$builderId}",
-            fn () => Lot::where('company_id', $this->companyId)
-                        ->where('builder_id', $builderId)
-                        ->distinct('subdivision')
-                        ->orderBy('subdivision')
-                        ->pluck('subdivision')
-                        ->map(fn ($s) => (object)[
-                            'id'   => $s,
-                            'name' => $s,
-                        ])
-                        ->toArray()
-        );
+{
+    // check if this builder really has any lots
+    $hasLots = Lot::where('company_id', $this->companyId)
+                  ->where('builder_id', $builderId)
+                  ->exists();
 
-        // inject into the card so <partials.cards> updates
-        $this->card1[1]['options'] = $this->subdivisions;
+    // if they do, scope by builder; otherwise grab every subdivision in the company
+    $this->subdivisions = Lot::where('company_id', $this->companyId)
+        ->when($hasLots, fn($q) => $q->where('builder_id', $builderId))
+        ->distinct()
+        ->orderBy('subdivision')
+        ->pluck('subdivision')
+        ->map(fn($s) => (object)[
+            'id'   => $s,
+            'name' => $s,
+        ])
+        ->toArray();
 
-        // reset downstream field
-        $this->subdivision = null;
-        $this->showSubdivisionInput = false;
-        $this->newSubdivision = '';
-    }
+    $this->card1[1]['options'] = $this->subdivisions;
+    $this->subdivision       = null;
+    $this->showSubdivisionInput = false;
+    $this->newSubdivision    = '';
+}
 
     public function render()
     {

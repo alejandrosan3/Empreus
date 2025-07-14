@@ -126,13 +126,11 @@ class LotProgressRepository
 
             switch ($colKey) {
                 case 'builder':
-                    $filters[$colKey] = $optionsQuery->clone()
-                        ->join('builders','lots.builder_id','=','builders.id')
-                        ->select('builders.id','builders.name')
-                        ->distinct()
-                        ->orderBy('builders.name','asc')
+                    $filters[$colKey] = \App\Models\Builder::query()
+                        ->select('id', 'name')
+                        ->orderBy('name', 'asc')
                         ->get()
-                        ->map(fn($b)=>['value'=>$b->id,'label'=>$b->name])
+                        ->map(fn($b) => ['value' => $b->id, 'label' => $b->name])
                         ->toArray();
                     break;
                 case 'subdivision':
