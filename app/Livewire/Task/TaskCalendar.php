@@ -3,10 +3,14 @@
 namespace App\Livewire\Task;
 
 use App\Models\Task;
+use App\Models\TaskType;
+use App\Models\Team;
 use App\Traits\WithToast;
 use Carbon\Carbon;
 use Flux\DateRange;
 use Livewire\Component;
+use Livewire\Attributes\On;
+use Livewire\Attributes\Computed;
 
 class TaskCalendar extends Component
 {
@@ -19,6 +23,10 @@ class TaskCalendar extends Component
 
     public DateRange $range;
 
+    public array $columns = [];
+    public array $selectedFilters = [];
+    public array $filters = [];
+
     protected $listeners = ['taskDateUpdated'];
 
     protected $loadingStates = ['previousRange', 'nextRange', 'today', 'taskDateUpdated'];
@@ -29,6 +37,15 @@ class TaskCalendar extends Component
 
         $this->range = DateRange::thisWeek();
         $this->currentRangeStart = $this->range->copy()->start();
+
+         $this->columns = [
+            ['label' => 'Task Type', 'value' => 'task_type', 'filterable' => true, 'filterType' => 'select', 'color' => 'green'],
+            ['label' => 'Team',      'value' => 'team',      'filterable' => true, 'filterType' => 'select', 'color' => 'purple'],
+        ];
+
+        $this->dispatch('update-columns', columns: $this->columns);
+        $this->dispatchFilters();
+
         $this->loadRangeDays();
         $this->loadTasks();
     }
@@ -131,6 +148,14 @@ class TaskCalendar extends Component
             ->where('tasks.company_id', session('company_id'))
             ->whereIn('status_types.identifier', ['confirmed', 'in_progress'])
             ->whereBetween('tasks.scheduled_start_date', [$startDate, $endDate])
+            ->when(!empty($this->selectedFilters['task_type']), function ($q) {
+                $q->whereIn('tasks.task_type_id', $this->selectedFilters['task_type']);
+            })
+            ->when(!empty($this->selectedFilters['team']), function ($q) {
+                $q->join('task_user', 'tasks.id', '=', 'task_user.task_id')
+                  ->join('team_worker', 'task_user.user_id', '=', 'team_worker.worker_id')
+                  ->whereIn('team_worker.team_id', $this->selectedFilters['team']);
+            })
             ->orderBy('tasks.scheduled_start_date')
             ->get();
 
@@ -139,6 +164,26 @@ class TaskCalendar extends Component
             $dayKey = Carbon::parse($task->scheduled_start_date)->format('Y-m-d');
             $this->tasksByDay[$dayKey][] = $task;
         }
+    }
+
+        #[On('global-filters-updated')]
+    public function handleGlobalFilters(array $filters)
+    {
+        $this->selectedFilters = $filters;
+        $this->loadTasks();
+        $this->dispatchFilters();
+    }
+
+
+    #[On('company-updated')]
+    public function dispatchFilters()
+    {
+        $this->filters = [
+            'task_type' => TaskType::orderBy('name')->get()->map(fn($t) => ['value' => $t->id, 'label' => $t->name])->toArray(),
+            'team'      => Team::orderBy('name')->get()->map(fn($t) => ['value' => $t->id, 'label' => $t->name])->toArray(),
+        ];
+
+        $this->dispatch('filters-updated', filters: $this->filters);
     }
 
     public function taskDateUpdated($taskId, $newDate)
@@ -188,6 +233,9 @@ class TaskCalendar extends Component
 
     public function render()
     {
-        return view('livewire.task.task-calendar')->layout('layouts.app');
+        return view('livewire.task.task-calendar')->layout('layouts.app', [
+            'showFilters' => true,
+            'currentAddable' => 'task',
+        ]);
     }
 }

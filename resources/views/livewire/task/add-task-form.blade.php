@@ -14,7 +14,52 @@
     <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
         {{-- Builder and task details section --}}
         <livewire:partials.cards :items="$card1" mode="add" :key="'card1-' . $builder_id . '-sub-' . $subdivision" />
-        <livewire:partials.cards :items="$card2" mode="add" />
+        <div>
+            <flux:card>
+                <div class="flex items-end gap-2">
+                    @php $disabled = empty($taskTypeOptions); @endphp
+                    @if(!$showTaskInput)
+                        <div class="flex-1">
+                            <flux:select
+                                wire:key="task_type-{{ $builder_id ?? 'none' }}"
+                                label="Task Name"
+                                variant="listbox"
+                                wire:model.live="task_type_id"
+                                :error="$errors->first('task_type_id')"
+                                searchable
+                                clearable
+                                :disabled="$disabled"
+                            >
+                                @foreach($taskTypeOptions as $opt)
+                                    <flux:select.option value="{{ $opt->id }}">{{ $opt->name }}</flux:select.option>
+                                @endforeach
+                            </flux:select>
+                        </div>
+                    @else
+                        <div class="flex-1">
+                            <flux:input
+                                label="Task Name"
+                                wire:model.defer="newTaskType"
+                                :error="$errors->first('newTaskType')"
+                            />
+                        </div>
+                    @endif
+                    <flux:button :tooltip="$taskToggleTooltip" wire:click="toggleTaskInput" size="sm" variant="ghost" :icon="$taskToggleIcon" :disabled="$disabled" />
+                </div>
+
+                <flux:input
+                    label="Order Number"
+                    wire:model.defer="order_number"
+                    :error="$errors->first('order_number')"
+                />
+
+                <flux:input
+                    label="Price"
+                    wire:model.defer="price"
+                    :error="$errors->first('price')"
+                />
+            </flux:card>
+        </div>
         <livewire:partials.cards :items="$card3" mode="add" />
     </div>
     <div class="grid grid-cols-1 gap-4 mt-4">

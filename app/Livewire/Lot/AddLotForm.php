@@ -45,7 +45,7 @@ class AddLotForm extends Component
 
     public bool $showSupervisorInput = false;
     public string $newSupervisor = '';
-    public string $supervisorToggleTooltip = 'Create New Subdivision';
+    public string $supervisorToggleTooltip = 'Create New Supervisor';
     public string $supervisorToggleIcon = 'plus';
 
     public function rules(): array
@@ -81,33 +81,24 @@ class AddLotForm extends Component
     public function mount(): void
     {
         $this->companyId   = session('company_id');
-        $this->companyName = Cache::rememberForever(
-            "company_{$this->companyId}_name",
-            fn () => Company::findOrFail($this->companyId)->name
-        );
+        $this->companyName = Company::findOrFail($this->companyId)->name;
 
-        $this->builders = Cache::rememberForever(
-            "builder_options.{$this->companyId}",
-            fn() => Builder::orderBy('name')
+        $this->builders = Builder::orderBy('name')
                         ->get()
                         ->map(fn($b) => (object)[
                             'id'   => $b->id,
                             'name' => $b->name,
                         ])
-                        ->toArray()
-        );
+                        ->toArray();
 
         
-        $this->supervisorOptions = Cache::rememberForever(
-        "supervisor_options.{$this->companyId}",
-        fn () => Supervisor::orderBy('name')
+        $this->supervisorOptions = Supervisor::orderBy('name')
                            ->get()
                            ->map(fn ($s) => (object)[
                                'id'   => $s->id,
                                'name' => $s->name,
                            ])
-                           ->toArray()
-        );
+                           ->toArray();
 
         /* 4) Card layout – mirrors your Task form style */
         $this->card1 = [
