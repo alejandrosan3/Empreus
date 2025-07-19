@@ -35,5 +35,12 @@ return [
         'livewire'  => 'workers.create-worker',
         'modalName' => 'add-worker',
         'route'     => 'worker-create'
+    ],
+    'team' => [
+        'label'     => 'Team',
+        'icon'      => 'plus',
+        'livewire'  => 'teams.create-team',
+        'modalName' => 'add-team',
+        'route'     => 'team-create'
     ]
 ];

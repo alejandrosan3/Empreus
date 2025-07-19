@@ -14,11 +14,19 @@ class ListWorker extends Component
     public string $sortDirection = 'desc';
     public array $columns = ['name', 'email'];
     public string $searchTerm = '';
+    public array $checkedWorkers = [];
 
     protected $listeners = [
         'search-tasks'   => 'updateSearch',
         'contentUpdated' => '$refresh',
     ];
+
+    public function startBulkAssign(): void
+    {
+        if (! empty($this->checkedWorkers)) {
+            $this->dispatch('open-worker-team-modal', ids: $this->checkedWorkers);
+        }
+    }
 
     public function sort(string $column): void
     {

@@ -68,6 +68,16 @@ Route::middleware(['auth', 'verified', SetCurrentCompany::class])
                 ->name('worker-create')
                 ->defaults('label', 'Add Worker')
                 ->defaults('icon', 'user-plus');
+            
+            Route::get('teams', \App\Livewire\Teams\ListTeam::class)
+                ->name('teams')
+                ->defaults('label', 'Teams')
+                ->defaults('icon', 'users');
+
+            Route::get('teams/create', \App\Livewire\Teams\CreateTeam::class)
+                ->name('team-create')
+                ->defaults('label', 'Add Team')
+                ->defaults('icon', 'plus');
 
             Route::get('supervisors/create', CreateSupervisor::class)
                 ->name('supervisor-create')
