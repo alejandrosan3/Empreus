@@ -13,7 +13,8 @@ class LotMap extends Component
     /**
      * Array of lots (id, address, subdivision).
      */
-    public array $lots = [];
+    public array $lots;
+    public $subdivisions;
 
     public function mount(): void
     {
@@ -25,13 +26,16 @@ class LotMap extends Component
 
     public function render()
     {
-        $subdivisions = collect($this->lots)
+        $this->subdivisions = collect($this->lots)
             ->pluck('subdivision')
             ->unique()
             ->values();
 
         return view('livewire.maps.lot-map', [
-            'subdivisions' => $subdivisions,
-        ]);
+            'subdivisions' => $this->subdivisions,
+            'lots'        => $this->lots,
+        ])->layout('layouts.app',[
+                'showFilters' => true,
+            ]);
     }
 }
