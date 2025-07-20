@@ -242,6 +242,13 @@ class TaskProgress extends Component
     {
         $this->dispatch('bulk-edit-action', entity: 'task', ids: $this->checkedTasks );
     }
+    
+    public function startBulkAssign()
+    {
+        if (! empty($this->checkedTasks)) {
+            $this->dispatch('open-bulk-assign-modal', ids: $this->checkedTasks);
+        }
+    }
 
     /**
      * Livewire 3 event listener for the Navigation's "global-filters-updated" event.

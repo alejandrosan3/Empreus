@@ -2,8 +2,12 @@
     <flux:modal wire:model="showModal" class="md:w-[800px]">
         <div class="space-y-6">
             <div>
-                <flux:heading size="lg">Assign Team to Task</flux:heading>
-                <flux:subheading>Manage worker assignments for this task</flux:subheading>
+                <flux:heading size="lg">
+                    {{ $bulk ? 'Assign Workers' : 'Assign Team to Task' }}
+                </flux:heading>
+                <flux:subheading>
+                    {{ $bulk ? 'Select workers or a team to assign to the selected tasks' : 'Manage worker assignments for this task' }}
+                </flux:subheading>
             </div>
 
             {{-- Two Column Layout --}}
@@ -101,6 +105,7 @@
                     @endif
                 </div>
 
+                @unless($bulk)
                 {{-- RIGHT COLUMN: Currently Assigned Workers --}}
                 <div class="space-y-4">
                     @if($assignedWorkers->count())
@@ -137,6 +142,7 @@
                         </div>
                     @endif
                 </div>
+                @endunless
             </div>
         </div>
 
