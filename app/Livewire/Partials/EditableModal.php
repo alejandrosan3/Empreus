@@ -98,6 +98,8 @@ class EditableModal extends Component
                 'lot_number'       => 'required|string|min:1',
                 'address'          => 'nullable|string',
                 'description'      => 'nullable|string',
+                'name'             => 'required|string',
+                'email'            => 'required|email',
 
                 // numbers
                 'num_of_floors'    => 'required|integer',
@@ -110,6 +112,9 @@ class EditableModal extends Component
                 "started_at"           => 'nullable|date',
                 "scheduled_end_date"   => 'nullable|date',
                 'phase'               => 'nullable|string',
+
+                // catch-all sfor other case
+                default            => 'nullable|string',
 
             },
         ];
@@ -146,7 +151,9 @@ class EditableModal extends Component
             \App\Models\TaskType::class,
             \App\Models\StatusType::class,
             \App\Models\Supervisor::class,
-            \App\Models\TaskNote::class
+            \App\Models\TaskNote::class,
+            \App\Models\Team::class,
+            \App\Models\User::class,
         ];
     
         if (!in_array($this->modelClass, $allowedModels)) {
