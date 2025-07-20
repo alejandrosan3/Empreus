@@ -35,7 +35,7 @@
 
                 {{-- Subdivision select or input --}}
                 <div class="flex items-end gap-2">
-                    @php $disabled = empty($card1[1]['options']); @endphp
+                    @php $builderSelected = ! is_null($builder_id); $disabled = empty($card1[1]['options']); @endphp
                     @if(!$showSubdivisionInput)
                         <div class="flex-1">
                             <flux:select
@@ -63,7 +63,7 @@
                             </div>
                         
                     @endif
-                    <flux:button :tooltip="$subdToggleTooltip" wire:click="toggleSubdivisionInput" size="sm" variant="ghost" :icon="$subdToggleIcon" :disabled="$disabled" />
+                    <flux:button :tooltip="$subdToggleTooltip" wire:click="toggleSubdivisionInput" size="sm" variant="ghost" :icon="$subdToggleIcon" :disabled="! $builderSelected" />
                 </div>
                 {{-- Lot Number --}}
                 <flux:input

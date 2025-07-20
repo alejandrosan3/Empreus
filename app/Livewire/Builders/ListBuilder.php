@@ -24,6 +24,11 @@ class ListBuilder extends Component
     
     public function mount()
     {
+        // If no builder, jump to create view
+        if (Builder::count() === 0) {
+             $this->redirectRoute('builder-create');
+        }
+        
         // Dynamically fetch column names from the database
         $this->columns = Schema::getColumnListing((new Builder)->getTable());
 

@@ -27,6 +27,11 @@ class ListSupervisor extends Component
 
     public function mount(): void
     {
+        // If no supervisor, jump to create view
+        if (Supervisor::count() === 0) {
+             $this->redirectRoute('supervisor-create');
+        }
+
         $this->companyId = session('company_id');
 
         // fetch all table columns, then drop the ones we don’t show

@@ -28,5 +28,19 @@ return [
         'livewire'  => 'task.add-task-form',
         'modalName' => 'add-task',
         'route'     => 'task-create'
+    ],
+    'worker' => [
+        'label'     => 'Worker',
+        'icon'      => 'plus',
+        'livewire'  => 'workers.create-worker',
+        'modalName' => 'add-worker',
+        'route'     => 'worker-create'
+    ],
+    'team' => [
+        'label'     => 'Team',
+        'icon'      => 'plus',
+        'livewire'  => 'teams.create-team',
+        'modalName' => 'add-team',
+        'route'     => 'team-create'
     ]
 ];
