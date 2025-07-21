@@ -16,14 +16,13 @@ class TaskBoard extends Component
     use WithToast;
 
     public array $tasks = [];
-
     public array $tasksById = [];
-
     public array $loadedCounts = [];
-
     public array $hasMore = [];
-
     public DateRange $range;
+
+    public ?string $startDate = null;
+    public ?string $endDate = null;
 
 
     public array $statuses = [
@@ -50,7 +49,13 @@ class TaskBoard extends Component
     {
         foreach (array_keys($this->getStatuses()) as $status) {
             $limit = $this->loadedCounts[$status] ?? 5;
-            $tasks = Task::getTasksByStatusForCurrentCompany($status, $limit, 0, $this->range);
+            $tasks = Task::getTasksByStatusForCurrentCompany(
+                $status,
+                $limit,
+                0,
+                $this->startDate,
+                $this->endDate
+            );
             $this->tasks[$status] = $tasks;
             $this->loadedCounts[$status] = $tasks->count();
             $this->hasMore[$status] = $tasks->count() === $limit;
@@ -96,7 +101,13 @@ class TaskBoard extends Component
     public function loadMore(string $status, int $count = 15): void
     {
         $offset = $this->loadedCounts[$status] ?? 0;
-        $tasks = Task::getTasksByStatusForCurrentCompany($status, $count, $offset, $this->range);
+        $tasks = Task::getTasksByStatusForCurrentCompany(
+            $status,
+            $count,
+            $offset,
+            $this->startDate,
+            $this->endDate
+        );
 
         foreach ($tasks as $task) {
             $this->tasks[$status][] = $task;
@@ -121,9 +132,11 @@ class TaskBoard extends Component
     }
 
 
-    public function mount(DateRange $range)
+    public function mount($startDate = null, $endDate = null)
     {
-        $this->range = $range;
+        $this->startDate = $startDate;
+        $this->endDate = $endDate;
+        
         foreach (array_keys($this->getStatuses()) as $status) {
             $this->tasks[$status] = [];
             $this->loadedCounts[$status] = 0;

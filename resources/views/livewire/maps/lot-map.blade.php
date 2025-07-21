@@ -22,5 +22,6 @@
 <script>
     window.lotMapData = @json($lots);
     window.googleMapsKey = '{{ config('services.google.maps_key') }}';
+    document.dispatchEvent(new Event('lot-map-added'));
 </script>
 @endpush

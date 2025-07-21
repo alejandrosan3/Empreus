@@ -94,5 +94,6 @@ async function init() {
 // Bind init to both Livewire and DOMContentLoaded
 window.addEventListener('livewire:load', init);
 document.addEventListener('DOMContentLoaded', init);
+document.addEventListener('lot-map-added', init);
 
 export default init;

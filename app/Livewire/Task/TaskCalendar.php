@@ -38,9 +38,28 @@ class TaskCalendar extends Component
         $this->range = $range;
         $this->currentRangeStart = $this->range->copy()->start();
 
-         $this->columns = [
-            ['label' => 'Task Type', 'value' => 'task_type', 'filterable' => true, 'filterType' => 'select', 'color' => 'green'],
-            ['label' => 'Team',      'value' => 'team',      'filterable' => true, 'filterType' => 'select', 'color' => 'purple'],
+        $this->columns =
+        [
+            [
+                'id' => 1,
+                'label' => 'Task Type',
+                'value' => 'task_type',
+                'group' => 'fixed',
+                'selected' => true,
+                'filterable' => true,
+                'filterType' => 'select',
+                'color' => 'green',
+            ],
+            [
+                'id' => 2,
+                'label' => 'Team',
+                'value' => 'team',
+                'group' => 'active',
+                'selected' => true,
+                'filterable' => true,
+                'filterType' => 'select',
+                'color' => 'purple',
+            ],
         ];
 
         $this->dispatch('update-columns', columns: $this->columns);

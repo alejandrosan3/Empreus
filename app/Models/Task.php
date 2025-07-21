@@ -152,11 +152,11 @@ class Task extends Model
      * @param int $offset
      * @return Collection
      */
-    public static function getTasksByStatusForCurrentCompany(string $status, int $limit = 100, int $offset = 0, ?\Flux\DateRange $range = null)
+    public static function getTasksByStatusForCurrentCompany(string $status, int $limit = 100, int $offset = 0, ?string $startDate = null,?string $endDate = null)
     {
         $companyId = session('company_id');
 
-        $query= self::query()
+        return self::query()
             ->select(
                 'tasks.*',
                 'lots.subdivision as subdivision',
@@ -173,12 +173,11 @@ class Task extends Model
             ->join('builders', 'lots.builder_id', '=', 'builders.id')
             ->where('tasks.company_id', $companyId)
 
-            ->where('status_types.identifier', $status);
-            if ($range) {
-                $query->whereBetween('tasks.scheduled_start_date', [$range->copy()->start(), $range->copy()->end()]);
-            }
-
-            return $query->orderBy('tasks.scheduled_start_date', 'asc')
+            ->where('status_types.identifier', $status)
+            ->when($startDate && $endDate, function ($q) use ($startDate, $endDate) {
+                $q->whereBetween('tasks.scheduled_start_date', [$startDate, $endDate]);
+            })
+            ->orderBy('tasks.scheduled_start_date', 'asc')
             ->offset($offset)
             ->limit($limit)
             ->get();
