@@ -33,11 +33,13 @@ class TaskScheduler extends Component
     public function previousRange()
     {
         $this->slideRange(-1);
+        $this->dispatch('rangeChanged');
     }
 
     public function nextRange()
     {
         $this->slideRange(1);
+        $this->dispatch('rangeChanged');
     }
 
     public function today()
@@ -46,14 +48,18 @@ class TaskScheduler extends Component
         $this->rangeDays = 7;
 
         $this->range = DateRange::thisWeek();
+        $this->dispatch('rangeChanged');
     }
 
-    public function updatedRange()
+    // this is only updated when you actually handle the datepicker.
+    public function updatedRange(DateRange $new)
     {
         $this->currentRangeStart = $this->range->copy()->start();
         $this->rangeDays = count($this->range->days()->toArray());
+        $this->dispatch('rangeChanged');
     }
 
+    #[Computed]
     public function isCurrentRange(): bool
     {
         return $this->currentRangeStart->copy()->eq(Carbon::now()->startOfWeek());

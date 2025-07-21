@@ -150,9 +150,11 @@ class Task extends Model
      * @param string $status
      * @param int $limit
      * @param int $offset
+     * @param \Carbon\CarbonInterface|null $startDate
+     * @param \Carbon\CarbonInterface|null $endDate
      * @return Collection
      */
-    public static function getTasksByStatusForCurrentCompany(string $status, int $limit = 100, int $offset = 0, ?string $startDate = null,?string $endDate = null)
+    public static function getTasksByStatusForCurrentCompany(string $status, int $limit = 100, int $offset = 0, ?\Carbon\CarbonInterface $startDate = null, ?\Carbon\CarbonInterface $endDate = null)
     {
         $companyId = session('company_id');
 

@@ -76,11 +76,11 @@
 
     <div class="mt-4">
         @if($activeTab==='board')
-            <livewire:task-board :range="$range" />
+            <livewire:task.task-board :$range /> 
         @elseif($activeTab==='calendar')
-            <livewire:task.task-calendar :range="$range" />
+            <livewire:task.task-calendar :$range />
         @else
-            <livewire:maps.lot-map />
+            <livewire:maps.lot-map :$range />
         @endif
     </div>
 </div>

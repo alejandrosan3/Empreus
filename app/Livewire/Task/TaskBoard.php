@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Livewire;
+namespace App\Livewire\Task;
 
 use App\Models\StatusType;
 use App\Models\Task;
@@ -9,6 +9,8 @@ use Livewire\Component;
 use Flux\Flux;
 use Flux\DateRange;
 use Mockery\Exception;
+use Livewire\Attributes\Reactive;
+use Livewire\Attributes\On;
 
 class TaskBoard extends Component
 {
@@ -19,11 +21,11 @@ class TaskBoard extends Component
     public array $tasksById = [];
     public array $loadedCounts = [];
     public array $hasMore = [];
+
+    #[Reactive]
     public DateRange $range;
 
-    public ?string $startDate = null;
-    public ?string $endDate = null;
-
+    
 
     public array $statuses = [
         'confirmed' => 'Confirmed',
@@ -47,14 +49,18 @@ class TaskBoard extends Component
 
     public function loadTasks(): void
     {
+        
+        $start = $this->range->copy()->start();
+        $end   = $this->range->copy()->end();
+
         foreach (array_keys($this->getStatuses()) as $status) {
             $limit = $this->loadedCounts[$status] ?? 5;
             $tasks = Task::getTasksByStatusForCurrentCompany(
                 $status,
                 $limit,
                 0,
-                $this->startDate,
-                $this->endDate
+                start,
+                end
             );
             $this->tasks[$status] = $tasks;
             $this->loadedCounts[$status] = $tasks->count();
@@ -101,12 +107,14 @@ class TaskBoard extends Component
     public function loadMore(string $status, int $count = 15): void
     {
         $offset = $this->loadedCounts[$status] ?? 0;
+        $start  = $this->range->copy()->start();
+        $end    = $this->range->copy()->end();
         $tasks = Task::getTasksByStatusForCurrentCompany(
             $status,
             $count,
             $offset,
-            $this->startDate,
-            $this->endDate
+            $start,
+            $end
         );
 
         foreach ($tasks as $task) {
@@ -118,7 +126,9 @@ class TaskBoard extends Component
         $this->hasMore[$status] = $tasks->count() === $count;
     }
 
-    public function updatedRange()
+    // Workaround because for some reason the "updated" state is never triggered
+    #[On('rangeChanged')]
+    public function onUpdatedRange(DateRange $new)
     {
         foreach (array_keys($this->getStatuses()) as $status) {
             $this->tasks[$status] = [];
@@ -132,10 +142,10 @@ class TaskBoard extends Component
     }
 
 
-    public function mount($startDate = null, $endDate = null)
+    public function mount()
     {
-        $this->startDate = $startDate;
-        $this->endDate = $endDate;
+        //The following is not needed when range is reactive!
+        //$this->range = DateRange::thisWeek();
         
         foreach (array_keys($this->getStatuses()) as $status) {
             $this->tasks[$status] = [];
@@ -148,8 +158,9 @@ class TaskBoard extends Component
         }
     }
 
+
     public function render()
     {
-        return view('livewire.task-board')->layout('layouts.app');
+        return view('livewire.task.task-board')->layout('layouts.app');
     }
 }
