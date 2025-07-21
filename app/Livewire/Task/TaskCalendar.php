@@ -32,10 +32,10 @@ class TaskCalendar extends Component
     protected $loadingStates = ['previousRange', 'nextRange', 'today', 'taskDateUpdated'];
 
 
-    public function mount()
+    public function mount( DateRange $range )
     {
 
-        $this->range = DateRange::thisWeek();
+        $this->range = $range;
         $this->currentRangeStart = $this->range->copy()->start();
 
          $this->columns = [

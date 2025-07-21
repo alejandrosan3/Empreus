@@ -21,6 +21,7 @@ $routes = collect(Route::getRoutes()->getRoutesByName())
         <flux:navlist.item icon="{{ Route::getRoutes()->getByName('task-progress')->defaults['icon'] }}" href="{{ route('task-progress') }}" :current="request()->is('task-progress')">{{ Route::getRoutes()->getByName('task-progress')->defaults['label'] }}</flux:navlist.item>
         <flux:navlist.item icon="{{ Route::getRoutes()->getByName('task-board')->defaults['icon'] }}" href="{{ route('task-board') }}" :current="request()->is('task-board')">{{ Route::getRoutes()->getByName('task-board')->defaults['label'] }}</flux:navlist.item>
         <flux:navlist.item icon="{{ Route::getRoutes()->getByName('task-calendar')->defaults['icon'] }}" href="{{ route('task-calendar') }}" :current="request()->is('task-calendar')">{{ Route::getRoutes()->getByName('task-calendar')->defaults['label'] }}</flux:navlist.item>
+        <flux:navlist.item icon="{{ Route::getRoutes()->getByName('task-scheduler')->defaults['icon'] }}" href="{{ route('task-scheduler') }}" :current="request()->is('task-scheduler')">{{ Route::getRoutes()->getByName('task-scheduler')->defaults['label'] }}</flux:navlist.item>
         <flux:navlist.item icon="{{ Route::getRoutes()->getByName('lot-map')->defaults['icon'] }}" href="{{ route('lot-map') }}" :current="request()->is('lot-map')">{{ Route::getRoutes()->getByName('lot-map')->defaults['label'] }}</flux:navlist.item>
 
         {{-- Statistics and Projections - WIP 

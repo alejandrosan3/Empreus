@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Livewire;
+namespace App\Livewire\Maps;
 
 use App\Models\Lot;
 use Livewire\Component;
@@ -14,7 +14,7 @@ class LotMap extends Component
      * Array of lots (id, address, subdivision).
      */
     public array $lots;
-    public $subdivisions;
+    public $subdivisions= [];
 
     public function mount(): void
     {
@@ -29,12 +29,10 @@ class LotMap extends Component
         $this->subdivisions = collect($this->lots)
             ->pluck('subdivision')
             ->unique()
-            ->values();
+            ->values()
+            ->toArray();
 
-        return view('livewire.maps.lot-map', [
-            'subdivisions' => $this->subdivisions,
-            'lots'        => $this->lots,
-        ])->layout('layouts.app',[
+        return view('livewire.maps.lot-map')->layout('layouts.app',[
                 'showFilters' => true,
             ]);
     }

@@ -11,6 +11,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use App\Traits\Duplicatable;
+use Flux\DateRange;
 
 class Task extends Model
 {
@@ -151,11 +152,11 @@ class Task extends Model
      * @param int $offset
      * @return Collection
      */
-    public static function getTasksByStatusForCurrentCompany(string $status, int $limit = 100, int $offset = 0)
+    public static function getTasksByStatusForCurrentCompany(string $status, int $limit = 100, int $offset = 0, ?\Flux\DateRange $range = null)
     {
         $companyId = session('company_id');
 
-        return self::query()
+        $query= self::query()
             ->select(
                 'tasks.*',
                 'lots.subdivision as subdivision',
@@ -171,8 +172,13 @@ class Task extends Model
             ->join('status_types', 'tasks.status_type_id', '=', 'status_types.id')
             ->join('builders', 'lots.builder_id', '=', 'builders.id')
             ->where('tasks.company_id', $companyId)
-            ->where('status_types.identifier', $status)
-            ->orderBy('tasks.scheduled_start_date', 'asc')
+
+            ->where('status_types.identifier', $status);
+            if ($range) {
+                $query->whereBetween('tasks.scheduled_start_date', [$range->copy()->start(), $range->copy()->end()]);
+            }
+
+            return $query->orderBy('tasks.scheduled_start_date', 'asc')
             ->offset($offset)
             ->limit($limit)
             ->get();

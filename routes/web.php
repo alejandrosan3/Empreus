@@ -109,7 +109,12 @@ Route::middleware(['auth', 'verified', SetCurrentCompany::class])
                 ->defaults('label', 'Tasks Calendar')
                 ->defaults('icon', 'calendar');
 
-            Route::get('lot-map', \App\Livewire\LotMap::class)
+            Route::get('task-scheduler', \App\Livewire\Task\TaskScheduler::class)
+                ->name('task-scheduler')
+                ->defaults('label', 'Tasks Scheduler')
+                ->defaults('icon', 'calendar');
+
+            Route::get('lot-map', \App\Livewire\Maps\LotMap::class)
                 ->name('lot-map')
                 ->defaults('label', 'Lot Map')
                 ->defaults('icon', 'map');

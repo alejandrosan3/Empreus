@@ -7,6 +7,7 @@ use App\Models\Task;
 use App\Traits\WithToast;
 use Livewire\Component;
 use Flux\Flux;
+use Flux\DateRange;
 use Mockery\Exception;
 
 class TaskBoard extends Component
@@ -21,6 +22,8 @@ class TaskBoard extends Component
     public array $loadedCounts = [];
 
     public array $hasMore = [];
+
+    public DateRange $range;
 
 
     public array $statuses = [
@@ -47,7 +50,7 @@ class TaskBoard extends Component
     {
         foreach (array_keys($this->getStatuses()) as $status) {
             $limit = $this->loadedCounts[$status] ?? 5;
-            $tasks = Task::getTasksByStatusForCurrentCompany($status, $limit);
+            $tasks = Task::getTasksByStatusForCurrentCompany($status, $limit, 0, $this->range);
             $this->tasks[$status] = $tasks;
             $this->loadedCounts[$status] = $tasks->count();
             $this->hasMore[$status] = $tasks->count() === $limit;
@@ -93,7 +96,7 @@ class TaskBoard extends Component
     public function loadMore(string $status, int $count = 15): void
     {
         $offset = $this->loadedCounts[$status] ?? 0;
-        $tasks = Task::getTasksByStatusForCurrentCompany($status, $count, $offset);
+        $tasks = Task::getTasksByStatusForCurrentCompany($status, $count, $offset, $this->range);
 
         foreach ($tasks as $task) {
             $this->tasks[$status][] = $task;
@@ -104,8 +107,23 @@ class TaskBoard extends Component
         $this->hasMore[$status] = $tasks->count() === $count;
     }
 
-    public function mount()
+    public function updatedRange()
     {
+        foreach (array_keys($this->getStatuses()) as $status) {
+            $this->tasks[$status] = [];
+            $this->loadedCounts[$status] = 0;
+            $this->hasMore[$status] = true;
+        }
+
+        foreach (array_keys($this->getStatuses()) as $status) {
+            $this->loadMore($status, 5);
+        }
+    }
+
+
+    public function mount(DateRange $range)
+    {
+        $this->range = $range;
         foreach (array_keys($this->getStatuses()) as $status) {
             $this->tasks[$status] = [];
             $this->loadedCounts[$status] = 0;
