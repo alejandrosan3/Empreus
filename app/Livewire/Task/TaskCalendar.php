@@ -10,6 +10,7 @@ use Carbon\Carbon;
 use Flux\DateRange;
 use Livewire\Component;
 use Livewire\Attributes\On;
+use Livewire\Attributes\Reactive;
 use Livewire\Attributes\Computed;
 
 class TaskCalendar extends Component
@@ -21,6 +22,7 @@ class TaskCalendar extends Component
     public string $date;
     public $rangeDays = 7;
 
+    #[Reactive]
     public DateRange $range;
 
     public array $columns = [];
@@ -139,6 +141,16 @@ class TaskCalendar extends Component
         $this->rangeDays = count($this->range->days()->toArray());
 
         // 4) Rebuild
+        $this->loadRangeDays();
+        $this->loadTasks();
+    }
+
+    // Triggered when the parent TaskScheduler component updates the range
+    #[On('rangeChanged')]
+    public function onUpdatedRange(DateRange $new)
+    {
+        $this->currentRangeStart = $this->range->copy()->start();
+        $this->rangeDays = count($this->range->days()->toArray());
         $this->loadRangeDays();
         $this->loadTasks();
     }

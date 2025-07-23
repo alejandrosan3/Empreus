@@ -5,6 +5,8 @@ namespace App\Livewire\Task;
 use Livewire\Component;
 use Flux\DateRange;
 use Carbon\Carbon;
+use App\Models\TaskType;
+use App\Models\Team;
 
 class TaskScheduler extends Component
 {
@@ -18,6 +20,38 @@ class TaskScheduler extends Component
     {
         $this->range = DateRange::thisWeek();
         $this->currentRangeStart = $this->range->copy()->start();
+
+        // Preload filter options for the navigation
+        $columns = [
+            [
+                'id' => 1,
+                'label' => 'Task Type',
+                'value' => 'task_type',
+                'group' => 'fixed',
+                'selected' => true,
+                'filterable' => true,
+                'filterType' => 'select',
+                'color' => 'green',
+            ],
+            [
+                'id' => 2,
+                'label' => 'Team',
+                'value' => 'team',
+                'group' => 'active',
+                'selected' => true,
+                'filterable' => true,
+                'filterType' => 'select',
+                'color' => 'purple',
+            ],
+        ];
+
+        $filters = [
+            'task_type' => TaskType::orderBy('name')->get()->map(fn($t) => ['value' => $t->id, 'label' => $t->name])->toArray(),
+            'team'      => Team::orderBy('name')->get()->map(fn($t) => ['value' => $t->id, 'label' => $t->name])->toArray(),
+        ];
+
+        $this->dispatch('update-columns', columns: $columns);
+        $this->dispatch('filters-updated', filters: $filters);
     }
 
     protected function slideRange(int $direction): void

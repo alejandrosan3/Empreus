@@ -90,6 +90,7 @@
              <!-- Page Content -->
              <main>
                 {{ $slot }}
+                @stack('scripts')
             </main>
         </flux:main>
 

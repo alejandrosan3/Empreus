@@ -78,9 +78,9 @@
         @if($activeTab==='board')
             <livewire:task.task-board :$range /> 
         @elseif($activeTab==='calendar')
-            <livewire:task.task-calendar :$range />
-        @else
-            <livewire:maps.lot-map :$range />
+            <livewire:task.task-calendar :$range :range-days="$rangeDays" />
+        @elseif($activeTab==='map')
+            <livewire:maps.lot-map />
         @endif
     </div>
 </div>

@@ -1,99 +1,129 @@
 import { Loader } from '@googlemaps/js-api-loader';
 import { MarkerClusterer } from '@googlemaps/markerclusterer';
 
-const colors = [
-  '#dc2626', '#2563eb', '#16a34a', '#fb923c', '#9333ea', '#059669', '#d97706'
-];
+// Generate `count` equally‑spaced HSL colors
+function generateColors(count) {
+  return Array.from({ length: count }, (_, i) => {
+    const hue = Math.round((360 * i) / count);
+    return `hsl(${hue}, 70%, 50%)`;
+  });
+}
 
-function getColor(index) {
-  return colors[index % colors.length];
+// Wrap the geocoder callback in a Promise
+function geocodeAddress(geocoder, address) {
+  return new Promise((resolve) => {
+    geocoder.geocode({ address }, (results, status) => {
+      if (status === 'OK' && results[0]) {
+        const loc = results[0].geometry.location;
+        resolve({ lat: loc.lat(), lng: loc.lng() });
+      } else {
+        console.warn(`Geocode failed for "${address}": ${status}`);
+        resolve(null);
+      }
+    });
+  });
 }
 
 async function init() {
-  console.log('🗺️ init fired', window.lotMapData, window.googleMapsKey);
-  if (!window.lotMapData || !window.googleMapsKey) return;
-
-  const loader = new Loader({
-    apiKey: window.googleMapsKey,
-    version: 'weekly',
-  });
-
-  // Dynamically load Maps and Geocoding libraries
-  const [{ Map }, { Geocoder }] = await Promise.all([
-    loader.importLibrary('maps'),
-    loader.importLibrary('geocoding'),
-  ]);
-
-  // Initialize map
-  const center = { lat: 37.0902, lng: -95.7129 };
-  const map = new Map(
-    document.getElementById('lot-map'),
-    { center, zoom: 4 }
-  );
-
-  const geocoder = new Geocoder();
-  const markers = [];
-  const colorMap = {};
-
-  // Helper: geocode an address
-  const geocode = (lot) =>
-    new Promise((resolve) => {
-      geocoder.geocode({ address: lot.address }, (results, status) => {
-        if (status === 'OK' && results[0]) {
-          const { lat, lng } = results[0].geometry.location;
-          resolve({ lat: lat(), lng: lng() });
-        } else {
-          console.warn(`Geocode failed for ${lot.address}: ${status}`);
-          resolve(null);
-        }
-      });
+  try {
+    console.log("🛠️ lot-map init()", {
+      hasEl: !!document.getElementById("lot-map"),
+      dataset: document.getElementById("lot-map")?.dataset,
     });
 
-  // Create markers for each lot
-  await Promise.all(
-    window.lotMapData.map(async (lot) => {
-      const pos = await geocode(lot);
-      if (!pos) return;
+    const el = document.getElementById("lot-map");
+    if (!el) {
+      console.log("⏭️ no #lot-map container, skipping");
+      return;
+    }
 
-      if (!(lot.subdivision in colorMap)) {
-        colorMap[lot.subdivision] = getColor(Object.keys(colorMap).length);
-      }
+    const raw = el.dataset.lots;
+    const apiKey = el.dataset.googleKey;
+    if (!raw || !apiKey) {
+      console.log("⚠️ missing data-lots or data-google-key", { raw, apiKey });
+      return;
+    }
 
-      const marker = new window.google.maps.Marker({
-        position: pos,
-        title: lot.address,
-        icon: {
-          path: window.google.maps.SymbolPath.CIRCLE,
-          scale: 8,
-          fillColor: colorMap[lot.subdivision],
-          fillOpacity: 1,
-          strokeColor: '#fff',
-          strokeWeight: 1,
-        },
+    const lotMapData = JSON.parse(raw);
+    const loader = new Loader({ apiKey, version: 'weekly' });
+
+    // Load Maps + Geocoding libraries
+    const [{ Map }, { Geocoder }] = await Promise.all([
+      loader.importLibrary('maps'),
+      loader.importLibrary('geocoding'),
+    ]);
+
+    // Initialize map
+    const map = new Map(el, {
+      center: { lat: 37.0902, lng: -95.7129 },
+      zoom: 4,
+    });
+    const geocoder = new Geocoder();
+
+    // Build unique color palette for subdivisions
+    const subdivisions = [...new Set(lotMapData.map(l => l.subdivision))];
+    const colors = generateColors(subdivisions.length);
+    const colorMap = subdivisions.reduce((m, sub, i) => {
+      m[sub] = colors[i];
+      return m;
+    }, {});
+
+    // Create markers
+    const markers = await Promise.all(
+      lotMapData.map(async (lot) => {
+        const pos = await geocodeAddress(geocoder, lot.address);
+        if (!pos) return null;
+
+        return new window.google.maps.Marker({
+          position: pos,
+          title: lot.address,
+          icon: {
+            path: window.google.maps.SymbolPath.CIRCLE,
+            scale: 8,
+            fillColor: colorMap[lot.subdivision],
+            fillOpacity: 1,
+            strokeColor: '#fff',
+            strokeWeight: 1,
+          },
+        });
+      })
+    ).then(arr => arr.filter(Boolean));
+
+    // Cluster markers
+    new MarkerClusterer({ markers, map });
+
+    // Color the legend swatches
+    document.querySelectorAll('[data-subdivision-color]').forEach(el => {
+      const sub = el.getAttribute('data-subdivision-color');
+      el.style.backgroundColor = colorMap[sub] || '#999';
+    });
+
+    // Legend toggle
+    const legend = document.getElementById('lot-legend');
+    const toggle = document.getElementById('toggle-legend');
+    if (toggle && legend) {
+      toggle.addEventListener('change', e => {
+        legend.classList.toggle('hidden', !e.target.checked);
       });
-      markers.push(marker);
-    })
-  );
+    }
 
-  // Cluster markers
-  new MarkerClusterer({ markers, map });
-
-  // Apply legend colors
-  document.querySelectorAll('[data-subdivision-color]').forEach((el) => {
-    const name = el.getAttribute('data-subdivision-color');
-    el.style.backgroundColor = colorMap[name] || '#999';
-  });
-
-  // Toggle legend visibility
-  const legend = document.getElementById('lot-legend');
-  document.getElementById('toggle-legend').addEventListener('change', (e) => {
-    legend.classList.toggle('hidden', !e.target.checked);
-  });
+    console.log("✅ lot-map initialized with", markers.length, "markers");
+  } catch (err) {
+    console.error("❌ lot-map error:", err);
+  }
 }
 
-// Bind init to both Livewire and DOMContentLoaded
+// Initializers
+window.addEventListener('DOMContentLoaded', init);
 window.addEventListener('livewire:load', init);
-document.addEventListener('DOMContentLoaded', init);
 document.addEventListener('lot-map-added', init);
+
+// Re‐init after every Livewire AJAX swap
+if (window.Livewire) {
+  window.Livewire.hook('message.processed', () => {
+    console.log('🔄 livewire message.processed → re‑init lot‑map');
+    init();
+  });
+}
 
 export default init;
