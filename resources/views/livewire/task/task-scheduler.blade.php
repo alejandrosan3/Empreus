@@ -80,7 +80,7 @@
         @elseif($activeTab==='calendar')
             <livewire:task.task-calendar :$range :range-days="$rangeDays" />
         @elseif($activeTab==='map')
-            <livewire:maps.lot-map />
+            <livewire:maps.lot-map :$range :key="'lot-map-'. $range->start()->format('Ymd'). '-'. $range->end()->format('Ymd')"/>
         @endif
     </div>
 </div>

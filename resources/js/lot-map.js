@@ -61,7 +61,7 @@ async function init() {
     const geocoder = new Geocoder();
 
     // Build unique color palette for subdivisions
-    const subdivisions = [...new Set(lotMapData.map(l => l.subdivision))];
+    const subdivisions = [...new Set(lotMapData.map(l => l.subdivision))].sort();
     const colors = generateColors(subdivisions.length);
     const colorMap = subdivisions.reduce((m, sub, i) => {
       m[sub] = colors[i];
