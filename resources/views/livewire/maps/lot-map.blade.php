@@ -23,10 +23,18 @@
         @endforeach
     </div>
 </flux:container>
+@script
+    <script>
+        // Only runs when this component is present in the DOM
+        (async () => {
+        const el = document.getElementById('lot-map');
+        if (!el) return;
 
-
-    @push('scripts')
-        {{-- this will output the correct localhost:5173 URL for you --}}
-        @vite('resources/js/lot-map.js')
-    @endpush
-
+    
+        // Pull in the built file that Vite generated.  Blade gives us the
+        const { default: init } = await import('{{ Vite::asset('resources/js/lot-map.js') }}');
+        init();
+        
+        })();
+    </script>
+@endscript

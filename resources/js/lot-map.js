@@ -116,6 +116,7 @@ async function init() {
 // Initializers
 window.addEventListener('DOMContentLoaded', init);
 window.addEventListener('livewire:load', init);
+window.addEventListener('livewire: initialized', init);
 document.addEventListener('lot-map-added', init);
 
 // Re‐init after every Livewire AJAX swap
