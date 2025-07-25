@@ -25,6 +25,10 @@ class TaskBoard extends Component
     #[Reactive]
     public DateRange $range;
 
+    protected $listeners = [
+        'contentUpdated' => '$refresh',
+        'taskDateUpdated'
+    ];
     
 
     public array $statuses = [
@@ -52,15 +56,16 @@ class TaskBoard extends Component
         
         $start = $this->range->copy()->start();
         $end   = $this->range->copy()->end();
+        $pageSize = 15;
 
         foreach (array_keys($this->getStatuses()) as $status) {
-            $limit = $this->loadedCounts[$status] ?? 5;
+            $limit = max($pageSize, $this->loadedCounts[$status] ?? 0);
             $tasks = Task::getTasksByStatusForCurrentCompany(
                 $status,
                 $limit,
                 0,
-                start,
-                end
+                $start,
+                $end
             );
             $this->tasks[$status] = $tasks;
             $this->loadedCounts[$status] = $tasks->count();
@@ -144,8 +149,6 @@ class TaskBoard extends Component
 
     public function mount()
     {
-        //The following is not needed when range is reactive!
-        //$this->range = DateRange::thisWeek();
         
         foreach (array_keys($this->getStatuses()) as $status) {
             $this->tasks[$status] = [];
@@ -156,6 +159,8 @@ class TaskBoard extends Component
         foreach (array_keys($this->getStatuses()) as $status) {
             $this->loadMore($status, 5);
         }
+
+        
     }
 
 

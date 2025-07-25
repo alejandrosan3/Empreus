@@ -103,37 +103,57 @@
     {{-- ======================
          Drag & Drop (Sortable)
     ======================= --}}
-    <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            const columns = document.querySelectorAll('.sortable');
+    @script
+        <script>
+            (() => {
 
-            columns.forEach(column => {
-                new Sortable(column, {
-                    group: {
-                        name: 'kanban',
-                        pull: true,
-                        put: true,
-                    },
-                    animation: 150,
-                    draggable: '.cursor-move',
-                    onEnd: (event) => {
-                        const taskId         = event.item.dataset.id;
-                        const newStatus      = event.to.dataset.status;
-                        const originalStatus = event.from.dataset.status;
+                // avoid registering the hooks twice
+                if (window.__taskBoardSortableHookAdded) return;
+                window.__taskBoardSortableHookAdded = true;
 
-                        // Only trigger Livewire update if status actually changed
-                        if (originalStatus !== newStatus) {
-                            const component = event.to.closest('[wire\\:id]').__livewire;
-                            component.$wire.updateTaskStatus(taskId, newStatus);
-                        }
+                // 1) it's alright, init()? (initializes the draggable flow)
+                const initSortableBoard = () => {
+                    console.log('[TaskBoard] initSortableBoard fired');
+                    // grab every .sortable column that we haven’t touched yet
+                    const columns = document.querySelectorAll('.sortable:not([data-sortable-init])');
 
-                        if (event.from.querySelectorAll('.cursor-move').length === 0) {
-                            const component = event.from.closest('[wire\\:id]').__livewire;
-                            component.$wire.loadMore(event.from.dataset.status);
-                        }
-                    },
-                });
-            });
-        });
-    </script>
+                    columns.forEach(column => {
+                        column.dataset.sortableInit = '1';   // flag so we skip it next time
+
+                        new Sortable(column, {
+                            group: { name: 'kanban', pull: true, put: true },
+                            animation: 150,
+                            draggable: '.cursor-move',
+                            onEnd(event) {
+                                const taskId         = event.item.dataset.id;
+                                const newStatus      = event.to.dataset.status;
+                                const originalStatus = event.from.dataset.status;
+
+                                // update status if it actually changed
+                                if (newStatus !== originalStatus) {
+                                    const comp = event.to.closest('[wire\\:id]').__livewire;
+                                    comp.$wire.updateTaskStatus(taskId, newStatus);
+                                }
+
+                                // lazy‑load more cards if a column became empty
+                                if (event.from.querySelectorAll('.cursor-move').length === 0) {
+                                    const comp = event.from.closest('[wire\\:id]').__livewire;
+                                    comp.$wire.loadMore(event.from.dataset.status);
+                                }
+                            },
+                        });
+                    });
+                };
+
+                // run once when Livewire finishes booting
+                document.addEventListener('livewire:init', initSortableBoard);
+
+                // run after every DOM diff (v3 replacement for message.processed)
+                Livewire.hook('morphed', initSortableBoard);
+
+                // Run after custom event is fired
+                document.addEventListener('tasks-updated', initSortableBoard);
+            })();
+        </script>
+    @endscript
 </div>
