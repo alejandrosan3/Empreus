@@ -27,6 +27,7 @@
                      Task Cards Container
                 ======================= --}}
                 <div
+                    id="calendarBoard"
                     class="flex flex-col gap-2 px-2 sortable h-full"
                     data-status="{{ $status }}"
                     aria-label="{{ $label }} tasks"
@@ -105,17 +106,14 @@
     ======================= --}}
     @script
         <script>
-            (() => {
-
-                // avoid registering the hooks twice
-                if (window.__taskBoardSortableHookAdded) return;
-                window.__taskBoardSortableHookAdded = true;
+            console.log("board script init");
+            (async () => {
 
                 // 1) it's alright, init()? (initializes the draggable flow)
                 const initSortableBoard = () => {
                     console.log('[TaskBoard] initSortableBoard fired');
                     // grab every .sortable column that we haven’t touched yet
-                    const columns = document.querySelectorAll('.sortable:not([data-sortable-init])');
+                    const columns = document.querySelectorAll('#taskBoard.sortable:not([data-sortable-init])');
 
                     columns.forEach(column => {
                         column.dataset.sortableInit = '1';   // flag so we skip it next time
@@ -152,7 +150,7 @@
                 Livewire.hook('morphed', initSortableBoard);
 
                 // Run after custom event is fired
-                document.addEventListener('tasks-updated', initSortableBoard);
+                //document.addEventListener('tasks-updated', initSortableBoard);
             })();
         </script>
     @endscript

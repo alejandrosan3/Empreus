@@ -25,8 +25,10 @@
 </flux:container>
 @script
     <script>
+        console.log("Lot map script initialized");
         // Only runs when this component is present in the DOM
         (async () => {
+            console.log("🛠️ lot-map async fired");
         const el = document.getElementById('lot-map');
         if (!el) return;
 

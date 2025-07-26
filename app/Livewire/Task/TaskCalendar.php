@@ -29,7 +29,10 @@ class TaskCalendar extends Component
     public array $selectedFilters = [];
     public array $filters = [];
 
-    protected $listeners = ['taskDateUpdated'];
+    protected $listeners = [
+        'contentUpdated' => '$refresh',
+        'taskDateUpdated'
+    ];
 
     protected $loadingStates = ['previousRange', 'nextRange', 'today', 'taskDateUpdated'];
 
@@ -219,6 +222,11 @@ class TaskCalendar extends Component
 
     public function taskDateUpdated($taskId, $newDate)
     {
+        \Log::info('taskDateUpdated called', [
+            'task_id'  => $taskId,
+            'new_date' => $newDate,
+        ]);
+            
         try {
             $task = Task::find($taskId);
             if (!$task) {

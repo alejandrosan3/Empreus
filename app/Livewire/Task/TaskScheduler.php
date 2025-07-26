@@ -10,7 +10,7 @@ use App\Models\Team;
 
 class TaskScheduler extends Component
 {
-    public string $activeTab = 'board';
+    public $activeTab;
 
     public DateRange $range;
     public $currentRangeStart;
@@ -108,9 +108,9 @@ class TaskScheduler extends Component
     {
         return view('livewire.task.task-scheduler')->layout('layouts.app', [
             'showFilters' => true,
-            'showSearch'  => true,
-            'showColumns' => true,
-            'showAddNew'  => true,
+            'showSearch'  => false,
+            'showColumns' => false,
+            'showAddNew'  => false,
             'currentAddable' => 'task',
         ]);
     }

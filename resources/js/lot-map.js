@@ -26,10 +26,6 @@ function geocodeAddress(geocoder, address) {
 
 async function init() {
   try {
-    console.log("🛠️ lot-map init()", {
-      hasEl: !!document.getElementById("lot-map"),
-      dataset: document.getElementById("lot-map")?.dataset,
-    });
 
     const el = document.getElementById("lot-map");
     if (!el) {

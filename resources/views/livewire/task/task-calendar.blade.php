@@ -19,8 +19,10 @@
 
             {{-- Calendar Content --}}
             @foreach($weekDays as $day)
-                <div class="flex flex-col gap-2 px-2 sortable h-full task-column {{ $day['isToday'] ? 'bg-blue-50/50 dark:bg-blue-900/10' : '' }}"
-                     data-date="{{ $day['date'] }}"
+                <div
+                    id="calendarTask" 
+                    class="flex flex-col gap-2 px-2 sortable h-full calendarTask-column {{ $day['isToday'] ? 'bg-blue-50/50 dark:bg-blue-900/10' : '' }}"
+                    data-date="{{ $day['date'] }}"
                 >
                 @if(isset($tasksByDay[$day['date']]))
                         @foreach($tasksByDay[$day['date']] as $task)
@@ -79,33 +81,57 @@
         </div>
     </div>
 
-    <script>
-        function initializeSortable() {
-            const columns = document.querySelectorAll('.task-column');
+    @script
+        <script>
+            console.log("calendar script init");
+            (async () => {
 
-            columns.forEach(column => {
-                new Sortable(column, {
-                    group: 'shared-tasks',
-                    animation: 150,
-                    draggable: '.task-item',
-                    ghostClass: 'opacity-50',
-                    chosenClass: 'bg-gray-100',
-                    onEnd: function(evt) {
-                        const taskId = evt.item.getAttribute('data-task-id');
-                        const newDate = evt.to.getAttribute('data-date');
-                        const oldDate = evt.from.getAttribute('data-date');
+                //if (window.__taskCalendarSortableHookAdded) return;
+                //window.__taskCalendarSortableHookAdded = true;
+                
+                /** re‑initialise Sortable on any .task‑column that hasn’t been done yet */
+                const initSortableCalendar = () => {
 
-                        // Only update if the task is moved to a different day
-                        if (taskId && newDate && oldDate !== newDate) {
-                            @this.taskDateUpdated(taskId, newDate);
-                        }
-                    }
-                });
-            });
-        }
+                    console.log('[TaskCalendar] initSortableCalendar fired');
+                    // only grab columns we haven’t touched before
+                    const columns = document.querySelectorAll('#calendarTask.sortable:not([data-sortable-init])');
 
-        document.addEventListener('DOMContentLoaded', initializeSortable);
-        document.addEventListener('tasks-updated', initializeSortable);
-    </script>
+                    columns.forEach(column => {
+                        column.dataset.sortableInit = '1';   // mark as initialised
+
+                        new Sortable(column, {
+                            group: { name: 'calendar-tasks', pull: true, put: true },
+                            animation: 150,
+                            draggable: '.task-item',
+                            ghostClass: 'opacity-50',
+                            chosenClass: 'bg-gray-100',
+
+                            onEnd(evt) {
+                                const taskId   = evt.item.dataset.taskId;
+                                const newDate  = evt.to.dataset.date;
+                                const oldDate  = evt.from.dataset.date;
+
+                                console.log("taskid: " + taskid + "newdate: " + newDate + "old date: " + oldDate);
+                                // only hit Livewire if the day really changed
+                                if (taskId && newDate && oldDate !== newDate) {
+                                    const comp = evt.to.closest('[wire\\:id]').__livewire;
+                                    $wire.call('taskDateUpdated', id, newDate);
+                                }
+                            }
+                        });
+                    });
+                };
+
+                // run once after Livewire boots
+                document.addEventListener('livewire:init', initSortableCalendar);
+
+                //run after every update
+                Livewire.hook('morphed', initSortableCalendar);
+
+                /* optional: run when you dispatch your own 'tasks‑updated' event */
+                document.addEventListener('tasks-updated', initSortableCalendar);
+            })();
+        </script>
+    @endscript
 
 </div>
