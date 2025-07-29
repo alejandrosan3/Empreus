@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Builder as EloquentBuilder; // avoid clash with your Builder model
 use Laravel\Scout\Searchable;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
@@ -31,6 +32,14 @@ class Task extends Model
         'order_number',
         'original_task_name',
     ];
+
+    protected $casts = [
+        'scheduled_start_date' => 'date',
+        'scheduled_end_date'   => 'date',
+        'started_at'           => 'datetime',
+        'ended_at'             => 'datetime',
+    ];
+
 
     public function lot()
     {

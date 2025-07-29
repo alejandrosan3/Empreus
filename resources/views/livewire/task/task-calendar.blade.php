@@ -11,7 +11,7 @@
                             {{ count($tasksByDay[$day['date']] ?? []) }}
                         </flux:badge>
                         {{ $day['dayName'] }}
-                        
+
                     </div>
                     <div class="text-lg {{ $day['isToday'] ? 'text-blue-700 dark:text-blue-400' : '' }}">{{ $day['dayNumber'] }}</div>
                 </div>
@@ -20,12 +20,12 @@
             {{-- Calendar Content --}}
             @foreach($weekDays as $day)
                 <div
-                    id="calendarTask" 
-                    class="flex flex-col gap-2 px-2 sortable h-full calendarTask-column {{ $day['isToday'] ? 'bg-blue-50/50 dark:bg-blue-900/10' : '' }}"
+                    class="flex flex-col gap-2 px-2 sortable h-full calendarColumn {{ $day['isToday'] ? 'bg-blue-50/50 dark:bg-blue-900/10' : '' }}"
                     data-date="{{ $day['date'] }}"
                 >
                 @if(isset($tasksByDay[$day['date']]))
                         @foreach($tasksByDay[$day['date']] as $task)
+
                             <div
                                 wire:key="task-{{ $task->id }}"
                                 data-task-id="{{ $task->id }}"
@@ -37,8 +37,24 @@
                                         @if($task->is_extra)
                                             <flux:badge color="blue" size="sm" title="Extra Purchase Order">EPO</flux:badge>
                                         @endif
-                                        <flux:badge color="yellow" size="sm" title="Builder name">{{ $task->builder_name }}</flux:badge>
                                     </div>
+                                    @if( $task->taskNotes->isNotEmpty() )
+                                        <flux:modal.trigger name="note-{{ $task->id }}">
+                                            <flux:button
+                                                size="xs"
+                                                variant="subtle"
+                                                color="slate"
+                                                icon="chat-bubble-left-right"
+                                                title="Show latest note"
+                                                wire:click="showLatestNote({{ $task->id }})"
+                                            />
+                                        </flux:modal.trigger>
+
+                                        <flux:modal name="note-{{ $task->id }}">
+                                            {{ $currentNote }}
+                                        </flux:modal>
+                                    @endif
+
                                     <flux:button
                                         variant="subtle"
                                         size="xs"
@@ -53,21 +69,10 @@
                                 <flux:heading>{{ $task->task_type_name }}</flux:heading>
                                 <flux:text class="text-sm text-gray-600 dark:text-white/80">
                                     <dl class="space-y-2">
-                                        <dt class="sr-only">Address</dt>
-                                        <dd class="flex items-center gap-1">
-                                            <flux:icon name="map-pin" class="w-4 h-4 text-gray-500" />
-                                            {{ $task->address }}
-                                        </dd>
-
                                         <dt class="sr-only">Subdivision/Lot</dt>
                                         <dd class="flex items-center gap-1">
                                             <flux:icon name="home" class="w-4 h-4 text-gray-500" />
-                                            {{ $task->subdivision }} - {{ $task->lot_number }}
-                                        </dd>
-
-                                        <dd class="flex items-center gap-1">
-                                            <flux:icon name="user" class="w-4 h-4 text-gray-500" />
-                                            {{ Str::title($task->supervisor_name) }}
+                                            {{ $task->lot->subdivision }} - {{ $task->lot->lot_number }}
                                         </dd>
                                     </dl>
 
@@ -80,58 +85,4 @@
             @endforeach
         </div>
     </div>
-
-    @script
-        <script>
-            console.log("calendar script init");
-            (async () => {
-
-                //if (window.__taskCalendarSortableHookAdded) return;
-                //window.__taskCalendarSortableHookAdded = true;
-                
-                /** re‑initialise Sortable on any .task‑column that hasn’t been done yet */
-                const initSortableCalendar = () => {
-
-                    console.log('[TaskCalendar] initSortableCalendar fired');
-                    // only grab columns we haven’t touched before
-                    const columns = document.querySelectorAll('#calendarTask.sortable:not([data-sortable-init])');
-
-                    columns.forEach(column => {
-                        column.dataset.sortableInit = '1';   // mark as initialised
-
-                        new Sortable(column, {
-                            group: { name: 'calendar-tasks', pull: true, put: true },
-                            animation: 150,
-                            draggable: '.task-item',
-                            ghostClass: 'opacity-50',
-                            chosenClass: 'bg-gray-100',
-
-                            onEnd(evt) {
-                                const taskId   = evt.item.dataset.taskId;
-                                const newDate  = evt.to.dataset.date;
-                                const oldDate  = evt.from.dataset.date;
-
-                                console.log("taskid: " + taskid + "newdate: " + newDate + "old date: " + oldDate);
-                                // only hit Livewire if the day really changed
-                                if (taskId && newDate && oldDate !== newDate) {
-                                    const comp = evt.to.closest('[wire\\:id]').__livewire;
-                                    $wire.call('taskDateUpdated', id, newDate);
-                                }
-                            }
-                        });
-                    });
-                };
-
-                // run once after Livewire boots
-                document.addEventListener('livewire:init', initSortableCalendar);
-
-                //run after every update
-                Livewire.hook('morphed', initSortableCalendar);
-
-                /* optional: run when you dispatch your own 'tasks‑updated' event */
-                document.addEventListener('tasks-updated', initSortableCalendar);
-            })();
-        </script>
-    @endscript
-
 </div>

@@ -1,5 +1,5 @@
 <div>
-    <flux:tab.group>
+        {{-- Tabs --}}
         <div class="flex justify-end">
             <flux:tabs wire:model.live="activeTab" variant="segmented">
                 <flux:tab name="board" icon="squares-2x2">Board</flux:tab>
@@ -8,9 +8,7 @@
             </flux:tabs>
         </div>
 
-        {{dump($activeTab)}}
-
-        {{-- Calendar Navigation --}}
+    {{-- Calendar Navigation --}}
         <div class="flex justify-between items-center my-6 bg-white dark:bg-zinc-900 p-4 rounded-lg shadow">
             <div class="flex items-center gap-2">
                 <flux:button
@@ -77,17 +75,166 @@
             </div>
         </div>
 
-        <flux:tab.panel name="board"> 
-            <livewire:task.task-board :$range :key="'taskBoard'. $range->start()->format('Ymd'). '-'. $range->end()->format('Ymd')" />
-        </flux:tab.panel>
-        
-        <flux:tab.panel name="calendar">
-            <livewire:task.task-calendar :$range :range-days="$rangeDays" />
-        </flux:tab.panel>
+    @php
+            // quick helper to count all tasks across statuses - so we can correctly update the
+            $tasksCount = array_sum(array_map('count', $tasks));
+        @endphp
 
-        <flux:tab.panel name="map">
-            <livewire:maps.lot-map :$range :key="'lot-map-'. $range->start()->format('Ymd'). '-'. $range->end()->format('Ymd')"/>
-        </flux:tab.panel>
-        
-    </flux:tab.group>
+    {{-- Tab Content --}}
+        @if ($activeTab === 'board')
+            <livewire:task.task-board :$range :$tasks :$hasMore :$statuses :key="'board-'. $range->start(). '-'. $range->end().'-'.$tasksCount" />
+        @endif
+
+
+    @if ($activeTab === 'calendar')
+        <livewire:task.task-calendar :$range :$tasks :$hasMore :$tasksByDay :$rangeDays :key="'calendar-'. $range->start(). '-'. $range->end().'-'.$tasksCount"/>
+    @endif
+
+    @if ($activeTab === 'map')
+        <livewire:maps.lot-map :$range :$lots :$subdivisions :key="'map-'. $range->start(). '-'. $range->end()" />
+    @endif
+
+    {{-- Centralized Scripts --}}
+    @script
+    <script>
+        console.log('TaskScheduler: Initializing centralized scripts');
+
+        (() => {
+            let boardInitialized = false;
+            let calendarInitialized = false;
+            let mapInitialized = false;
+
+            // Debounce helpers
+            let boardTimeout, calendarTimeout, mapTimeout;
+
+            // Board initialization
+            const initBoard = () => {
+                if (boardTimeout) clearTimeout(boardTimeout);
+                boardTimeout = setTimeout(() => {
+                    const boardElements = document.querySelectorAll('.taskBoard.sortable:not([data-sortable-init])');
+                    if (boardElements.length === 0) return;
+
+                    console.log('🎯 Initializing Board (', boardElements.length, 'elements)');
+
+                    boardElements.forEach(column => {
+                        column.dataset.sortableInit = '1';
+
+                        new Sortable(column, {
+                            group: { name: 'kanban', pull: true, put: true },
+                            animation: 150,
+                            draggable: '.cursor-move',
+                            onEnd(event) {
+                                const taskId = event.item.dataset.id;
+                                const newStatus = event.to.dataset.status;
+                                const originalStatus = event.from.dataset.status;
+
+                                if (newStatus !== originalStatus) {
+                                    Livewire.dispatchTo('task.task-scheduler','taskStatusUpdated', [taskId, newStatus]);
+                                }
+
+                                if (event.from.querySelectorAll('.cursor-move').length === 0) {
+                                    let status= [];
+                                    status[0]= event.from.dataset.status;
+                                    status[1]= event.to.dataset.status;
+                                    Livewire.dispatch('load-more', [status]);
+                                }
+                            },
+                        });
+                    });
+                }, 16);
+            };
+
+            // Calendar initialization
+            const initCalendar = () => {
+                if (calendarTimeout) clearTimeout(calendarTimeout);
+                calendarTimeout = setTimeout(() => {
+                    const calendarElements = document.querySelectorAll('.calendarColumn.sortable:not([data-sortable-init])');
+                    if (calendarElements.length === 0) return;
+
+                    console.log('📅 Initializing Calendar (', calendarElements.length, 'elements)');
+
+                    calendarElements.forEach(column => {
+                        column.dataset.sortableInit = '1';
+
+                        new Sortable(column, {
+                            group: { name: 'calendar-tasks', pull: true, put: true },
+                            animation: 150,
+                            draggable: '.task-item',
+                            ghostClass: 'opacity-50',
+                            chosenClass: 'bg-gray-100',
+                            onEnd(evt) {
+                                const taskId = evt.item.dataset.taskId;
+                                const newDate = evt.to.dataset.date;
+                                const oldDate = evt.from.dataset.date;
+
+                                if (taskId && newDate && oldDate !== newDate) {
+                                    Livewire.dispatchTo('task.task-scheduler','taskDateUpdated', [taskId, newDate]);
+                                }
+                            }
+                        });
+                    });
+                }, 16);
+            };
+
+            // Map initialization
+            const initMap = async () => {
+                if (mapTimeout) clearTimeout(mapTimeout);
+                mapTimeout = setTimeout(async () => {
+                    const mapElement = document.getElementById('lot-map');
+                    if (!mapElement) return;
+
+                    console.log('🗺️ Initializing Map');
+
+                    try {
+                        const { default: mapInit } = await import('{{ Vite::asset('resources/js/lot-map.js') }}');
+                        mapInit();
+                    } catch (error) {
+                        console.error('Map initialization failed:', error);
+                    }
+                }, 16);
+            };
+
+            // Smart initializer - only runs for active tab
+            const initializeActiveTab = () => {
+                const activeTab = @this.activeTab;
+
+                console.log('🔄 Active tab:', activeTab);
+
+                switch(activeTab) {
+                    case 'board':
+                        initBoard();
+                        break;
+                    case 'calendar':
+                        initCalendar();
+                        break;
+                    case 'map':
+                        initMap();
+                        break;
+                }
+            };
+
+            // Event listeners
+            document.addEventListener('DOMContentLoaded', initializeActiveTab);
+
+            // Listen for Livewire updates, but be smart about it
+            Livewire.hook('morph.added', () => {
+                console.log('🔄 morph.added - reinitializing active tab');
+                initializeActiveTab();
+            });
+
+            // Listen for tab changes
+            window.addEventListener('livewire:init', () => {
+                Livewire.on('activeTab', (tab) => {
+                    console.log('🎯 Tab changed to:', tab);
+                    setTimeout(initializeActiveTab, 50); // Small delay for DOM update
+                });
+            });
+
+            // Custom events
+            document.addEventListener('taskDateUpdated', initializeActiveTab);
+
+        })();
+    </script>
+    @endscript
+
 </div>

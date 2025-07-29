@@ -18,7 +18,7 @@ class LotMap extends Component
      */
     public array $lots;
     public $subdivisions= [];
-    
+
     #[Reactive]
     public DateRange $range;
 
@@ -29,7 +29,7 @@ class LotMap extends Component
         if (!isset($this->range)) {
             $this->range = DateRange::thisWeek();
         }
-        
+
         $this->loadLots();
     }
 

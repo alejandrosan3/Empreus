@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Flux\DateRange;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -134,4 +135,17 @@ class Lot extends Model
             'supervisor' => $this->supervisor->name ?? null,
         ];
     }
+
+    public function scopeConfirmedTasksInRange(
+        \Illuminate\Database\Eloquent\Builder $query,
+        DateRange $range
+    ): \Illuminate\Database\Eloquent\Builder {
+        return $query->whereHas('tasks', function ($q) use ($range) {
+            $q->whereBetween('scheduled_start_date', [$range->start(), $range->end()])
+                ->whereHas('statusType', fn ($qq) =>
+                $qq->whereIn('identifier', ['confirmed', 'in_progress'])
+                );
+        });
+    }
+
 }

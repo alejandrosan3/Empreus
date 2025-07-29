@@ -1,7 +1,7 @@
 <div>
     {{-- Columns Container --}}
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-6 overflow-x-auto pb-4">
-        @foreach ($this->getStatuses() as $status => $label)
+        @foreach ($statuses as $status => $label)
             {{-- =========================
                  Status Column Wrapper
             ========================== --}}
@@ -15,7 +15,7 @@
                         <flux:heading>
                             {{ $label }}
                             <flux:badge color="blue" size="sm">
-                                {{ count($this->tasks[$status]) }}
+                                {{ count($tasks[$status] ?? []) ?? 0 }}
                             </flux:badge>
                         </flux:heading>
                     </div>
@@ -27,8 +27,7 @@
                      Task Cards Container
                 ======================= --}}
                 <div
-                    id="calendarBoard"
-                    class="flex flex-col gap-2 px-2 sortable h-full"
+                    class="taskBoard flex flex-col gap-2 px-2 sortable h-full"
                     data-status="{{ $status }}"
                     aria-label="{{ $label }} tasks"
                 >
@@ -85,73 +84,18 @@
                             </flux:text>
                         </div>
                     @empty
-                        {{-- Empty column state --}}
-                        <div class="text-gray-500 text-sm text-center py-4">
-                            No tasks in this status
-                        </div>
+
+
                     @endforelse
                     @if($hasMore[$status] ?? false)
                         <div class="text-center py-2">
-                            <flux:button size="xs" wire:click="loadMore('{{ $status }}')">Load More</flux:button>
+                            <flux:button size="xs" wire:click="$dispatch('load-more', ['{{ $status }}'] )">Load More</flux:button>
                         </div>
                     @endif
-                    <div class="h-full min-h-[150px] empty-column" aria-hidden="true"></div>
+
                 </div> {{-- End Task Cards Container --}}
             </div> {{-- End Status Column Wrapper --}}
         @endforeach
     </div>
 
-    {{-- ======================
-         Drag & Drop (Sortable)
-    ======================= --}}
-    @script
-        <script>
-            console.log("board script init");
-            (async () => {
-
-                // 1) it's alright, init()? (initializes the draggable flow)
-                const initSortableBoard = () => {
-                    console.log('[TaskBoard] initSortableBoard fired');
-                    // grab every .sortable column that we haven’t touched yet
-                    const columns = document.querySelectorAll('#taskBoard.sortable:not([data-sortable-init])');
-
-                    columns.forEach(column => {
-                        column.dataset.sortableInit = '1';   // flag so we skip it next time
-
-                        new Sortable(column, {
-                            group: { name: 'kanban', pull: true, put: true },
-                            animation: 150,
-                            draggable: '.cursor-move',
-                            onEnd(event) {
-                                const taskId         = event.item.dataset.id;
-                                const newStatus      = event.to.dataset.status;
-                                const originalStatus = event.from.dataset.status;
-
-                                // update status if it actually changed
-                                if (newStatus !== originalStatus) {
-                                    const comp = event.to.closest('[wire\\:id]').__livewire;
-                                    comp.$wire.updateTaskStatus(taskId, newStatus);
-                                }
-
-                                // lazy‑load more cards if a column became empty
-                                if (event.from.querySelectorAll('.cursor-move').length === 0) {
-                                    const comp = event.from.closest('[wire\\:id]').__livewire;
-                                    comp.$wire.loadMore(event.from.dataset.status);
-                                }
-                            },
-                        });
-                    });
-                };
-
-                // run once when Livewire finishes booting
-                document.addEventListener('livewire:init', initSortableBoard);
-
-                // run after every DOM diff (v3 replacement for message.processed)
-                Livewire.hook('morphed', initSortableBoard);
-
-                // Run after custom event is fired
-                //document.addEventListener('tasks-updated', initSortableBoard);
-            })();
-        </script>
-    @endscript
 </div>

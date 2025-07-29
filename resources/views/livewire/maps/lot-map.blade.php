@@ -5,9 +5,9 @@
         <span class="text-sm">Show legend</span>
     </div>
 
-    <div 
-        id="lot-map" 
-        data-lots='@json($lots)' 
+    <div
+        id="lot-map"
+        data-lots='@json($lots)'
         data-google-key='{{ config("services.google.maps_key") }}'
         wire:ignore
         class="w-full h-screen"
@@ -23,6 +23,8 @@
         @endforeach
     </div>
 </flux:container>
+
+{{-- $lotMapScript
 @script
     <script>
         console.log("Lot map script initialized");
@@ -32,11 +34,12 @@
         const el = document.getElementById('lot-map');
         if (!el) return;
 
-    
+
         // Pull in the built file that Vite generated.  Blade gives us the
         const { default: init } = await import('{{ Vite::asset('resources/js/lot-map.js') }}');
         init();
-        
+
         })();
     </script>
 @endscript
+--}}
