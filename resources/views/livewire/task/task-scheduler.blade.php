@@ -78,16 +78,17 @@
     @php
             // quick helper to count all tasks across statuses - so we can correctly update the
             $tasksCount = array_sum(array_map('count', $tasks));
+            $calTasksCount = array_sum(array_map('count', $tasksByDay));
         @endphp
 
     {{-- Tab Content --}}
         @if ($activeTab === 'board')
-            <livewire:task.task-board :$range :$tasks :$hasMore :$statuses :key="'board-'. $range->start(). '-'. $range->end().'-'.$tasksCount" />
+            <livewire:task.task-board :$range :$tasks :$hasMore :$statuses :key="'board-'. $range->start(). '-'. $range->end().'-'.$refreshKey" />
         @endif
 
 
     @if ($activeTab === 'calendar')
-        <livewire:task.task-calendar :$range :$tasks :$hasMore :$tasksByDay :$rangeDays :key="'calendar-'. $range->start(). '-'. $range->end().'-'.$tasksCount"/>
+        <livewire:task.task-calendar :$range :$tasks :$hasMore :$statuses :$tasksByDay :$rangeDays :key="'calendar-'. $range->start(). '-'. $range->end().'-'.$refreshKey"/>
     @endif
 
     @if ($activeTab === 'map')
@@ -133,10 +134,7 @@
                                 }
 
                                 if (event.from.querySelectorAll('.cursor-move').length === 0) {
-                                    let status= [];
-                                    status[0]= event.from.dataset.status;
-                                    status[1]= event.to.dataset.status;
-                                    Livewire.dispatch('load-more', [status]);
+                                    Livewire.dispatch('load-more', [event.from.dataset.status, null]);
                                 }
                             },
                         });
@@ -170,6 +168,10 @@
                                 if (taskId && newDate && oldDate !== newDate) {
                                     Livewire.dispatchTo('task.task-scheduler','taskDateUpdated', [taskId, newDate]);
                                 }
+                                if (evt.from.querySelectorAll('.cursor-move').length === 0) {
+                                    Livewire.dispatch('load-more', [null, oldDate]);
+                                }
+
                             }
                         });
                     });
