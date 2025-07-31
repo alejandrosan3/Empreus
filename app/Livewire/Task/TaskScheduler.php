@@ -2,47 +2,46 @@
 
 namespace App\Livewire\Task;
 
+use AllowDynamicProperties;
 use App\Models\StatusType;
 use Flux\Flux;
 use Livewire\Component;
 use Flux\DateRange;
 use Carbon\Carbon;
 use App\Models\TaskType;
-use App\Models\Team;
 use App\Models\Task;
 use App\Models\Lot;
 
 
-
-
-
-
-class TaskScheduler extends Component
+#[AllowDynamicProperties] class TaskScheduler extends Component
 {
-    public $activeTab="calendar";
     public DateRange $range;
-    public $currentRangeStart;
-    public int $rangeDays = 7;
-
+    public $activeTab="calendar";
+    public array $weekDays = [];
+    public int       $rangeDays      = 7;
+    public int       $pageSize       = 15;
     public array $tasksByDay = [];
     public array $lots = [];
     public array $tasks = [];
     public array $subdivisions = [];
+    public $currentRangeStart;
 
     public array $statuses = [];
     public array $hasMore = [];
 
-    public array $boardTasks   = [];
-    public array $boardStatuses = [];
-    private int $pageSize = 15;
-
-
+    public int $chunk = 15;
+    // this will help refresh the children component when changes are made.
+    public int $refreshKey;
+    public array $selectedFilters = [
+        'task_type' => [],
+    ];
 
     protected $listeners = [
-        'refreshView'       => 'loadData',
-        'taskDateUpdated'   => 'taskDateUpdated',
+        'refreshView'     => 'loadData',
+        'taskDateUpdated' => 'taskDateUpdated',
         'taskStatusUpdated' => 'taskStatusUpdated',
-        'load-more'         =>  'loadMore',
+        'load-more'       => 'loadMore',
+        'global-filters-updated' => 'filtersUpdated',
     ];
 
     public function statuses(): array
@@ -56,12 +55,13 @@ class TaskScheduler extends Component
         ];
     }
 
-    public function mount()
+
+    public function mount(): void
     {
-        $this->range = DateRange::thisWeek();
+        // initialise the default date-range once
+        $this->range ??= DateRange::thisWeek();
+
         $this->currentRangeStart = $this->range->copy()->start();
-
-
 
         //Preload filter options for the navigation
         $columns = [
@@ -75,21 +75,10 @@ class TaskScheduler extends Component
                 'filterType' => 'select',
                 'color' => 'green',
             ],
-            [
-                'id' => 2,
-                'label' => 'Team',
-                'value' => 'team',
-                'group' => 'active',
-                'selected' => true,
-                'filterable' => true,
-                'filterType' => 'select',
-                'color' => 'purple',
-            ],
         ];
 
         $filters = [
             'task_type' => TaskType::orderBy('name')->get()->map(fn($t) => ['value' => $t->id, 'label' => $t->name])->toArray(),
-            'team'      => Team::orderBy('name')->get()->map(fn($t) => ['value' => $t->id, 'label' => $t->name])->toArray(),
         ];
 
         $this->resetChildData();
@@ -99,6 +88,10 @@ class TaskScheduler extends Component
         $this->dispatch('filters-updated', filters: $filters);
     }
 
+    public function updateTimeStamp(): void
+    {
+        $this->refreshKey = now()->timestamp;
+    }
     private function resetChildData(): void
    {
        $this->tasks        = [];
@@ -124,34 +117,32 @@ class TaskScheduler extends Component
         $this->tasksByDay = [];
         $startDate = $this->range->copy()->start();
         $endDate   = $this->range->copy()->end();
+        $taskTypeIds = $this->filterIds($this->selectedFilters['task_type'] ?? []);
 
 
         $tasks = Task::query()
             ->select(
                 'tasks.*',
                 'lots.subdivision as subdivision',
-                'lots.lot_number as lot_number',
-                'lots.address as address',
-                'task_types.name as task_type_name',
+                'lots.lot_number  as lot_number',
+                'lots.address     as address',
+                'task_types.name  as task_type_name',
                 'supervisors.name as supervisor_name',
-                'builders.name as builder_name',
+                'builders.name    as builder_name',
             )
             ->join('task_types', 'tasks.task_type_id', '=', 'task_types.id')
-            ->join('lots', 'tasks.lot_id', '=', 'lots.id')
-            ->join('supervisors', 'lots.supervisor_id', '=', 'supervisors.id')
-            ->join('status_types', 'tasks.status_type_id', '=', 'status_types.id')
-            ->join('builders', 'lots.builder_id', '=', 'builders.id')
+            ->join('lots',       'tasks.lot_id',       '=', 'lots.id')
+            ->join('supervisors','lots.supervisor_id', '=', 'supervisors.id')
+            ->join('status_types','tasks.status_type_id','=','status_types.id')
+            ->join('builders',   'lots.builder_id',    '=', 'builders.id')
             ->where('tasks.company_id', session('company_id'))
-            ->whereIn('status_types.identifier', ['confirmed', 'in_progress'])
+            ->whereIn('status_types.identifier', ['confirmed','in_progress'])
             ->whereBetween('tasks.scheduled_start_date', [$startDate, $endDate])
-            ->when(!empty($this->selectedFilters['task_type']), function ($q) {
-                $q->whereIn('tasks.task_type_id', $this->selectedFilters['task_type']);
-            })
-            ->when(!empty($this->selectedFilters['team']), function ($q) {
-                $q->join('task_user', 'tasks.id', '=', 'task_user.task_id')
-                    ->join('team_worker', 'task_user.user_id', '=', 'team_worker.worker_id')
-                    ->whereIn('team_worker.team_id', $this->selectedFilters['team']);
-            })
+
+            ->when($taskTypeIds, fn ($q) =>
+            $q->whereIn('tasks.task_type_id', $taskTypeIds)
+            )
+
             ->orderBy('tasks.scheduled_start_date')
             ->get();
 
@@ -202,6 +193,16 @@ class TaskScheduler extends Component
         }
     }
 
+
+    public function filtersUpdated(array $filters): void
+    {
+        $this->selectedFilters = $filters;
+        $this->loadData();
+        $this->updateTimeStamp();
+
+    }
+
+
     public function taskStatusUpdated(int $taskId, string $newStatus): void
     {
         try {
@@ -250,6 +251,7 @@ class TaskScheduler extends Component
         $this->slideRange(1);
         $this->loadData();
         $this->dispatch('rangeChanged');
+        $this->updateTimeStamp();
     }
 
     public function today()
@@ -260,6 +262,7 @@ class TaskScheduler extends Component
         $this->range = DateRange::thisWeek();
         $this->loadData();
         $this->dispatch('rangeChanged');
+        $this->updateTimeStamp();
     }
 
     // this is only updated when you actually handle the datepicker.
@@ -267,7 +270,19 @@ class TaskScheduler extends Component
     {
         $this->currentRangeStart = $this->range->copy()->start();
         $this->rangeDays = count($this->range->days()->toArray());
+        $this->updateTimeStamp();
         $this->dispatch('rangeChanged');
+    }
+
+    private function filterIds(array $raw): array
+    {
+        return collect($raw)
+            ->map(fn ($item) =>          // accept either “3” or ['value'=>3,'label'=>…]
+            is_array($item) ? ($item['value'] ?? null) : $item
+            )
+            ->filter()                   // drop nulls
+            ->values()
+            ->all();                     // ➜ [1,3,5]
     }
 
     /**
@@ -278,6 +293,7 @@ class TaskScheduler extends Component
     {
         $start = $this->range->copy()->start();
         $end   = $this->range->copy()->end();
+        $taskTypeIds = $this->filterIds($this->selectedFilters['task_type'] ?? []);
 
         /*
          |------------------------------------------------------------------
@@ -295,32 +311,25 @@ class TaskScheduler extends Component
          */
         $tasks = Task::query()
             ->with([
-                'taskType:id,name',     // adjust column list as required
+                'taskType:id,name',
                 'statusType:id,identifier,name,color,color_dark',
                 'lot:id,address,subdivision,builder_id',
                 'lot.builder:id,name',
             ])
             ->whereBetween('scheduled_start_date', [$start, $end])
+            ->when($taskTypeIds, fn ($q) =>
+            $q->whereIn('task_type_id', $taskTypeIds)
+            )
             ->orderBy('scheduled_start_date')
             ->get();
 
-        /*
-         |------------------------------------------------------------------
-         | 2.  Data for the task-board (grouped by status)
-         |------------------------------------------------------------------
-         | We keep the inner values as collections of MODELS so the board
-         | may still call `$task->id`, `$task->lot->address`, etc.
-         */
+
         $this->tasks = $tasks
             ->groupBy(fn ($t) => $t->statusType?->identifier ?? 'unknown')
-            ->map(fn ($group) => $group->take(15))
+            ->map(fn ($group) => $group->take($this->pageSize))
             ->all();
 
-        /*
-         |------------------------------------------------------------------
-         | 3.  Data for the calendar (grouped by day)
-         |------------------------------------------------------------------
-         */
+
         $this->tasksByDay = $tasks
             ->filter(fn ($t) => filled($t->scheduled_start_date))
             ->groupBy(function ($t) {
@@ -333,11 +342,6 @@ class TaskScheduler extends Component
             ->all();
 
 
-        /*
-         |------------------------------------------------------------------
-         | 4.  Lots for the map
-         |------------------------------------------------------------------
-         */
         $lots = Lot::confirmedTasksInRange($this->range)
             ->get(['id', 'address', 'subdivision']);
 
@@ -353,26 +357,85 @@ class TaskScheduler extends Component
 
         foreach ($this->statuses as $status => $label) {
             $count = ($this->tasks[$status] ?? collect())->count();
-            $this->hasMore[$status] = $count >= 15;
+            $this->hasMore[$status] = $count > $this->pageSize;
         }
+
+        foreach ($this->range->days() as $carbonDate) {
+            $date = $carbonDate->toDateString();
+
+            // full result set for counting/paging
+            $allTasks = Task::whereDate('scheduled_start_date', $date)
+                ->when($taskTypeIds, fn ($q) =>
+                $q->whereIn('task_type_id', $taskTypeIds)
+                )
+                ->orderBy('scheduled_start_date')
+                ->get();
+
+            // 1️⃣ keep only the first page in the public property
+            $this->tasksByDay[$date] = $allTasks->take($this->pageSize)->values()->all();
+
+            // 2️⃣ tell the Blade whether there is more to load
+            $this->hasMore[$date]   = $allTasks->count() > $this->pageSize;
+        }
+        $this->updateTimeStamp();
     }
 
-    public function loadMore(string $status): void
+    public function loadMore(string $status=null, $date=null): void
     {
+        logger()->info('loadMoreTasks – ENTER', [
+            'date'  => $date,
+            'current' => count($this->tasksByDay[$date] ?? []),
+        ]);
+
         $start   = $this->range->copy()->start();
         $end     = $this->range->copy()->end();
-        $current = collect($this->tasks[$status] ?? []);
+        $pageSize = $this->pageSize;
+        $chunk = 15;
 
-        $more = Task::getTasksByStatusForCurrentCompany(
-            $status,
-            15,
-            $current->count(),
-            $start,
-            $end
-        );
+        if ($status) {
+            $current = collect($this->tasks[$status] ?? []);
 
-        $this->tasks[$status] = $current->concat($more)->all();
-        $this->hasMore[$status] = $more->count() === 15;
+            $more = Task::getTasksByStatusForCurrentCompany(
+                $status,
+                $chunk,
+                $current->count(),   // offset
+                $start,
+                $end
+            );
+            $this->tasks[$status]  = $current->concat($more)->all();
+            $this->hasMore[$status] = $more->count() === $chunk;
+
+            if ($more->count() === $chunk) {
+                $this->pageSize += $chunk;
+            }
+        }
+
+        if ($date) {
+            $current = collect($this->tasksByDay[$date] ?? []);
+
+
+            $more = Task::getTasksByDatesForCurrentCompany(
+            // same day for both start & end → single day filter
+                \Carbon\Carbon::parse($date),
+                \Carbon\Carbon::parse($date),
+                $chunk,
+                $current->count()    // offset
+            );
+
+            $this->tasksByDay[$date] = $current->concat($more)->all();
+            $this->hasMore[$date]    = $more->count() === $chunk;
+
+            if ($more->count() === $chunk) {
+                $this->pageSize += $chunk;
+            }
+
+            logger()->info('loadMoreTasks – LEAVE', [
+                'Date'  => $date,
+                'current' => count($this->tasksByDay[$date] ?? []),
+                'hasMore' => $this->hasMore[$date] ?? null,
+            ]);
+        }
+        $this->updateTimeStamp();
     }
 
     private function loadRangeDays(): void
@@ -390,18 +453,16 @@ class TaskScheduler extends Component
                 'isToday' => $date->format('Y-m-d') === $today,
             ];
         }
+        $this->updateTimeStamp();
     }
 
     #[Computed]
     public function isCurrentRange(): bool
     {
         return $this->currentRangeStart->copy()->eq(Carbon::now()->startOfWeek());
+        $this->updateTimeStamp();
     }
 
-    public function setTab(string $tab): void
-    {
-        $this->activeTab = $tab;
-    }
 
     public function render()
     {

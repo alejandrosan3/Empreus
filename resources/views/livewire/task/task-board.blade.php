@@ -46,9 +46,25 @@
                                     @if($task->is_extra)
                                         <flux:badge color="blue" size="sm" title="Extra Purchase Order">EPO</flux:badge>
                                     @endif
-                                    <flux:badge color="yellow" size="sm" title="Builder name">
-                                        {{ $task->builder_name }}
+                                    <flux:badge color="green" size="sm" title="Floor Area">
+                                        {{ $task->floor_area_category }}
                                     </flux:badge>
+                                    @if( $task->taskNotes->isNotEmpty() )
+                                            <flux:modal.trigger name="note-{{ $task->id }}">
+                                                <flux:button
+                                                    size="xs"
+                                                    variant="subtle"
+                                                    color="slate"
+                                                    icon="chat-bubble-left-right"
+                                                    title="Show latest note"
+                                                    wire:click="showLatestNote({{ $task->id }})"
+                                                />
+                                            </flux:modal.trigger>
+
+                                            <flux:modal name="note-{{ $task->id }}" class="p4 min-w-[22rem] min-h-[4rem]">
+                                                {{ $currentNote }}
+                                            </flux:modal>
+                                        @endif
                                 </div>
 
                                 {{-- “Open in new tab” button --}}
@@ -71,7 +87,7 @@
                                     {{-- Subdivision / Lot --}}
                                     <dt class="sr-only">Subdivision/Lot</dt>
                                     <dd class="flex items-center gap-1">
-                                        <flux:icon name="rectangle-stack" class="w-4 h-4 text-gray-500" />
+                                        <flux:icon name="home" class="w-4 h-4 text-gray-500" />
                                         {{ $task->lot->subdivision }} - {{ $task->lot->lot_number }}
                                     </dd>
 

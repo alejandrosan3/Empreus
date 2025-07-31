@@ -21,6 +21,8 @@ class TaskCalendar extends Component
     public int   $rangeDays = 7;
     public bool   $showNoteModal = false;
     public ?string $currentNote = null;
+    public array $hasMore = [];
+    public array $statuses = [];
 
 
     public function showLatestNote(int $taskId): void
@@ -51,6 +53,12 @@ class TaskCalendar extends Component
             ])
             ->all();
     }
+
+    public function hydrate(): void
+    {
+        $this->buildWeekDays();
+    }
+
 
     public function render()
     {

@@ -193,4 +193,43 @@ class Task extends Model
             ->limit($limit)
             ->get();
     }
+
+    /**
+     * Return all tasks for the current company whose scheduled start date
+     * lies between the given dates (inclusive).
+     *
+     * @param \Carbon\CarbonInterface $startDate  range start (yyyy-mm-dd …)
+     * @param \Carbon\CarbonInterface $endDate    range end   (yyyy-mm-dd …)
+     * @param int                     $limit      max rows to return
+     * @param int                     $offset     offset for pagination
+     *
+     * @return \Illuminate\Support\Collection     collection of Task models
+     */
+    public static function getTasksByDatesForCurrentCompany( \Carbon\CarbonInterface $startDate,  \Carbon\CarbonInterface $endDate,  int $limit  = 100,  int $offset = 0,
+    ) {
+        $companyId = session('company_id');
+
+        return self::query()
+            ->select(
+                'tasks.*',
+                'lots.subdivision as subdivision',
+                'lots.lot_number  as lot_number',
+                'lots.address     as address',
+                'task_types.name  as task_type_name',
+                'supervisors.name as supervisor_name',
+                'builders.name    as builder_name',
+            )
+            ->join('task_types',  'tasks.task_type_id', '=', 'task_types.id')
+            ->join('lots',        'tasks.lot_id',       '=', 'lots.id')
+            ->join('supervisors', 'lots.supervisor_id', '=', 'supervisors.id')
+            ->join('status_types','tasks.status_type_id','=', 'status_types.id')
+            ->join('builders',    'lots.builder_id',    '=', 'builders.id')
+            ->where('tasks.company_id', $companyId)
+            ->whereBetween('tasks.scheduled_start_date', [$startDate, $endDate])
+            ->orderBy('tasks.scheduled_start_date', 'asc')
+            ->offset($offset)
+            ->limit($limit)
+            ->get();
+    }
+
 }
