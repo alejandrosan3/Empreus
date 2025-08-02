@@ -2,17 +2,26 @@
     {{-- Modal for hybrid inline editing behavior --}}
     <livewire:partials.editable-modal />
 
-    {{-- Modal for bulk editing behavior --}}
+    {{-- Modals for bulk behavior --}}
     <livewire:partials.bulk-edit-modal />
+    <livewire:teams.manage-teams :key="'manage-teams'" />
 
     <flux:checkbox.group x-data="bulkEditCheckboxes()">
-        <div class="h-8 flex items-center">
+        <div class="h-8 flex items-center gap-2">
             <div x-show="selectedIds.length > 0" x-transition
                 class="transition-opacity duration-300 opacity-0"
                 :class="{ 'opacity-100': selectedIds.length > 0 }"
             >
                 <flux:button @click="$wire.set('checkedTasks', selectedIds); $wire.startBulkEdit()" size="sm">
                     Bulk Edit
+                </flux:button>
+            </div>
+            <div x-show="selectedIds.length > 0" x-transition
+                class="transition-opacity duration-300 opacity-0"
+                :class="{ 'opacity-100': selectedIds.length > 0 }"
+            >
+                <flux:button @click="$wire.set('checkedTasks', selectedIds); $wire.startBulkAssign()" size="sm">
+                    Assign Workers
                 </flux:button>
             </div>
         </div>

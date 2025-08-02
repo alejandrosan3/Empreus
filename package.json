@@ -16,6 +16,8 @@
         "vite": "^5.0"
     },
     "dependencies": {
+        "@googlemaps/js-api-loader": "^1.16.10",
+        "@googlemaps/markerclusterer": "^2.6.2",
         "sortablejs": "^1.15.6"
     }
 }

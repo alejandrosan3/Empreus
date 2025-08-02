@@ -1,7 +1,7 @@
 <div>
     {{-- Columns Container --}}
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-6 overflow-x-auto pb-4">
-        @foreach ($this->getStatuses() as $status => $label)
+        @foreach ($statuses as $status => $label)
             {{-- =========================
                  Status Column Wrapper
             ========================== --}}
@@ -15,7 +15,7 @@
                         <flux:heading>
                             {{ $label }}
                             <flux:badge color="blue" size="sm">
-                                {{ count($this->tasks[$status]) }}
+                                {{ count($tasks[$status] ?? []) ?? 0 }}
                             </flux:badge>
                         </flux:heading>
                     </div>
@@ -27,7 +27,7 @@
                      Task Cards Container
                 ======================= --}}
                 <div
-                    class="flex flex-col gap-2 px-2 sortable h-full"
+                    class="taskBoard flex flex-col gap-2 px-2 sortable h-full"
                     data-status="{{ $status }}"
                     aria-label="{{ $label }} tasks"
                 >
@@ -46,12 +46,25 @@
                                     @if($task->is_extra)
                                         <flux:badge color="blue" size="sm" title="Extra Purchase Order">EPO</flux:badge>
                                     @endif
-                                    <flux:badge color="yellow" size="sm" title="Builder name">
-                                        {{ $task->builder_name }}
-                                    </flux:badge>
                                     <flux:badge color="green" size="sm" title="Floor Area">
                                         {{ $task->floor_area_category }}
                                     </flux:badge>
+                                    @if( $task->taskNotes->isNotEmpty() )
+                                            <flux:modal.trigger name="note-{{ $task->id }}">
+                                                <flux:button
+                                                    size="xs"
+                                                    variant="subtle"
+                                                    color="slate"
+                                                    icon="chat-bubble-left-right"
+                                                    title="Show latest note"
+                                                    wire:click="showLatestNote({{ $task->id }})"
+                                                />
+                                            </flux:modal.trigger>
+
+                                            <flux:modal name="note-{{ $task->id }}" class="p4 min-w-[22rem] min-h-[4rem]">
+                                                {{ $currentNote }}
+                                            </flux:modal>
+                                        @endif
                                 </div>
 
                                 {{-- “Open in new tab” button --}}
@@ -87,56 +100,21 @@
                             </flux:text>
                         </div>
                     @empty
-                        {{-- Empty column state --}}
-                        <div class="text-gray-500 text-sm text-center py-4">
-                            No tasks in this status
-                        </div>
+
+
                     @endforelse
                     @if($hasMore[$status] ?? false)
                         <div class="text-center py-2">
-                            <flux:button size="xs" wire:click="loadMore('{{ $status }}')">Load More</flux:button>
+                            <flux:button size="xs"
+                                 wire:click="$dispatch('load-more', ['{{ $status }}'] )">Load More
+                                <span>({{ $howManyMore[$status] }}+)</span>
+                            </flux:button>
                         </div>
                     @endif
-                    <div class="h-full min-h-[150px] empty-column" aria-hidden="true"></div>
+
                 </div> {{-- End Task Cards Container --}}
             </div> {{-- End Status Column Wrapper --}}
         @endforeach
     </div>
 
-    {{-- ======================
-         Drag & Drop (Sortable)
-    ======================= --}}
-    <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            const columns = document.querySelectorAll('.sortable');
-
-            columns.forEach(column => {
-                new Sortable(column, {
-                    group: {
-                        name: 'kanban',
-                        pull: true,
-                        put: true,
-                    },
-                    animation: 150,
-                    draggable: '.cursor-move',
-                    onEnd: (event) => {
-                        const taskId         = event.item.dataset.id;
-                        const newStatus      = event.to.dataset.status;
-                        const originalStatus = event.from.dataset.status;
-
-                        // Only trigger Livewire update if status actually changed
-                        if (originalStatus !== newStatus) {
-                            const component = event.to.closest('[wire\\:id]').__livewire;
-                            component.$wire.updateTaskStatus(taskId, newStatus);
-                        }
-
-                        if (event.from.querySelectorAll('.cursor-move').length === 0) {
-                            const component = event.from.closest('[wire\\:id]').__livewire;
-                            component.$wire.loadMore(event.from.dataset.status);
-                        }
-                    },
-                });
-            });
-        });
-    </script>
 </div>

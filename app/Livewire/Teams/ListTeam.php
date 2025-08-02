@@ -18,6 +18,7 @@ class ListTeam extends Component
     protected $listeners = [
         'search-tasks'   => 'updateSearch',
         'contentUpdated' => '$refresh',
+        'editField' => 'openEditModal',
     ];
 
     public function sort(string $column): void

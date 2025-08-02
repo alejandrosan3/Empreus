@@ -12,6 +12,8 @@ use Livewire\Component;
 class ManageTeams extends Component
 {
     public $taskId;
+    public array $taskIds = [];
+    public bool $bulk = false;
     public $showModal = false;
     public $selectedTeamId = null;
     public $selectedWorkerIds = [];
@@ -20,31 +22,39 @@ class ManageTeams extends Component
     public $assignedWorkers;
     public $availableWorkers;
 
-    public function mount($taskId)
+    public function mount($taskId = null)
     {
+        $this->assignedWorkers = collect();
         $this->taskId = $taskId;
-        $this->task = Task::find($taskId);
-        $this->loadAssignedWorkers();
+        
+        if ($this->taskId) {
+            $this->task = Task::find($taskId);
+            $this->loadAssignedWorkers();
+        }
+
         $this->loadAvailableWorkers();
         $this->loadTeams();
     }
 
     public function loadAssignedWorkers()
     {
-        $this->assignedWorkers = $this->task->workers()->get();
+         $this->assignedWorkers = $this->task ? $this->task->workers()->get() : collect();
     }
 
     public function loadAvailableWorkers()
     {
         $companyId = session('company_id');
 
-        $this->availableWorkers = User::where('role', 'worker')
+        $query = User::where('role', 'worker')
             ->whereHas('companies', function ($query) use ($companyId) {
                 $query->where('company_id', $companyId);
-            })
-            ->whereNotIn('id', $this->assignedWorkers->pluck('id'))
-            ->orderBy('name')
-            ->get();
+            });
+            
+            if (! $this->bulk && $this->assignedWorkers) {
+                $query->whereNotIn('id', $this->assignedWorkers->pluck('id'));
+            }
+
+            $this->availableWorkers = $query->orderBy('name')->get();
     }
 
     public function loadTeams()
@@ -68,7 +78,25 @@ class ManageTeams extends Component
     {
         if ($taskId == $this->taskId) {
             $this->showModal = true;
+            $this->bulk = false;
+            $this->task   = Task::find($taskId);
+            $this->loadAssignedWorkers();
+            $this->loadAvailableWorkers();
         }
+    }
+
+    #[On('open-bulk-assign-modal')]
+    public function openBulk(array $ids)
+    {
+        if ($this->taskId !== null) {
+            return;
+        }
+        $this->taskIds = $ids;
+        $this->bulk = true;
+        $this->showModal = true;
+        $this->selectedTeamId = null;
+        $this->selectedWorkerIds = [];
+        $this->loadAvailableWorkers();
     }
 
     public function closeModal()
@@ -76,7 +104,10 @@ class ManageTeams extends Component
         $this->showModal = false;
         $this->selectedTeamId = null;
         $this->selectedWorkerIds = [];
-        $this->loadAssignedWorkers();
+        $this->taskIds = [];
+        if (! $this->bulk) {
+            $this->loadAssignedWorkers();
+        }
         $this->loadAvailableWorkers();
     }
 
@@ -100,31 +131,47 @@ class ManageTeams extends Component
             }
 
             // Remove duplicates and already assigned workers
-            $workersToAssign = $workersToAssign->unique('id')
-                ->whereNotIn('id', $this->assignedWorkers->pluck('id'));
+            $workersToAssign = $workersToAssign->unique('id');
+            
+            if ($this->bulk) {
+                if ($workersToAssign->isEmpty()) {
+                    Flux::toast(
+                        variant: 'warning',
+                        text: 'No workers selected.',
+                        heading: 'Nothing to assign'
+                    );
+                    return;
+                }
+                foreach ($this->taskIds as $id) {
+                    if ($task = Task::find($id)) {
+                        $task->workers()->syncWithoutDetaching($workersToAssign->pluck('id')->toArray());
+                    }
+                }
+            } else {
+                $workersToAssign = $workersToAssign->whereNotIn('id', $this->assignedWorkers->pluck('id'));
 
-            if ($workersToAssign->isEmpty()) {
-                Flux::toast(
-                    variant: 'warning',
-                    text: 'No new workers to assign.',
-                    heading: 'Nothing to assign'
-                );
-                return;
+                if ($workersToAssign->isEmpty()) {
+                    Flux::toast(
+                        variant: 'warning',
+                        text: 'No new workers to assign.',
+                        heading: 'Nothing to assign'
+                    );
+                    return;
+                }
+                foreach ($workersToAssign as $worker) {
+                    $this->task->workers()->attach($worker->id);
+                }
             }
 
-            // Assign workers to task
-            foreach ($workersToAssign as $worker) {
-                $this->task->workers()->attach($worker->id);
-            }
 
             Flux::toast(
                 variant: 'success',
-                text: 'Successfully assigned ' . $workersToAssign->count() . ' worker(s) to the task.',
-                heading: 'Workers Assigned'
+                text: 'Workers assigned successfully',
+                heading: 'All done!'
             );
 
             $this->closeModal();
-            $this->dispatch('workersAssigned');
+            $this->dispatch('contentUpdated');
 
         } catch (\Exception $e) {
             Flux::toast(

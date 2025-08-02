@@ -99,7 +99,7 @@ Route::middleware(['auth', 'verified', SetCurrentCompany::class])
                 ->defaults('label', 'Tasks Progress')
                 ->defaults('icon', 'queue-list');
 
-            Route::get('task-board', \App\Livewire\TaskBoard::class)
+            Route::get('task-board', \App\Livewire\Task\TaskBoard::class)
                 ->name('task-board')
                 ->defaults('label', 'Tasks Board')
                 ->defaults('icon', 'view-columns');
@@ -108,6 +108,16 @@ Route::middleware(['auth', 'verified', SetCurrentCompany::class])
                 ->name('task-calendar')
                 ->defaults('label', 'Tasks Calendar')
                 ->defaults('icon', 'calendar');
+
+            Route::get('task-scheduler', \App\Livewire\Task\TaskScheduler::class)
+                ->name('task-scheduler')
+                ->defaults('label', 'Tasks Scheduler')
+                ->defaults('icon', 'calendar');
+
+            Route::get('lot-map', \App\Livewire\Maps\LotMap::class)
+                ->name('lot-map')
+                ->defaults('label', 'Lot Map')
+                ->defaults('icon', 'map');
 
             Route::get('/lots/{lot_id}/details', LotDetails::class)
                 ->name('lot-details')
