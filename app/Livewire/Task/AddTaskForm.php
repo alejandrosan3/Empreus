@@ -45,6 +45,13 @@ class AddTaskForm extends Component
     public $status_type_id        = null;
     public $note                  = '';
 
+     // Toggle for creating a new Task Type on the fly
+    public bool   $showTaskInput      = false;
+    public string $newTaskType        = '';
+    public string $taskToggleTooltip  = 'Create New Task';
+    public string $taskToggleIcon     = 'plus';
+
+
     // Validation rules
     public function rules(): array
     {
@@ -64,6 +71,7 @@ class AddTaskForm extends Component
                 Rule::unique('tasks', 'task_type_id')
                     ->where(fn($query) => $query->where('lot_id', $lotId))
             ],
+            'newTaskType'          => $this->showTaskInput ? 'required|string|max:255' : 'nullable',
             'order_number'         => 'required|string',
             'price'                => 'required|numeric|min:0',
             'is_extra'             => 'required|in:0,1',
@@ -80,6 +88,7 @@ class AddTaskForm extends Component
         'price.required'       => 'Price can\'t be empty',
         'task_type_id.required' => 'Pick a task',
         'task_type_id.unique'     => 'This task already exists for this Subdivision and Lot',
+        'newTaskType.required'  => 'Enter a task name.',
         'status_type_id'       => 'Pick a status',
         'is_extra.required'    => 'Pick the Order Type',
     ];
@@ -133,6 +142,12 @@ class AddTaskForm extends Component
 
         // default “pending”
         $this->status_type_id = 1;
+        
+        // Task type creation toggle defaults
+        $this->showTaskInput     = false;
+        $this->newTaskType       = '';
+        $this->taskToggleTooltip = 'Create New Task';
+        $this->taskToggleIcon    = 'plus';
 
         // 6) Build minimal card definitions
         $this->card1 = [
@@ -196,9 +211,37 @@ class AddTaskForm extends Component
         $this->lot_number = null;
     }
 
+    public function toggleTaskInput(): void
+    {
+        $this->showTaskInput = ! $this->showTaskInput;
+        if ($this->showTaskInput) {
+            $this->task_type_id = null;
+            $this->taskToggleTooltip = 'Select Task';
+            $this->taskToggleIcon = 'x-mark';
+        } else {
+            $this->newTaskType = '';
+            $this->taskToggleTooltip = 'Create New Task';
+            $this->taskToggleIcon = 'plus';
+        }
+    }
+
     public function save()
     {
         try {
+                 
+            if ($this->showTaskInput && !empty($this->newTaskType)) {
+                $taskType = TaskType::firstOrCreate(
+                    ['name' => $this->newTaskType],
+                    ['description' => $this->newTaskType]
+                );
+                Cache::forget("task_types.{$this->companyId}");
+                $this->taskTypeOptions[] = (object)[
+                    'id'   => $taskType->id,
+                    'name' => $taskType->name,
+                ];
+                $this->task_type_id = $taskType->id;
+            }
+
             $this->validate();
         } catch (ValidationException $e) {
             // 1) Push the errors into Livewire’s error bag
@@ -256,6 +299,8 @@ class AddTaskForm extends Component
         $fieldsToReset = collect($lotKeys)
             ->merge($taskKeys)
             ->push('note')
+            ->push('newTaskType')
+            ->push('showTaskInput')
             ->all();
         $this->reset($fieldsToReset);
 

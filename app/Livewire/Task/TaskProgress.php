@@ -319,6 +319,11 @@ class TaskProgress extends Component
      */
     public function mount(TaskProgressRepository $repository)
     {
+        // If no builder, jump to create view
+        if (Task::count() === 0) {
+             $this->redirectRoute('task-create');
+        }
+
         $this->repository = $repository;
 
         // load everything from config/task-progress.php

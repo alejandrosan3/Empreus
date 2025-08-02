@@ -14,6 +14,7 @@ $routes = collect(Route::getRoutes()->getRoutesByName())
             <flux:navlist.item icon="{{ Route::getRoutes()->getByName('subdivisions')->defaults['icon'] }}" href="{{ route('subdivisions') }}" :current="request()->is('subdivisions')">{{ Route::getRoutes()->getByName('subdivisions')->defaults['label'] }}</flux:navlist.item>
             <flux:navlist.item icon="{{ Route::getRoutes()->getByName('supervisors')->defaults['icon'] }}" href="{{ route('supervisors') }}" :current="request()->is('supervisors')">{{ Route::getRoutes()->getByName('supervisors')->defaults['label'] }}</flux:navlist.item>
             <flux:navlist.item icon="{{ Route::getRoutes()->getByName('workers')->defaults['icon'] }}" href="{{ route('workers') }}" :current="request()->is('workers')">{{ Route::getRoutes()->getByName('workers')->defaults['label'] }}</flux:navlist.item>
+            <flux:navlist.item icon="{{ Route::getRoutes()->getByName('teams')->defaults['icon'] }}" href="{{ route('teams') }}" :current="request()->is('teams')">{{ Route::getRoutes()->getByName('teams')->defaults['label'] }}</flux:navlist.item>
         </flux:navlist.group>
 
         <flux:navlist.item icon="{{ Route::getRoutes()->getByName('lot-progress')->defaults['icon'] }}" href="{{ route('lot-progress') }}" :current="request()->is('lot-progress')">{{ Route::getRoutes()->getByName('lot-progress')->defaults['label'] }}</flux:navlist.item>

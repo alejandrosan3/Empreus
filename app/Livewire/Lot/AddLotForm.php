@@ -45,7 +45,7 @@ class AddLotForm extends Component
 
     public bool $showSupervisorInput = false;
     public string $newSupervisor = '';
-    public string $supervisorToggleTooltip = 'Create New Subdivision';
+    public string $supervisorToggleTooltip = 'Create New Supervisor';
     public string $supervisorToggleIcon = 'plus';
 
     public function rules(): array
@@ -81,34 +81,24 @@ class AddLotForm extends Component
     public function mount(): void
     {
         $this->companyId   = session('company_id');
-        $this->companyName = Cache::rememberForever(
-            "company_{$this->companyId}_name",
-            fn () => Company::findOrFail($this->companyId)->name
-        );
+        $this->companyName = Company::findOrFail($this->companyId)->name;
 
-        $this->builders = Cache::rememberForever(
-            "builder_options.{$this->companyId}",
-            fn() => Builder::whereHas('lots', fn($q) => $q->where('company_id', $this->companyId))
-                          ->orderBy('name')
-                          ->get()
-                          ->map(fn($b) => (object)[
-                              'id'   => $b->id,
-                              'name' => $b->name,
-                          ])
-                          ->toArray()
-        );
+        $this->builders = Builder::orderBy('name')
+                        ->get()
+                        ->map(fn($b) => (object)[
+                            'id'   => $b->id,
+                            'name' => $b->name,
+                        ])
+                        ->toArray();
 
         
-        $this->supervisorOptions = Cache::rememberForever(
-        "supervisor_options.{$this->companyId}",
-        fn () => Supervisor::orderBy('name')
+        $this->supervisorOptions = Supervisor::orderBy('name')
                            ->get()
                            ->map(fn ($s) => (object)[
                                'id'   => $s->id,
                                'name' => $s->name,
                            ])
-                           ->toArray()
-        );
+                           ->toArray();
 
         /* 4) Card layout – mirrors your Task form style */
         $this->card1 = [
@@ -164,29 +154,29 @@ class AddLotForm extends Component
     }
 
     public function updatedBuilderId($builderId): void
-    {
-        $this->subdivisions = Cache::rememberForever(
-            "subdivision_options.{$this->companyId}.{$builderId}",
-            fn () => Lot::where('company_id', $this->companyId)
-                        ->where('builder_id', $builderId)
-                        ->distinct('subdivision')
-                        ->orderBy('subdivision')
-                        ->pluck('subdivision')
-                        ->map(fn ($s) => (object)[
-                            'id'   => $s,
-                            'name' => $s,
-                        ])
-                        ->toArray()
-        );
+{
+    // check if this builder really has any lots
+    $hasLots = Lot::where('company_id', $this->companyId)
+                  ->where('builder_id', $builderId)
+                  ->exists();
 
-        // inject into the card so <partials.cards> updates
-        $this->card1[1]['options'] = $this->subdivisions;
+    // if they do, scope by builder; otherwise grab every subdivision in the company
+    $this->subdivisions = Lot::where('company_id', $this->companyId)
+        ->when($hasLots, fn($q) => $q->where('builder_id', $builderId))
+        ->distinct()
+        ->orderBy('subdivision')
+        ->pluck('subdivision')
+        ->map(fn($s) => (object)[
+            'id'   => $s,
+            'name' => $s,
+        ])
+        ->toArray();
 
-        // reset downstream field
-        $this->subdivision = null;
-        $this->showSubdivisionInput = false;
-        $this->newSubdivision = '';
-    }
+    $this->card1[1]['options'] = $this->subdivisions;
+    $this->subdivision       = null;
+    $this->showSubdivisionInput = false;
+    $this->newSubdivision    = '';
+}
 
     public function render()
     {

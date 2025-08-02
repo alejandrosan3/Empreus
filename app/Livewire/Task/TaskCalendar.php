@@ -3,77 +3,132 @@
 namespace App\Livewire\Task;
 
 use App\Models\Task;
+use App\Models\TaskType;
+use App\Models\Team;
 use App\Traits\WithToast;
 use Carbon\Carbon;
+use Flux\DateRange;
 use Livewire\Component;
+use Livewire\Attributes\On;
+use Livewire\Attributes\Computed;
 
 class TaskCalendar extends Component
 {
     use WithToast;
     public array $weekDays = [];
     public array $tasksByDay = [];
-    public $currentWeekStart;
+    public $currentRangeStart;
+    public string $date;
+    public $rangeDays = 7;
+
+    public DateRange $range;
+
+    public array $columns = [];
+    public array $selectedFilters = [];
+    public array $filters = [];
 
     protected $listeners = ['taskDateUpdated'];
 
-    protected $loadingStates = ['previousWeek', 'nextWeek', 'today', 'taskDateUpdated'];
+    protected $loadingStates = ['previousRange', 'nextRange', 'today', 'taskDateUpdated'];
 
 
     public function mount()
     {
-        $this->currentWeekStart = Carbon::now()->startOfWeek();
-        $this->loadWeekDays();
+
+        $this->range = DateRange::thisWeek();
+        $this->currentRangeStart = $this->range->copy()->start();
+
+         $this->columns = [
+            ['label' => 'Task Type', 'value' => 'task_type', 'filterable' => true, 'filterType' => 'select', 'color' => 'green'],
+            ['label' => 'Team',      'value' => 'team',      'filterable' => true, 'filterType' => 'select', 'color' => 'purple'],
+        ];
+
+        $this->dispatch('update-columns', columns: $this->columns);
+        $this->dispatchFilters();
+
+        $this->loadRangeDays();
         $this->loadTasks();
     }
 
-    public function previousWeek()
+    protected function slideRange(int $direction): void
     {
-        $this->currentWeekStart->subWeek();
-        $this->loadWeekDays();
+        // direction = +1 for next, −1 for previous
+        $this->currentRangeStart->addDays($direction * $this->rangeDays);
+
+        $start = $this->currentRangeStart->copy();
+        $end   = $start->copy()->addDays($this->rangeDays - 1);
+
+        $this->range = new DateRange($start, $end);
+    }
+
+    public function previousRange()
+    {
+        $this->slideRange(-1);
+        $this->loadRangeDays();
         $this->loadTasks();
     }
 
-    public function nextWeek()
+    public function nextRange()
     {
-        $this->currentWeekStart->addWeek();
-        $this->loadWeekDays();
+        $this->slideRange(1);
+        $this->loadRangeDays();
         $this->loadTasks();
     }
 
     public function today()
     {
-        $this->currentWeekStart = Carbon::now()->startOfWeek();
-        $this->loadWeekDays();
+        // Resets this to the current weekly range
+        $this->currentRangeStart = Carbon::now()->startOfWeek();
+        $this->rangeDays= 7;
+
+        $this->loadRangeDays();
         $this->loadTasks();
     }
 
     #[Computed]
-    public function isCurrentWeek(): bool
+    public function isCurrentRange(): bool
     {
-        return $this->currentWeekStart->startOfWeek()->eq(Carbon::now()->startOfWeek());
+        return $this->currentRangeStart->copy()->eq(Carbon::now()->startOfWeek());
+       
     }
 
-    private function loadWeekDays(): void
+    private function loadRangeDays(): void
     {
         $this->weekDays = [];
         $today = Carbon::now()->format('Y-m-d');
 
-        for ($i = 0; $i < 7; $i++) {
-            $date = $this->currentWeekStart->copy()->addDays($i);
+        for ($i = 0; $i < $this->rangeDays; $i++) {
+            $date = $this->currentRangeStart->copy()->addDays($i);
+
             $this->weekDays[] = [
                 'date' => $date->format('Y-m-d'),
-                'dayName' => $date->format('l'),
+                'dayName' => $date->format('D'),
                 'dayNumber' => $date->format('j'),
                 'isToday' => $date->format('Y-m-d') === $today,
             ];
         }
     }
 
+    // Triggers Whenever $range is updated by the date-picker
+    public function updatedRange()
+    {   
+        
+        // 1) Reset your “anchor” date
+        $this->currentRangeStart = $this->range->copy()->start();
+
+        // 3) Turn the period into an array of Carbon dates, then count them
+        $this->rangeDays = count($this->range->days()->toArray());
+
+        // 4) Rebuild
+        $this->loadRangeDays();
+        $this->loadTasks();
+    }
+
     private function loadTasks(): void
     {
         $this->tasksByDay = [];
-        $startDate = $this->currentWeekStart;
-        $endDate = $this->currentWeekStart->copy()->endOfWeek();
+        $startDate = $this->range->copy()->start();
+        $endDate   = $this->range->copy()->end();
 
         $tasks = Task::query()
             ->select(
@@ -93,6 +148,14 @@ class TaskCalendar extends Component
             ->where('tasks.company_id', session('company_id'))
             ->whereIn('status_types.identifier', ['confirmed', 'in_progress'])
             ->whereBetween('tasks.scheduled_start_date', [$startDate, $endDate])
+            ->when(!empty($this->selectedFilters['task_type']), function ($q) {
+                $q->whereIn('tasks.task_type_id', $this->selectedFilters['task_type']);
+            })
+            ->when(!empty($this->selectedFilters['team']), function ($q) {
+                $q->join('task_user', 'tasks.id', '=', 'task_user.task_id')
+                  ->join('team_worker', 'task_user.user_id', '=', 'team_worker.worker_id')
+                  ->whereIn('team_worker.team_id', $this->selectedFilters['team']);
+            })
             ->orderBy('tasks.scheduled_start_date')
             ->get();
 
@@ -101,6 +164,26 @@ class TaskCalendar extends Component
             $dayKey = Carbon::parse($task->scheduled_start_date)->format('Y-m-d');
             $this->tasksByDay[$dayKey][] = $task;
         }
+    }
+
+        #[On('global-filters-updated')]
+    public function handleGlobalFilters(array $filters)
+    {
+        $this->selectedFilters = $filters;
+        $this->loadTasks();
+        $this->dispatchFilters();
+    }
+
+
+    #[On('company-updated')]
+    public function dispatchFilters()
+    {
+        $this->filters = [
+            'task_type' => TaskType::orderBy('name')->get()->map(fn($t) => ['value' => $t->id, 'label' => $t->name])->toArray(),
+            'team'      => Team::orderBy('name')->get()->map(fn($t) => ['value' => $t->id, 'label' => $t->name])->toArray(),
+        ];
+
+        $this->dispatch('filters-updated', filters: $this->filters);
     }
 
     public function taskDateUpdated($taskId, $newDate)
@@ -139,9 +222,20 @@ class TaskCalendar extends Component
         }
     }
 
+    public function updatedDate()
+    {
+        $this->currentWeekStart = Carbon::parse($this->date)->startOfDay();
+        $this->range = new DateRange($this->currentWeekStart->copy(), $this->currentWeekStart->copy()->addDays($this->rangeDays - 1));
+        $this->loadWeekDays();
+        $this->loadTasks();
+    }
+
 
     public function render()
     {
-        return view('livewire.task.task-calendar')->layout('layouts.app');
+        return view('livewire.task.task-calendar')->layout('layouts.app', [
+            'showFilters' => true,
+            'currentAddable' => 'task',
+        ]);
     }
 }
