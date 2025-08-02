@@ -105,7 +105,10 @@
                     @endforelse
                     @if($hasMore[$status] ?? false)
                         <div class="text-center py-2">
-                            <flux:button size="xs" wire:click="$dispatch('load-more', ['{{ $status }}'] )">Load More</flux:button>
+                            <flux:button size="xs"
+                                 wire:click="$dispatch('load-more', ['{{ $status }}'] )">Load More
+                                <span>({{ $howManyMore[$status] }}+)</span>
+                            </flux:button>
                         </div>
                     @endif
 

@@ -83,16 +83,15 @@
 
     {{-- Tab Content --}}
         @if ($activeTab === 'board')
-            <livewire:task.task-board :$range :$tasks :$hasMore :$statuses :key="'board-'. $range->start(). '-'. $range->end().'-'.$refreshKey" />
+            <livewire:task.task-board :$range :$tasks :$hasMore :$howManyMore :$statuses :key="'board-'. $range->start(). '-'. $range->end().'-'.$refreshKey" />
         @endif
 
-
     @if ($activeTab === 'calendar')
-        <livewire:task.task-calendar :$range :$tasks :$hasMore :$statuses :$tasksByDay :$rangeDays :key="'calendar-'. $range->start(). '-'. $range->end().'-'.$refreshKey"/>
+        <livewire:task.task-calendar :$range :$tasks :$hasMore :$howManyMore :$statuses :$tasksByDay :$rangeDays :key="'calendar-'. $range->start(). '-'. $range->end().'-'.$refreshKey"/>
     @endif
 
     @if ($activeTab === 'map')
-        <livewire:maps.lot-map :$range :$lots :$subdivisions :key="'map-'. $range->start(). '-'. $range->end()" />
+        <livewire:maps.lot-map :$range :$lots :$subdivisions :$howManyMore :key="'map-'. $range->start(). '-'. $range->end()" />
     @endif
 
     {{-- Centralized Scripts --}}

@@ -89,8 +89,10 @@
                                         <flux:button
                                             size="xs"
                                             wire:click="$dispatch('load-more', [null, '{{ $day['date'] }}'])"
-                                        >
-                                            Load More
+                                        >Load More
+                                            <span>
+                                                ({{ $howManyMore[$day['date']] }}+)
+                                            </span>
                                         </flux:button>
                                     </div>
                                 @endif

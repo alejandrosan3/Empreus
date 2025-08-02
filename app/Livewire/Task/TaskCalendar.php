@@ -23,6 +23,7 @@ class TaskCalendar extends Component
     public ?string $currentNote = null;
     public array $hasMore = [];
     public array $statuses = [];
+    public array $howManyMore = [];
 
 
     public function showLatestNote(int $taskId): void

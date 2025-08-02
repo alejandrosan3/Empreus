@@ -29,6 +29,8 @@ use App\Models\Lot;
     public array $statuses = [];
     public array $hasMore = [];
 
+    public array $howManyMore = [];
+
     public int $chunk = 15;
     // this will help refresh the children component when changes are made.
     public int $refreshKey;
@@ -358,6 +360,7 @@ use App\Models\Lot;
         foreach ($this->statuses as $status => $label) {
             $count = ($this->tasks[$status] ?? collect())->count();
             $this->hasMore[$status] = $count > $this->pageSize;
+            $this->howManyMore[$status] = $count - $this->pageSize;
         }
 
         foreach ($this->range->days() as $carbonDate) {
@@ -376,6 +379,7 @@ use App\Models\Lot;
 
             // 2️⃣ tell the Blade whether there is more to load
             $this->hasMore[$date]   = $allTasks->count() > $this->pageSize;
+            $this->howManyMore[$date] = $allTasks->count() - $this->pageSize;
         }
         $this->updateTimeStamp();
     }
@@ -402,8 +406,9 @@ use App\Models\Lot;
                 $start,
                 $end
             );
-            $this->tasks[$status]  = $current->concat($more)->all();
+            $this->tasks[$status]  = $current->concat((array)$more)->all();
             $this->hasMore[$status] = $more->count() === $chunk;
+            $this->howManyMore[$status] = $this->howManyMore[$status] - $chunk;
 
             if ($more->count() === $chunk) {
                 $this->pageSize += $chunk;
@@ -422,8 +427,9 @@ use App\Models\Lot;
                 $current->count()    // offset
             );
 
-            $this->tasksByDay[$date] = $current->concat($more)->all();
+            $this->tasksByDay[$date] = $current->concat((array)$more)->all();
             $this->hasMore[$date]    = $more->count() === $chunk;
+            $this->howManyMore[$date] = $this->howManyMore[$date] - $chunk;
 
             if ($more->count() === $chunk) {
                 $this->pageSize += $chunk;
