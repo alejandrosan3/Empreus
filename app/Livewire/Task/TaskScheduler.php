@@ -406,7 +406,7 @@ use App\Models\Lot;
                 $start,
                 $end
             );
-            $this->tasks[$status]  = $current->concat((array)$more)->all();
+            $this->tasks[$status]  = $current->concat($more)->all();
             $this->hasMore[$status] = $more->count() === $chunk;
             $this->howManyMore[$status] = $this->howManyMore[$status] - $chunk;
 
@@ -427,7 +427,7 @@ use App\Models\Lot;
                 $current->count()    // offset
             );
 
-            $this->tasksByDay[$date] = $current->concat((array)$more)->all();
+            $this->tasksByDay[$date] = $current->concat($more)->all();
             $this->hasMore[$date]    = $more->count() === $chunk;
             $this->howManyMore[$date] = $this->howManyMore[$date] - $chunk;
 
