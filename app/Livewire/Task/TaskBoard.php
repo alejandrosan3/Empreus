@@ -19,9 +19,9 @@ class TaskBoard extends Component
     public array $hasMore = [];
     public array $statuses = [];
     public ?string $currentNote = null;
-
     public DateRange $range;
     public array $howManyMore = [];
+    public array $totalTasksByStatus = [];
 
 
     public function showLatestNote(int $taskId): void

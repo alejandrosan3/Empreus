@@ -75,19 +75,13 @@
             </div>
         </div>
 
-    @php
-            // quick helper to count all tasks across statuses - so we can correctly update the
-            $tasksCount = array_sum(array_map('count', $tasks));
-            $calTasksCount = array_sum(array_map('count', $tasksByDay));
-        @endphp
-
     {{-- Tab Content --}}
         @if ($activeTab === 'board')
-            <livewire:task.task-board :$range :$tasks :$hasMore :$howManyMore :$statuses :key="'board-'. $range->start(). '-'. $range->end().'-'.$refreshKey" />
+            <livewire:task.task-board :$range :$tasks :$hasMore :$howManyMore :$totalTasksByStatus :$statuses :key="'board-'. $range->start(). '-'. $range->end().'-'.$refreshKey" />
         @endif
 
     @if ($activeTab === 'calendar')
-        <livewire:task.task-calendar :$range :$tasks :$hasMore :$howManyMore :$statuses :$tasksByDay :$rangeDays :key="'calendar-'. $range->start(). '-'. $range->end().'-'.$refreshKey"/>
+        <livewire:task.task-calendar :$range :$tasks :$hasMore :$howManyMore :$statuses :$tasksByDay :$totalTasksByDay :$rangeDays :key="'calendar-'. $range->start(). '-'. $range->end().'-'.$refreshKey"/>
     @endif
 
     @if ($activeTab === 'map')
