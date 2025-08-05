@@ -159,6 +159,7 @@ use App\Models\Lot;
     {
         $this->slideRange(-1);
         $this->loadData();
+        $this->dispatch('rangeChanged');
     }
 
     public function taskDateUpdated($taskId, $newDate)
@@ -253,7 +254,6 @@ use App\Models\Lot;
         $this->slideRange(1);
         $this->loadData();
         $this->dispatch('rangeChanged');
-        $this->updateTimeStamp();
     }
 
     public function today()
@@ -268,11 +268,11 @@ use App\Models\Lot;
     }
 
     // this is only updated when you actually handle the datepicker.
-    public function updatedRange(DateRange $new)
+    public function updatedRange(): void
     {
         $this->currentRangeStart = $this->range->copy()->start();
         $this->rangeDays = count($this->range->days()->toArray());
-        $this->updateTimeStamp();
+        $this->loadData();
         $this->dispatch('rangeChanged');
     }
 
