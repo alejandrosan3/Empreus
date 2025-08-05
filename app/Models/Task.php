@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Carbon\CarbonInterface;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -169,20 +170,31 @@ class Task extends Model
     }
 
     /**
-     * Get tasks by status for the current company.
+     * Retrieve tasks filtered by status for the current company.
      *
-     * @param string $status
-     * @param int $limit
-     * @param int $offset
-     * @param \Carbon\CarbonInterface|null $startDate
-     * @param \Carbon\CarbonInterface|null $endDate
-     * @return Collection
+     * This method fetches tasks filtered by a specified status, associated with the
+     * current company in session. It also allows filtering by scheduled start date
+     * range, applying limits and offsets for pagination.
+     *
+     * @param string $status The identifier for the status type.
+     * @param int|null $limit The maximum number of tasks to retrieve (default is 100).
+     * @param int $offset The number of records to skip (default is 0).
+     * @param CarbonInterface|null $startDate The start date for filtering the scheduled start date (optional).
+     * @param CarbonInterface|null $endDate The end date for filtering the scheduled start date (optional).
+     *
+     * @return \Illuminate\Support\Collection A collection of tasks matching the criteria.
      */
-    public static function getTasksByStatusForCurrentCompany(string $status, int $limit = 100, int $offset = 0, ?\Carbon\CarbonInterface $startDate = null, ?\Carbon\CarbonInterface $endDate = null)
+    public static function getTasksByStatusForCurrentCompany(
+        string           $status,
+        ?int             $limit     = 100,
+        int              $offset    = 0,
+        ?CarbonInterface $startDate = null,
+        ?CarbonInterface $endDate   = null
+    ): \Illuminate\Support\Collection
     {
         $companyId = session('company_id');
 
-        return self::query()
+        $query = self::query()
             ->select(
                 'tasks.*',
                 'lots.subdivision as subdivision',
@@ -199,33 +211,39 @@ class Task extends Model
             ->join('status_types', 'tasks.status_type_id', '=', 'status_types.id')
             ->join('builders', 'lots.builder_id', '=', 'builders.id')
             ->where('tasks.company_id', $companyId)
-
             ->where('status_types.identifier', $status)
             ->when($startDate && $endDate, function ($q) use ($startDate, $endDate) {
                 $q->whereBetween('tasks.scheduled_start_date', [$startDate, $endDate]);
             })
-            ->orderBy('tasks.scheduled_start_date', 'asc')
-            ->offset($offset)
-            ->limit($limit)
-            ->get();
+            ->orderBy('tasks.scheduled_start_date', 'asc');
+
+        // Apply offset if provided
+        if ($offset > 0) {
+            $query->offset($offset);
+        }
+
+        // Apply limit only if it's not null
+        if ($limit !== null) {
+            $query->limit($limit);
+        }
+
+        return $query->get();
     }
 
     /**
-     * Return all tasks for the current company whose scheduled start date
-     * lies between the given dates (inclusive).
-     *
-     * @param \Carbon\CarbonInterface $startDate  range start (yyyy-mm-dd …)
-     * @param \Carbon\CarbonInterface $endDate    range end   (yyyy-mm-dd …)
-     * @param int                     $limit      max rows to return
-     * @param int                     $offset     offset for pagination
-     *
-     * @return \Illuminate\Support\Collection     collection of Task models
+     * Return tasks for the current company whose scheduled start date
+     * lies between the given dates (inclusive)
+     * @param CarbonInterface $startDate
+     * @param CarbonInterface $endDate
+     * @param int $limit
+     * @param int $offset
+     * @return Collection
      */
-    public static function getTasksByDatesForCurrentCompany( \Carbon\CarbonInterface $startDate,  \Carbon\CarbonInterface $endDate,  int $limit  = 100,  int $offset = 0,
-    ) {
+    public static function getTasksByDatesForCurrentCompany(CarbonInterface $startDate, CarbonInterface $endDate, int $limit  = 100, int $offset = 0): Collection
+    {
         $companyId = session('company_id');
 
-        return self::query()
+        $query = self::query()
             ->select(
                 'tasks.*',
                 'lots.subdivision as subdivision',
@@ -242,10 +260,19 @@ class Task extends Model
             ->join('builders',    'lots.builder_id',    '=', 'builders.id')
             ->where('tasks.company_id', $companyId)
             ->whereBetween('tasks.scheduled_start_date', [$startDate, $endDate])
-            ->orderBy('tasks.scheduled_start_date', 'asc')
-            ->offset($offset)
-            ->limit($limit)
-            ->get();
+            ->orderBy('tasks.scheduled_start_date', 'asc');
+
+        // Apply offset if provided
+        if ($offset > 0) {
+            $query->offset($offset);
+        }
+
+        // Apply limit only if it's not null
+        if ($limit !== null) {
+            $query->limit($limit);
+        }
+
+        return $query->get();
     }
 
 }

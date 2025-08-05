@@ -24,6 +24,7 @@ class TaskCalendar extends Component
     public array $hasMore = [];
     public array $statuses = [];
     public array $howManyMore = [];
+    public array $totalTasksByDay = [];
 
 
     public function showLatestNote(int $taskId): void
