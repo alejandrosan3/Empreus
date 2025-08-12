@@ -30,7 +30,8 @@ use App\Models\Lot;
     public array $hasMore = [];
 
     public array $howManyMore = [];
-
+    public array $totalTasksByDay = [];
+    public array $totalTasksByStatus = [];
     public int $chunk = 15;
     // this will help refresh the children component when changes are made.
     public int $refreshKey;
@@ -159,6 +160,7 @@ use App\Models\Lot;
     {
         $this->slideRange(-1);
         $this->loadData();
+        $this->dispatch('rangeChanged');
     }
 
     public function taskDateUpdated($taskId, $newDate)
@@ -253,7 +255,6 @@ use App\Models\Lot;
         $this->slideRange(1);
         $this->loadData();
         $this->dispatch('rangeChanged');
-        $this->updateTimeStamp();
     }
 
     public function today()
@@ -268,11 +269,11 @@ use App\Models\Lot;
     }
 
     // this is only updated when you actually handle the datepicker.
-    public function updatedRange(DateRange $new)
+    public function updatedRange(): void
     {
         $this->currentRangeStart = $this->range->copy()->start();
         $this->rangeDays = count($this->range->days()->toArray());
-        $this->updateTimeStamp();
+        $this->loadData();
         $this->dispatch('rangeChanged');
     }
 
@@ -288,8 +289,36 @@ use App\Models\Lot;
     }
 
     /**
-     * Fetch every piece of information the three child components
-     * (TaskBoard, TaskCalendar, LotMap) need, using ONE query.
+     * Loads data based on the given date range, filters, and company context.
+     *
+     * This method retrieves and organizes task-related data, including tasks,
+     * lots, subdivisions, and statuses. The data is grouped and prepared
+     * for both daily and status-based views for use in UI components.
+     *
+     * Key responsibilities:
+     * - Retrieves tasks for the current company within the specified date range.
+     * - Applies relationships such as task type, status type, lot, and builder.
+     * - Groups tasks by status type for display and calculates totals per status.
+     * - Groups tasks by day and prepares paginated subsets for daily view.
+     * - Retrieves lots and subdivisions for display in the user interface.
+     * - Determines "has more" and "how many more" tasks for pagination UI logic.
+     * - Calculates total task counts per day for display purposes.
+     * - Updates a timestamp after processing the data to signal data freshness.
+     *
+     * Relationships included in task queries:
+     * - taskType        (used for task name and color display)
+     * - statusType      (used for task grouping and visualization on boards)
+     * - lot             (provides address and subdivision info)
+     * - lot.builder     (provides builder name for additional context)
+     *
+     * Assumptions:
+     * - Task queries are limited to required columns to minimize data payload.
+     * - Pagination is handled to ensure that only a subset of tasks are displayed.
+     *
+     * Data Preparation:
+     * - Groups tasks by status type (with counts) for display on boards.
+     * - Groups tasks by scheduled date (with paginated subsets) for calendars.
+     * - Calculates additional information such as "has more" tasks and totals.
      */
     public function loadData(): void
     {
@@ -297,20 +326,10 @@ use App\Models\Lot;
         $end   = $this->range->copy()->end();
         $taskTypeIds = $this->filterIds($this->selectedFilters['task_type'] ?? []);
 
-        /*
-         |------------------------------------------------------------------
-         | 1.  Tasks + relationships
-         |------------------------------------------------------------------
-         | Relationships included:
-         |   • taskType        – calendar & board show the task name / colour
-         |   • statusType      – board groups by status identifier
-         |   • team            – shown on cards (optional, keep if displayed)
-         |   • lot             – address / subdivision
-         |   • lot.builder     – builder’s name on cards & tooltip
-         |
-         | Restrict the selected columns to the ones that the views touch;
-         | that keeps the payload small without breaking lazy-loaded props.
+        /**
+         * Query for tasks by status.
          */
+        $companyId = session('company_id');
         $tasks = Task::query()
             ->with([
                 'taskType:id,name',
@@ -318,6 +337,7 @@ use App\Models\Lot;
                 'lot:id,address,subdivision,builder_id',
                 'lot.builder:id,name',
             ])
+            ->where('company_id', $companyId)
             ->whereBetween('scheduled_start_date', [$start, $end])
             ->when($taskTypeIds, fn ($q) =>
             $q->whereIn('task_type_id', $taskTypeIds)
@@ -325,24 +345,14 @@ use App\Models\Lot;
             ->orderBy('scheduled_start_date')
             ->get();
 
-
         $this->tasks = $tasks
             ->groupBy(fn ($t) => $t->statusType?->identifier ?? 'unknown')
-            ->map(fn ($group) => $group->take($this->pageSize))
-            ->all();
-
-
-        $this->tasksByDay = $tasks
-            ->filter(fn ($t) => filled($t->scheduled_start_date))
-            ->groupBy(function ($t) {
-                // guard against “string instead of Carbon” situations
-                return $t->scheduled_start_date instanceof \Carbon\CarbonInterface
-                    ? $t->scheduled_start_date->toDateString()
-                    : \Carbon\Carbon::parse($t->scheduled_start_date)->toDateString();
+            ->map(function ($group, $status) {
+                // Store the total count for each status before limiting
+                $this->totalTasksByStatus[$status] = $group->count();
+                return $group->take($this->pageSize);
             })
-            ->map(fn ($group) => $group->values())
             ->all();
-
 
         $lots = Lot::confirmedTasksInRange($this->range)
             ->get(['id', 'address', 'subdivision']);
@@ -358,21 +368,23 @@ use App\Models\Lot;
         $this->statuses = $this->statuses();
 
         foreach ($this->statuses as $status => $label) {
-            $count = ($this->tasks[$status] ?? collect())->count();
-            $this->hasMore[$status] = $count > $this->pageSize;
-            $this->howManyMore[$status] = $count - $this->pageSize;
+            $this->hasMore[$status] = ($this->totalTasksByStatus[$status] ?? 0) > $this->pageSize;
+            $this->howManyMore[$status] = ($this->totalTasksByStatus[$status] ?? 0) - $this->pageSize;
         }
+
+        // Reset the total counts array
+        $this->totalTasksByDay = [];
 
         foreach ($this->range->days() as $carbonDate) {
             $date = $carbonDate->toDateString();
 
-            // full result set for counting/paging
-            $allTasks = Task::whereDate('scheduled_start_date', $date)
-                ->when($taskTypeIds, fn ($q) =>
-                $q->whereIn('task_type_id', $taskTypeIds)
-                )
-                ->orderBy('scheduled_start_date')
-                ->get();
+            $allTasks = Task::getTasksByDatesForCurrentCompany(
+                \Carbon\Carbon::parse($date)->startOfDay(),
+                \Carbon\Carbon::parse($date)->endOfDay(),
+            );
+
+            // Store the total count for each day
+            $this->totalTasksByDay[$date] = $allTasks->count();
 
             // 1️⃣ keep only the first page in the public property
             $this->tasksByDay[$date] = $allTasks->take($this->pageSize)->values()->all();
@@ -386,6 +398,10 @@ use App\Models\Lot;
 
     public function loadMore(string $status=null, $date=null): void
     {
+        if (!$status && !$date) {
+            return;
+        }
+
         logger()->info('loadMoreTasks – ENTER', [
             'date'  => $date,
             'current' => count($this->tasksByDay[$date] ?? []),
@@ -406,9 +422,9 @@ use App\Models\Lot;
                 $start,
                 $end
             );
-            $this->tasks[$status]  = $current->concat((array)$more)->all();
-            $this->hasMore[$status] = $more->count() === $chunk;
-            $this->howManyMore[$status] = $this->howManyMore[$status] - $chunk;
+            $this->tasks[$status]  = $current->concat($more)->all();
+            $this->hasMore[$status] = ($this->totalTasksByStatus[$status] ?? 0) > count($this->tasks[$status] ?? []);
+            $this->howManyMore[$status] = ($this->totalTasksByStatus[$status] ?? 0) - count($this->tasks[$status] ?? []);
 
             if ($more->count() === $chunk) {
                 $this->pageSize += $chunk;
@@ -418,25 +434,27 @@ use App\Models\Lot;
         if ($date) {
             $current = collect($this->tasksByDay[$date] ?? []);
 
-
             $more = Task::getTasksByDatesForCurrentCompany(
             // same day for both start & end → single day filter
-                \Carbon\Carbon::parse($date),
-                \Carbon\Carbon::parse($date),
+                \Carbon\Carbon::parse($date)->startOfDay(),
+                \Carbon\Carbon::parse($date)->endOfDay(),
                 $chunk,
                 $current->count()    // offset
             );
 
-            $this->tasksByDay[$date] = $current->concat((array)$more)->all();
-            $this->hasMore[$date]    = $more->count() === $chunk;
-            $this->howManyMore[$date] = $this->howManyMore[$date] - $chunk;
+            $this->tasksByDay[$date] = $current->concat($more)->all();
+            $this->hasMore[$date] = ($this->totalTasksByDay[$date] ?? 0) > count($this->tasksByDay[$date] ?? []);
+            $this->howManyMore[$date] = ($this->totalTasksByDay[$date] ?? 0) - count($this->tasksByDay[$date] ?? []);
 
             if ($more->count() === $chunk) {
                 $this->pageSize += $chunk;
             }
 
             logger()->info('loadMoreTasks – LEAVE', [
-                'Date'  => $date,
+                'date'  => $date,
+                'status'  => $status,
+                'found'  => $more->count(),
+                'totalTasksByDay'  => $this->totalTasksByDay[$date],
                 'current' => count($this->tasksByDay[$date] ?? []),
                 'hasMore' => $this->hasMore[$date] ?? null,
             ]);

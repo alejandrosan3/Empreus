@@ -10,7 +10,7 @@
                 <flux:input wire:model="fieldValue" label="Field Content" />
             @elseif($fieldType === 'select')
                 <flux:select wire:model="fieldValue" variant="listbox" searchable clearable>
-                    
+
 
                     @foreach($selectOptions as $key => $label)
                         <flux:select.option value="{{ $key }}" > {{ $label }} </flux:select.option>
@@ -18,9 +18,7 @@
                 </flux:select>
 
             @elseif($fieldType === 'date')
-                <flux:date-picker class="size-auto" value="{{ $key }}" wire:model="fieldValue" label="Select the date" clearable with-inputs with-today />
-                
-            
+                <flux:date-picker class="size-auto" value="{{ $fieldType }}" wire:model="fieldValue" label="Select the date" clearable with-inputs with-today />
             @endif
 
             <div class="flex">
@@ -29,5 +27,5 @@
             </div>
         </div>
     </flux:modal>
-    
+
 </div>

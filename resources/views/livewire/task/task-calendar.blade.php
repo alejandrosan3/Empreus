@@ -8,7 +8,7 @@
                 <div class="text-center p-4 {{ $day['isToday'] ? 'bg-blue-50 dark:bg-blue-900/20 rounded-t-lg border-t-2 border-blue-500' : 'bg-gray-50 dark:bg-zinc-800 rounded-t-lg' }}">
                     <div class="font-semibold {{ $day['isToday'] ? 'text-blue-700 dark:text-blue-400' : '' }}">
                         <flux:badge color="blue" size="sm">
-                            {{ count($tasksByDay[$day['date']] ?? []) }}
+                            {{ $totalTasksByDay[$day['date']] ?? 0 }}
                         </flux:badge>
                         {{ $day['dayName'] }}
 
@@ -90,9 +90,6 @@
                                             size="xs"
                                             wire:click="$dispatch('load-more', [null, '{{ $day['date'] }}'])"
                                         >Load More
-                                            <span>
-                                                ({{ $howManyMore[$day['date']] }}+)
-                                            </span>
                                         </flux:button>
                                     </div>
                                 @endif

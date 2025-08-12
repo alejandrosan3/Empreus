@@ -15,7 +15,7 @@
                         <flux:heading>
                             {{ $label }}
                             <flux:badge color="blue" size="sm">
-                                {{ count($tasks[$status] ?? []) ?? 0 }}
+                                {{ $totalTasksByStatus[$status] ?? 0 }}
                             </flux:badge>
                         </flux:heading>
                     </div>
@@ -107,7 +107,6 @@
                         <div class="text-center py-2">
                             <flux:button size="xs"
                                  wire:click="$dispatch('load-more', ['{{ $status }}'] )">Load More
-                                <span>({{ $howManyMore[$status] }}+)</span>
                             </flux:button>
                         </div>
                     @endif
