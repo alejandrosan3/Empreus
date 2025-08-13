@@ -91,6 +91,12 @@
                                         {{ $task->lot->subdivision }} - {{ $task->lot->lot_number }}
                                     </dd>
 
+                                    <dd class="flex items-center gap-1">
+                                        <flux:icon name="arrows-pointing-out" class="w-4 h-4 text-gray-500" />
+                                        {{ $task->lot->house_type }} - {{ $task->lot->stories_count }} floor{{$task->lot->stories_count > 1 ? 's' : '' }}
+
+                                    </dd>
+
                                     <dt class="sr-only">Scheduled Start</dt>
                                     <dd class="flex items-center gap-1 font-bold">
                                         <flux:icon name="calendar" class="w-4 h-4 text-gray-500" />

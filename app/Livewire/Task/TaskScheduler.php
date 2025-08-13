@@ -129,6 +129,7 @@ use App\Models\Lot;
                 'lots.subdivision as subdivision',
                 'lots.lot_number  as lot_number',
                 'lots.address     as address',
+                'lots.num_of_floors as num_of_floors',
                 'task_types.name  as task_type_name',
                 'supervisors.name as supervisor_name',
                 'builders.name    as builder_name',
@@ -334,7 +335,7 @@ use App\Models\Lot;
             ->with([
                 'taskType:id,name',
                 'statusType:id,identifier,name,color,color_dark',
-                'lot:id,address,subdivision,builder_id',
+                'lot:id,address,subdivision,builder_id,num_of_floors',
                 'lot.builder:id,name',
             ])
             ->where('company_id', $companyId)
