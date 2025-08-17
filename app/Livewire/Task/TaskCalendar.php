@@ -25,6 +25,7 @@ class TaskCalendar extends Component
     public array $statuses = [];
     public array $howManyMore = [];
     public array $totalTasksByDay = [];
+    public array $checkedTasks = [];
 
 
     public function showLatestNote(int $taskId): void
@@ -34,6 +35,13 @@ class TaskCalendar extends Component
 
         if ($task?->taskNotes->isNotEmpty()) {
             $this->currentNote   = $task->taskNotes->first()->description;
+        }
+    }
+
+    public function startBulkAssign(): void
+    {
+        if (! empty($this->checkedTasks)) {
+            $this->dispatch('open-bulk-assign-modal', ids: $this->checkedTasks);
         }
     }
 
