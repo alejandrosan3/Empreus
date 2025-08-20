@@ -41,19 +41,29 @@ async function init() {
     }
 
     const lotMapData = JSON.parse(raw);
+
+    // Avoid double-initializing the same DOM node
+    if (el.dataset.inited === '1') {
+        console.log('⏭️ lot-map already initialized, skipping');
+        return;
+    }
+
     const loader = new Loader({ apiKey, version: 'weekly' });
 
     // Load Maps + Geocoding libraries
-    const [{ Map }, { Geocoder }] = await Promise.all([
+    const [{ Map }, { Geocoder }, { AdvancedMarkerElement, PinElement }] = await Promise.all([
       loader.importLibrary('maps'),
       loader.importLibrary('geocoding'),
+      loader.importLibrary('marker'),
     ]);
 
-    // Initialize map
-    const map = new Map(el, {
-      center: { lat: 37.0902, lng: -95.7129 },
-      zoom: 4,
-    });
+      // Initialize map (needs a Map ID for Advanced Markers)
+      const map = new Map(el, {
+          center: { lat: 37.0902, lng: -95.7129 },
+          zoom: 4,
+          mapId: "DEMO_MAP_ID", // REAL: 249fa5ae398d0c11f927ef99
+      });
+
     const geocoder = new Geocoder();
 
     // Build unique color palette for subdivisions
@@ -70,23 +80,33 @@ async function init() {
         const pos = await geocodeAddress(geocoder, lot.address);
         if (!pos) return null;
 
-        return new window.google.maps.Marker({
-          position: pos,
-          title: lot.address,
-          icon: {
-            path: window.google.maps.SymbolPath.CIRCLE,
-            scale: 8,
-            fillColor: colorMap[lot.subdivision],
-            fillOpacity: 1,
-            strokeColor: '#fff',
-            strokeWeight: 1,
-          },
-        });
+          return new AdvancedMarkerElement({
+              position: pos,
+              title: lot.address,
+              content: new PinElement({
+                  scale: 0.8,
+                  background: colorMap[lot.subdivision],
+                  borderColor: "#fff",
+                  glyphColor: "#fff",
+              }).element,
+          });
+
       })
     ).then(arr => arr.filter(Boolean));
 
     // Cluster markers
     new MarkerClusterer({ markers, map });
+
+      // Auto‑zoom/center map to fit all markers
+     if (markers.length > 0) {
+         const bounds = new google.maps.LatLngBounds();
+         markers.forEach(m => bounds.extend(m.position));
+         map.fitBounds(bounds);
+         // optional: don't zoom in too much
+         google.maps.event.addListenerOnce(map, 'idle', () => {
+            if (map.getZoom() > 16) map.setZoom(16);
+         });
+     }
 
     // Color the legend swatches
     document.querySelectorAll('[data-subdivision-color]').forEach(el => {
@@ -103,7 +123,9 @@ async function init() {
       });
     }
 
-    console.log("✅ lot-map initialized with", markers.length, "markers");
+      // Mark as initialized for this node
+      el.dataset.inited = '1';
+      console.log("✅ lot-map initialized with", markers.length, "markers");
   } catch (err) {
     console.error("❌ lot-map error:", err);
   }
@@ -112,7 +134,7 @@ async function init() {
 // Initializers
 window.addEventListener('DOMContentLoaded', init);
 window.addEventListener('livewire:load', init);
-window.addEventListener('livewire: initialized', init);
+window.addEventListener('livewire:initialized', init);
 document.addEventListener('lot-map-added', init);
 
 // Re‐init after every Livewire AJAX swap
