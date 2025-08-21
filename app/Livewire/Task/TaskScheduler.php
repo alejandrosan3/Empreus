@@ -17,6 +17,11 @@ use App\Models\Lot;
 {
     public DateRange $range;
     public $activeTab="calendar";
+    public array $loadedTabs = [
+        'board'    => false,
+        'calendar' => false,
+        'map'      => false,
+    ];
     public array $weekDays = [];
     public int       $rangeDays      = 7;
     public int       $pageSize       = 15;
@@ -65,6 +70,9 @@ use App\Models\Lot;
         $this->range ??= DateRange::thisWeek();
 
         $this->currentRangeStart = $this->range->copy()->start();
+
+        // mark default tab as loaded/opened
+        $this->loadedTabs[$this->activeTab] = true;
 
         //Preload filter options for the navigation
         $columns = [
@@ -276,6 +284,13 @@ use App\Models\Lot;
         $this->rangeDays = count($this->range->days()->toArray());
         $this->loadData();
         $this->dispatch('rangeChanged');
+    }
+
+    // When the tab changes, mark it as loaded and ping JS
+    public function updatedActiveTab(string $tab): void
+    {
+        $this->loadedTabs[$tab] = true;
+        $this->dispatch('tab-activated', tab: $tab);
     }
 
     private function filterIds(array $raw): array
