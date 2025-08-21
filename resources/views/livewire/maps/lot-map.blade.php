@@ -5,9 +5,32 @@
         <span class="text-sm">Show legend</span>
     </div>
 
+    @php
+        // Build a clean array the JS can trust
+        $lotMapPayload = collect($lots)->map(function ($l) {
+            $lat = data_get($l, 'latitude');
+            $lng = data_get($l, 'longitude');
+
+            // Cast to numbers or null
+            $lat = is_numeric($lat) ? (float) $lat : null;
+            $lng = is_numeric($lng) ? (float) $lng : null;
+
+            return [
+                'id'          => data_get($l, 'id'),
+                'address'     => data_get($l, 'address'),
+                'subdivision' => data_get($l, 'subdivision'),
+                'lat'         => $lat,   // <-- always these keys for JS
+                'lng'         => $lng,
+            ];
+        })
+        ->filter(fn ($row) => !is_null($row['id']))
+        ->values()
+        ->all();
+    @endphp
+
     <div
         id="lot-map"
-        data-lots='@json($lots)'
+        data-lots='@json($lotMapPayload)'
         data-google-key='{{ config("services.google.maps_key") }}'
         wire:ignore
         class="w-full h-screen"
@@ -23,23 +46,3 @@
         @endforeach
     </div>
 </flux:container>
-
-{{-- $lotMapScript
-@script
-    <script>
-        console.log("Lot map script initialized");
-        // Only runs when this component is present in the DOM
-        (async () => {
-            console.log("🛠️ lot-map async fired");
-        const el = document.getElementById('lot-map');
-        if (!el) return;
-
-
-        // Pull in the built file that Vite generated.  Blade gives us the
-        const { default: init } = await import('{{ Vite::asset('resources/js/lot-map.js') }}');
-        init();
-
-        })();
-    </script>
-@endscript
---}}

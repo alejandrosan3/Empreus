@@ -29,6 +29,10 @@ class Lot extends Model
         'floor_area',
         'num_of_floors',
     ];
+    protected $casts = [
+        'latitude'  => 'float',
+        'longitude' => 'float',
+    ];
 
     public function builder(): BelongsTo
     {
