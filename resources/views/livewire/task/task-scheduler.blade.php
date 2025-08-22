@@ -1,11 +1,13 @@
 <div>
         {{-- Tabs --}}
     <flux:tab.group>
-        <flux:tabs wire:model.live="activeTab" variant="segmented">
-            <flux:tab name="board" icon="squares-2x2">Board</flux:tab>
-            <flux:tab name="calendar" icon="calendar">Calendar</flux:tab>
-            <flux:tab name="map" icon="map">Map</flux:tab>
-        </flux:tabs>
+        <div class="flex justify-end">
+            <flux:tabs wire:model.live="activeTab" variant="segmented">
+                <flux:tab name="board" icon="squares-2x2">Board</flux:tab>
+                <flux:tab name="calendar" icon="calendar">Calendar</flux:tab>
+                <flux:tab name="map" icon="map">Map</flux:tab>
+            </flux:tabs>
+        </div>
 
         {{-- Calendar Navigation --}}
         <div class="flex justify-between items-center my-6 bg-white dark:bg-zinc-900 p-4 rounded-lg shadow">
@@ -80,7 +82,7 @@
             @if ($loadedTabs['board'])
                 <livewire:task.task-board
                     :$range :$tasks :$hasMore :$howManyMore :$totalTasksByStatus :$statuses
-                    :key="'board-static'"
+                    :key="'board-'. $range->start().'-'. $range->end().'-'.$refreshKey"
                 />
             @endif
         </flux:tab.panel>
@@ -90,7 +92,7 @@
             @if ($loadedTabs['calendar'])
                 <livewire:task.task-calendar
                     :$range :$tasks :$hasMore :$howManyMore :$statuses :$tasksByDay :$totalTasksByDay :$rangeDays
-                    :key="'calendar-static'"
+                    :key="'calendar-'. $range->start().'-'. $range->end().'-'.$refreshKey"
                 />
             @endif
         </flux:tab.panel>
@@ -100,7 +102,7 @@
             @if ($loadedTabs['map'])
                 <livewire:maps.lot-map
                     :$range :$lots :$subdivisions :$howManyMore
-                    :key="'map-static'"
+                    :key="'map-'. $range->start().'-'. $range->end().'-'.$refreshKey"
                 />
             @endif
         </flux:tab.panel>
