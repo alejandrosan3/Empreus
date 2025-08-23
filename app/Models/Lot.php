@@ -29,6 +29,10 @@ class Lot extends Model
         'floor_area',
         'num_of_floors',
     ];
+    protected $casts = [
+        'latitude'  => 'float',
+        'longitude' => 'float',
+    ];
 
     public function builder(): BelongsTo
     {
@@ -147,5 +151,74 @@ class Lot extends Model
                 );
         });
     }
+
+    /**
+     * Determine the house type for this lot using configuration.
+     * Always returns a non-empty string; falls back to the configured default.
+     */
+    public function determineHouseType(): string
+    {
+        $types           = (array) config('house.types', []);
+        $abbrMap         = (array) config('house.abbreviations', []);
+        $fallbackFloors  = (array) config('house.fallback_by_floors', []);
+
+        // Resolve default display label (from config), with a safe final fallback
+        $defaultKey   = $fallbackFloors['default'] ?? null;
+        $defaultLabel = ($defaultKey && isset($types[$defaultKey]))
+            ? $types[$defaultKey]
+            : (reset($types) ?: 'Single Family');
+
+        $subdivision = (string) ($this->subdivision ?? '');
+
+        // Rule 1: Check subdivision abbreviations (case-insensitive, whole word)
+        if ($subdivision !== '' && !empty($abbrMap)) {
+            foreach ($abbrMap as $abbr => $typeKey) {
+                $pattern = '/\b' . preg_quote((string) $abbr, '/') . '\b/i';
+                if (preg_match($pattern, $subdivision)) {
+                    return $types[$typeKey] ?? $defaultLabel;
+                }
+            }
+        }
+
+        // Rule 2: Fallback to num_of_floors
+        if ($this->num_of_floors !== null) {
+            $floors  = (int) $this->num_of_floors;
+            $typeKey = $fallbackFloors[(string) $floors] ?? null;
+
+            if (!$typeKey) {
+                if ($floors > 1 && isset($fallbackFloors['more_than_one'])) {
+                    $typeKey = $fallbackFloors['more_than_one'];
+                } elseif ($defaultKey) {
+                    $typeKey = $defaultKey;
+                }
+            }
+
+            return $typeKey ? ($types[$typeKey] ?? $defaultLabel) : $defaultLabel;
+        }
+
+        // No subdivision hit and floors unknown: return default
+        return $defaultLabel;
+    }
+
+    /**
+     * Accessor: $lot->house_type
+     *
+     * @return string|null
+     */
+    public function getHouseTypeAttribute(): ?string
+    {
+        return $this->determineHouseType();
+    }
+
+    /**
+     * Get the number of stories for this lot.
+     * Defaults to 1 if the number of floors is not explicitly set.
+     */
+    public function getStoriesCountAttribute(): int
+    {
+        return (int) ($this->num_of_floors ?? 1);
+    }
+
+
 
 }

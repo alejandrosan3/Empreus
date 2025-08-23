@@ -43,7 +43,7 @@ class LotMap extends Component
                     $q->whereBetween('scheduled_start_date', [$start, $end])
                     ->whereHas('statusType', fn($q2) => $q2->whereIn('identifier', ['confirmed', 'in_progress']));
                 })
-                ->get(['id', 'address', 'subdivision'])
+                ->get(['id', 'address', 'subdivision','latitude','longitude'])
                 ->toArray();
     }
 

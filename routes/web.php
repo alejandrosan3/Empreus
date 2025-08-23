@@ -11,6 +11,7 @@ use App\Livewire\Lot\{LotProgress, AddLotForm};
 use App\Livewire\Task\{TaskProgress, AddTaskForm} ;
 use App\Livewire\Pages\{LotDetails, TaskDetails};
 use App\Models\Task;
+use App\Http\Controllers\LotCoordsController;
 
 Route::get('/', function () {
     return redirect()->route('login'); // Redirect to login or a public landing page
@@ -63,12 +64,12 @@ Route::middleware(['auth', 'verified', SetCurrentCompany::class])
                 ->name('workers')
                 ->defaults('label', 'Workers')
                 ->defaults('icon', 'user-group');
-            
+
             Route::get('workers/create', \App\Livewire\Workers\CreateWorker::class)
                 ->name('worker-create')
                 ->defaults('label', 'Add Worker')
                 ->defaults('icon', 'user-plus');
-            
+
             Route::get('teams', \App\Livewire\Teams\ListTeam::class)
                 ->name('teams')
                 ->defaults('label', 'Teams')
@@ -143,6 +144,11 @@ Route::middleware(['auth', 'verified', SetCurrentCompany::class])
                 ->name('projections')
                 ->defaults('label', 'Projections')
                 ->defaults('icon', 'chart-bar');
+
+            Route::middleware(['auth', 'throttle:30,1'])->post(
+                '/lots/{lot}/coords',
+                [LotCoordsController::class, 'store']
+            )->name('lots.coords.store');
         });
 
 

@@ -20,6 +20,7 @@ class TaskBoard extends Component
     public array $statuses = [];
     public ?string $currentNote = null;
     public DateRange $range;
+    public array $checkedTasks = [];
     public array $howManyMore = [];
     public array $totalTasksByStatus = [];
 
@@ -31,6 +32,13 @@ class TaskBoard extends Component
 
         if ($task?->taskNotes->isNotEmpty()) {
             $this->currentNote   = $task->taskNotes->first()->description;
+        }
+    }
+
+    public function startBulkAssign(): void
+    {
+        if (! empty($this->checkedTasks)) {
+            $this->dispatch('open-bulk-assign-modal', ids: $this->checkedTasks);
         }
     }
 

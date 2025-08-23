@@ -1,6 +1,13 @@
 import { Loader } from '@googlemaps/js-api-loader';
 import { MarkerClusterer } from '@googlemaps/markerclusterer';
 
+const postedLots = new Set();    // finished saves
+const savingLots = new Set();    // in-flight saves
+const JUNK_ADDRESSES = new Set([
+    'could not determine address',
+    'n/a', 'na', 'none', 'unknown', 'tbd', 'tba', 'null', '0', '-'
+]);
+
 // Generate `count` equally‑spaced HSL colors
 function generateColors(count) {
   return Array.from({ length: count }, (_, i) => {
@@ -17,11 +24,23 @@ function geocodeAddress(geocoder, address) {
         const loc = results[0].geometry.location;
         resolve({ lat: loc.lat(), lng: loc.lng() });
       } else {
+          // this would happen when you have a wrong address that Google Maps could not figure out.
         console.warn(`Geocode failed for "${address}": ${status}`);
         resolve(null);
       }
     });
   });
+}
+
+function cleanAddr(a) {
+    return (a ?? '').toString().trim();
+}
+
+function isGeocodable(a) {
+    const s = cleanAddr(a);
+    if (!s) return false;                  // empty/whitespace
+    if (JUNK_ADDRESSES.has(s.toLowerCase())) return false; // placeholders
+    return s.length >= 5;                  // basic length sanity
 }
 
 async function init() {
@@ -41,22 +60,32 @@ async function init() {
     }
 
     const lotMapData = JSON.parse(raw);
+
+    // Avoids double-initializing the same DOM node
+    if (el.dataset.inited === '1') {
+        console.log('⏭️ lot-map already initialized, skipping');
+        return;
+    }
+
     const loader = new Loader({ apiKey, version: 'weekly' });
 
-    // Load Maps + Geocoding libraries
-    const [{ Map }, { Geocoder }] = await Promise.all([
+    // Load Maps and Geocoding libraries
+    const [{ Map }, { Geocoder }, { AdvancedMarkerElement, PinElement }] = await Promise.all([
       loader.importLibrary('maps'),
       loader.importLibrary('geocoding'),
+      loader.importLibrary('marker'),
     ]);
 
-    // Initialize map
-    const map = new Map(el, {
-      center: { lat: 37.0902, lng: -95.7129 },
-      zoom: 4,
-    });
+      // Initialize map (needs a Map ID for Advanced Markers)
+      const map = new Map(el, {
+          center: { lat: 37.0902, lng: -95.7129 },
+          zoom: 4,
+          mapId: "DEMO_MAP_ID", // REAL: 249fa5ae398d0c11f927ef99
+      });
+
     const geocoder = new Geocoder();
 
-    // Build unique color palette for subdivisions
+    // Build a unique color palette for subdivisions
     const subdivisions = [...new Set(lotMapData.map(l => l.subdivision))].sort();
     const colors = generateColors(subdivisions.length);
     const colorMap = subdivisions.reduce((m, sub, i) => {
@@ -67,26 +96,39 @@ async function init() {
     // Create markers
     const markers = await Promise.all(
       lotMapData.map(async (lot) => {
-        const pos = await geocodeAddress(geocoder, lot.address);
-        if (!pos) return null;
+          const pos = await resolvePosition(lot, geocoder);
+          if (!pos) {
+              console.log('⏭️ skipping (no coords / badly formatted address):', lot.id, lot.address);
+              return null;
+          }
 
-        return new window.google.maps.Marker({
-          position: pos,
-          title: lot.address,
-          icon: {
-            path: window.google.maps.SymbolPath.CIRCLE,
-            scale: 8,
-            fillColor: colorMap[lot.subdivision],
-            fillOpacity: 1,
-            strokeColor: '#fff',
-            strokeWeight: 1,
-          },
-        });
+          return new AdvancedMarkerElement({
+              position: pos,
+              title: lot.address,
+              content: new PinElement({
+                  scale: 0.8,
+                  background: colorMap[lot.subdivision],
+                  borderColor: "#fff",
+                  glyphColor: "#fff",
+              }).element,
+          });
+
       })
     ).then(arr => arr.filter(Boolean));
 
     // Cluster markers
     new MarkerClusterer({ markers, map });
+
+      // Auto‑zoom/center map to fit all markers
+     if (markers.length > 0) {
+         const bounds = new google.maps.LatLngBounds();
+         markers.forEach(m => bounds.extend(m.position));
+         map.fitBounds(bounds);
+         // optional: don't zoom in too much
+         google.maps.event.addListenerOnce(map, 'idle', () => {
+            if (map.getZoom() > 16) map.setZoom(16);
+         });
+     }
 
     // Color the legend swatches
     document.querySelectorAll('[data-subdivision-color]').forEach(el => {
@@ -103,16 +145,85 @@ async function init() {
       });
     }
 
-    console.log("✅ lot-map initialized with", markers.length, "markers");
+      // Mark as initialized for this node
+      el.dataset.inited = '1';
+      console.log("✅ lot-map initialized with", markers.length, "markers");
   } catch (err) {
     console.error("❌ lot-map error:", err);
   }
 }
 
+async function saveCoords(lotId, pos) {
+    try {
+        if (!lotId) return;
+        if (postedLots.has(lotId) || savingLots.has(lotId)) return;
+
+        savingLots.add(lotId);
+
+        const token = document.querySelector('meta[name="csrf-token"]')?.content;
+        if (!token) {
+            console.warn('⚠️ Missing CSRF token <meta>');
+            savingLots.delete(lotId);
+            return;
+        }
+
+        const res = await fetch(`/lots/${lotId}/coords`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8',
+                'X-CSRF-TOKEN': token,
+                'Accept': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest',
+            },
+            body: new URLSearchParams({
+                latitude:  pos.lat.toFixed(7),
+                longitude: pos.lng.toFixed(7),
+            }).toString(),
+            credentials: 'same-origin',
+        });
+
+        if (res.ok) {
+            postedLots.add(lotId);
+            console.log(`💾 Saved coords for lot ${lotId}`);
+        } else {
+            console.warn(`❌ Save coords failed (${res.status}) for lot ${lotId}`);
+        }
+    } catch (e) {
+        console.error('❌ Save coords error:', e);
+    } finally {
+        savingLots.delete(lotId);
+    }
+}
+async function resolvePosition(lot, geocoder) {
+    // 1) Use DB coords first
+    if (lot.lat != null && lot.lng != null) {
+        console.log(`✅ using DB coords for lot ${lot.id}`, {
+            lat: lot.lat,
+            lng: lot.lng,
+            address: lot.address,
+        });
+        return { lat: Number(lot.lat), lng: Number(lot.lng) };
+    }
+
+    // 2) If no coords, only geocode valid addresses
+    if (!isGeocodable?.(lot.address)) return null;
+
+    const query = cleanAddr(lot.address); // <-- modify this in case you want to set defaults cities or something.
+    const pos = await geocodeAddress(geocoder, query);
+
+    // 3) Persist once we find them
+    if (pos && lot.id && typeof saveCoords === 'function') {
+        saveCoords(lot.id, pos);
+    }
+
+    return pos;
+}
+
+
 // Initializers
 window.addEventListener('DOMContentLoaded', init);
 window.addEventListener('livewire:load', init);
-window.addEventListener('livewire: initialized', init);
+window.addEventListener('livewire:initialized', init);
 document.addEventListener('lot-map-added', init);
 
 // Re‐init after every Livewire AJAX swap

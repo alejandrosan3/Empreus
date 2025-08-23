@@ -1,5 +1,6 @@
 <div>
         {{-- Tabs --}}
+    <flux:tab.group>
         <div class="flex justify-end">
             <flux:tabs wire:model.live="activeTab" variant="segmented">
                 <flux:tab name="board" icon="squares-2x2">Board</flux:tab>
@@ -8,7 +9,7 @@
             </flux:tabs>
         </div>
 
-    {{-- Calendar Navigation --}}
+        {{-- Calendar Navigation --}}
         <div class="flex justify-between items-center my-6 bg-white dark:bg-zinc-900 p-4 rounded-lg shadow">
             <div class="flex items-center gap-2">
                 <flux:button
@@ -75,8 +76,40 @@
             </div>
         </div>
 
-    {{-- Tab Content --}}
-        @if ($activeTab === 'board')
+        {{-- Tab Content --}}
+
+        <flux:tab.panel name="board">
+            @if ($loadedTabs['board'])
+                <livewire:task.task-board
+                    :$range :$tasks :$hasMore :$howManyMore :$totalTasksByStatus :$statuses
+                    :key="'board-'. $range->start().'-'. $range->end().'-'.$refreshKey"
+                />
+            @endif
+        </flux:tab.panel>
+
+        {{-- Calendar panel --}}
+        <flux:tab.panel name="calendar">
+            @if ($loadedTabs['calendar'])
+                <livewire:task.task-calendar
+                    :$range :$tasks :$hasMore :$howManyMore :$statuses :$tasksByDay :$totalTasksByDay :$rangeDays
+                    :key="'calendar-'. $range->start().'-'. $range->end().'-'.$refreshKey"
+                />
+            @endif
+        </flux:tab.panel>
+
+        {{-- Map panel --}}
+        <flux:tab.panel name="map">
+            @if ($loadedTabs['map'])
+                <livewire:maps.lot-map
+                    :$range :$lots :$subdivisions :$howManyMore
+                    :key="'map-'. $range->start().'-'. $range->end().'-'.$refreshKey"
+                />
+            @endif
+        </flux:tab.panel>
+    </flux:tab.group>
+
+
+        {{--         @if ($activeTab === 'board')
             <livewire:task.task-board :$range :$tasks :$hasMore :$howManyMore :$totalTasksByStatus :$statuses :key="'board-'. $range->start(). '-'. $range->end().'-'.$refreshKey" />
         @endif
 
@@ -87,7 +120,7 @@
     @if ($activeTab === 'map')
         <livewire:maps.lot-map :$range :$lots :$subdivisions :$howManyMore :key="'map-'. $range->start(). '-'. $range->end()" />
     @endif
-
+--}}
     {{-- Centralized Scripts --}}
     @script
     <script>
@@ -217,10 +250,10 @@
                 initializeActiveTab();
             });
 
-            // Listen for tab changes
+            // Listen for tab changes but oly mount them once :D
             window.addEventListener('livewire:init', () => {
-                Livewire.on('activeTab', (tab) => {
-                    console.log('🎯 Tab changed to:', tab);
+                Livewire.on('tab-activated', (tab) => {
+                    console.log('🎯 tab-activated:', tab);
                     setTimeout(initializeActiveTab, 50); // Small delay for DOM update
                 });
             });
