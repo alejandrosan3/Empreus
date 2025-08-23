@@ -11,6 +11,7 @@ use Livewire\Attributes\Computed;
 use Illuminate\Support\Facades\Cache;
 use App\Repositories\TaskProgressRepository;
 use App\Traits\WithToast;
+use App\Services\ColumnPreferenceService;
 
 use Flux\Flux;
 
@@ -36,10 +37,12 @@ class TaskProgress extends Component
 
 
     protected TaskProgressRepository $repository;
+    protected ColumnPreferenceService $columnPreferences;
 
-    public function boot(TaskProgressRepository $repo)
+    public function boot(TaskProgressRepository $repo, ColumnPreferenceService $columnPreferenceService)
     {
         $this->repository = $repo;
+        $this->columnPreferences = $columnPreferenceService;
     }
 
     /**
@@ -80,7 +83,7 @@ class TaskProgress extends Component
     public function getFlatTasksProperty()
     {
         $map = config('task-progress.option_map');
-        
+
         // We’ll build a simple array-of-arrays, one per task
         return $this->tasks->map(function($task) use ($map) {
             // Start each row with its id
@@ -242,7 +245,7 @@ class TaskProgress extends Component
     {
         $this->dispatch('bulk-edit-action', entity: 'task', ids: $this->checkedTasks );
     }
-    
+
     public function startBulkAssign()
     {
         if (! empty($this->checkedTasks)) {
@@ -296,7 +299,10 @@ class TaskProgress extends Component
     public function updateColumns($columns)
     {
         $this->columns = $columns;
+        $this->columnPreferences->setColumns(auth()->user(),'task-progress', $columns);
+        $this->dispatchFilters();
     }
+
 
     /**
      * Create a copy of the current task.
@@ -334,7 +340,7 @@ class TaskProgress extends Component
         $this->repository = $repository;
 
         // load everything from config/task-progress.php
-        $this->columns       = config('task-progress.columns');
+        $this->columns       = $this->columnPreferences->getColumns(auth()->user(), 'task-progress');
         $this->sortBy        = config('task-progress.default_sort_by');
         $this->sortDirection = config('task-progress.default_sort_direction');
 

@@ -17,7 +17,7 @@
             <ul id="fixed-columns" class="mb-4 space-y-2" x-init="initSortable($el, 'fixed')">
                 @foreach($columns as $index => $column)
                     @if($column['group'] === 'fixed')
-                        <li class="flex justify-between items-center space-x-2" data-id="{{ $column['id'] }}">
+                        <li class="flex justify-between items-center space-x-2" data-id="{{ $column['id'] }}" wire:key="fixed-{{ $column['id'] }}">
                             <div class="flex items-center space-x-2">
                                 <input type="checkbox" checked disabled class="form-checkbox w-5 h-5 rounded-sm border-gray-300 text-gray-600 focus:ring-gray-500 opacity-25">
                                 <span>{{ $column['label'] }}</span>
@@ -36,11 +36,11 @@
             <ul id="active-columns" class="space-y-2" x-init="initSortable($el, 'active')">
                 @foreach($columns as $index => $column)
                     @if($column['group'] === 'active')
-                        <li class="flex justify-between items-center space-x-2" data-id="{{ $column['id'] }}" wire:key="column-{{ $column['id'] }}">
+                        <li class="flex justify-between items-center space-x-2" data-id="{{ $column['id'] }}" wire:key="active-{{ $column['id'] }}">
                             <div class="flex items-center space-x-2">
                                 <input type="checkbox"
                                     wire:model.defer="columns.{{ $index }}.selected"
-                                    class="form-checkbox w-5 h-5 rounded-sm border-gray-300 text-blue-600 focus:ring-blue-500 dark:border-white/10 dark:bg-white/10""
+                                    class="form-checkbox w-5 h-5 rounded-sm border-gray-300 text-blue-600 focus:ring-blue-500 dark:border-white/10 dark:bg-white/10"
                                     @change="dispatchUpdatedColumns()">
                                 <span>{{ $column['label'] }}</span>
                             </div>
@@ -62,6 +62,7 @@
         const activeIds = [...document.getElementById('active-columns').children].map(item => item.getAttribute('data-id'));
         Livewire.dispatch('update-column-lists', { fixedIds, activeIds });
     }
+
     // Alpine.js initialization for SortableJS
     function initSortable(el, groupName) {
         new Sortable(el, {
@@ -73,8 +74,6 @@
             animation: 200,
             onEnd: (event) => {
                 dispatchUpdatedColumns();
-
-
             },
         });
     }
