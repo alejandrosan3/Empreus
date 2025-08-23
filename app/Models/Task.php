@@ -275,4 +275,56 @@ class Task extends Model
         return $query->get();
     }
 
+    /**
+     * Group tasks for a company by the team of their assigned workers.
+     *
+     * @param int $companyId
+     * @param \Carbon\CarbonInterface $start Inclusive start of the scheduled start date range.
+     * @param \Carbon\CarbonInterface $end   Inclusive end of the scheduled start date range.
+     *
+     * @return \Illuminate\Support\Collection<array{team:?Team,tasks:\Illuminate\Support\Collection,external:\Illuminate\Support\Collection}>
+     */
+    public static function groupedByTeamForCompany( int $companyId,  \Carbon\CarbonInterface $start,  \Carbon\CarbonInterface $end): \Illuminate\Support\Collection {
+        $tasks = self::query()
+            ->where('company_id', $companyId)
+            ->whereBetween('scheduled_start_date', [$start, $end])
+            ->with(['workers.teams'])
+            ->get();
+
+        $groups = collect();
+
+        foreach ($tasks as $task) {
+            $teams = $task->workers->flatMap->teams->unique('id');
+
+            if ($teams->count() === 1) {
+                $team = $teams->first();
+                $key  = 'team-' . $team->id;
+                $external = $task->workers->filter(
+                    fn ($worker) => ! $worker->teams->contains('id', $team->id)
+                );
+            } else {
+                $team = null;
+                $key  = 'no-team';
+                $external = collect();
+            }
+
+            if (! $groups->has($key)) {
+                $groups[$key] = [
+                    'team' => $team,
+                    'tasks' => collect(),
+                    'external' => collect(),
+                ];
+            }
+
+            $groups[$key]['tasks']->push($task);
+            if ($external->isNotEmpty()) {
+                $groups[$key]['external'] = $groups[$key]['external']
+                    ->merge($external)->unique('id');
+            }
+        }
+
+        return $groups->values();
+    }
+
+
 }

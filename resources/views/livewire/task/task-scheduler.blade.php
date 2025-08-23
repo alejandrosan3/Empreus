@@ -5,6 +5,7 @@
             <flux:tabs wire:model.live="activeTab" variant="segmented">
                 <flux:tab name="board" icon="squares-2x2">Board</flux:tab>
                 <flux:tab name="calendar" icon="calendar">Calendar</flux:tab>
+                <flux:tab name="team" icon="users">Teams</flux:tab>
                 <flux:tab name="map" icon="map">Map</flux:tab>
             </flux:tabs>
         </div>
@@ -106,22 +107,16 @@
                 />
             @endif
         </flux:tab.panel>
+
+        {{-- Team panel --}}
+        <flux:tab.panel name="team">
+            @if ($loadedTabs['team'])
+                <livewire:task.task-team :key="'team-'.$refreshKey" />
+            @endif
+        </flux:tab.panel>
     </flux:tab.group>
 
 
-        {{--         @if ($activeTab === 'board')
-            <livewire:task.task-board :$range :$tasks :$hasMore :$howManyMore :$totalTasksByStatus :$statuses :key="'board-'. $range->start(). '-'. $range->end().'-'.$refreshKey" />
-        @endif
-
-    @if ($activeTab === 'calendar')
-        <livewire:task.task-calendar :$range :$tasks :$hasMore :$howManyMore :$statuses :$tasksByDay :$totalTasksByDay :$rangeDays :key="'calendar-'. $range->start(). '-'. $range->end().'-'.$refreshKey"/>
-    @endif
-
-    @if ($activeTab === 'map')
-        <livewire:maps.lot-map :$range :$lots :$subdivisions :$howManyMore :key="'map-'. $range->start(). '-'. $range->end()" />
-    @endif
---}}
-    {{-- Centralized Scripts --}}
     @script
     <script>
         console.log('TaskScheduler: Initializing centralized scripts');
@@ -130,9 +125,10 @@
             let boardInitialized = false;
             let calendarInitialized = false;
             let mapInitialized = false;
+            let teamInitialized = false;
 
             // Debounce helpers
-            let boardTimeout, calendarTimeout, mapTimeout;
+            let boardTimeout, calendarTimeout, mapTimeout, teamTimeout;
 
             // Board initialization
             const initBoard = () => {
@@ -222,6 +218,36 @@
                 }, 16);
             };
 
+            // Team initialization
+            const initTeam = () => {
+                if (teamTimeout) clearTimeout(teamTimeout);
+                teamTimeout = setTimeout(() => {
+                    const teamElements = document.querySelectorAll('.teamTasks.sortable:not([data-sortable-init])');
+                    if (teamElements.length === 0) return;
+
+                    console.log('👥 Initializing Team view (', teamElements.length, 'elements)');
+
+                    teamElements.forEach(column => {
+                        column.dataset.sortableInit = '1';
+
+                        new Sortable(column, {
+                            group: { name: 'team-tasks', pull: true, put: true },
+                            animation: 150,
+                            draggable: '.task-item',
+                            onEnd(evt) {
+                                const taskId = evt.item.dataset.taskId;
+                                const newTeam = evt.to.dataset.team;
+                                const oldTeam = evt.from.dataset.team;
+
+                                if (taskId && newTeam !== oldTeam) {
+                                    Livewire.dispatchTo('task.task-scheduler', 'taskTeamUpdated', [taskId, newTeam]);
+                                }
+                            }
+                        });
+                    });
+                }, 16);
+            };
+
             // Smart initializer - only runs for active tab
             const initializeActiveTab = () => {
                 const activeTab = @this.activeTab;
@@ -237,6 +263,9 @@
                         break;
                     case 'map':
                         initMap();
+                        break;
+                    case 'team':
+                        initTeam();
                         break;
                 }
             };
@@ -260,6 +289,7 @@
 
             // Custom events
             document.addEventListener('taskDateUpdated', initializeActiveTab);
+            document.addEventListener('taskTeamUpdated', initializeActiveTab); // <-- MIGHT NOT BE NEEDED?
 
         })();
     </script>
