@@ -39,7 +39,7 @@
 
     <div id="lot-legend" class="absolute top-8 right-2 bg-white dark:bg-zinc-800 rounded shadow p-3 space-y-1 hidden">
         @foreach($subdivisions as $index => $name)
-            <div class="flex items-center space-x-2">
+            <div class="flex items-center space-x-2 cursor-pointer" data-subdivision-legend="{{ $name }}">
                 <span class="w-3 h-3 rounded-full" data-subdivision-color="{{ $name }}"></span>
                 <span class="text-xs">{{ $name }}</span>
             </div>
