@@ -93,6 +93,7 @@ async function init() {
       return m;
     }, {});
 
+    const markersBySubdivision = {};
     // Create markers
     const markers = await Promise.all(
       lotMapData.map(async (lot) => {
@@ -102,7 +103,7 @@ async function init() {
               return null;
           }
 
-          return new AdvancedMarkerElement({
+          const marker = new AdvancedMarkerElement({
               position: pos,
               title: lot.address,
               content: new PinElement({
@@ -112,6 +113,13 @@ async function init() {
                   glyphColor: "#fff",
               }).element,
           });
+
+          if (!markersBySubdivision[lot.subdivision]) {
+              markersBySubdivision[lot.subdivision] = [];
+          }
+          markersBySubdivision[lot.subdivision].push(marker);
+
+          return marker;
 
       })
     ).then(arr => arr.filter(Boolean));
@@ -134,6 +142,20 @@ async function init() {
     document.querySelectorAll('[data-subdivision-color]').forEach(el => {
       const sub = el.getAttribute('data-subdivision-color');
       el.style.backgroundColor = colorMap[sub] || '#999';
+    });
+
+    // Legend item click -> zoom to subdivision
+    document.querySelectorAll('[data-subdivision-legend]').forEach(el => {
+      el.addEventListener('click', () => {
+          const sub = el.getAttribute('data-subdivision-legend');
+          const subset = markersBySubdivision[sub];
+          if (subset && subset.length) {
+              const bounds = new google.maps.LatLngBounds();
+              subset.forEach(m => bounds.extend(m.position));
+              map.fitBounds(bounds);
+              if (map.getZoom() > 16) map.setZoom(16);
+          }
+      });
     });
 
     // Legend toggle
