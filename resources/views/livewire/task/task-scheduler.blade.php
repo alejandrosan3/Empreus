@@ -122,6 +122,7 @@
     @endif
 --}}
     {{-- Centralized Scripts --}}
+    @vite(['resources/js/lot-map.js'])
     @script
     <script>
         console.log('TaskScheduler: Initializing centralized scripts');
@@ -212,13 +213,14 @@
                     if (!mapElement) return;
 
                     console.log('🗺️ Initializing Map');
+                    document.dispatchEvent(new Event('lot-map-added'));
 
-                    try {
+/*                    try {
                         const { default: mapInit } = await import('{{ Vite::asset('resources/js/lot-map.js') }}');
                         mapInit();
                     } catch (error) {
                         console.error('Map initialization failed:', error);
-                    }
+                    } */
                 }, 16);
             };
 
