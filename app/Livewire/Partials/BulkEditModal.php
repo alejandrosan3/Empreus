@@ -3,6 +3,8 @@
 namespace App\Livewire\Partials;
 
 use App\Models\Lot;
+use App\Models\Tag;
+use Illuminate\Support\Facades\DB;
 use Livewire\Attributes\On;
 use Livewire\Component;
 use App\Models\Task;
@@ -32,6 +34,13 @@ class BulkEditModal extends Component
     public array $statusTypes = [];
     public array $supervisors = [];
 
+    // Tags
+    public array $allTags = [];      // [ [id, name, color], ... ]
+    public string $tagMode = 'add';  // 'add' | 'remove' | 'replace'
+    public array $selectedTags = []; // [tagId, ...]
+    public array $tagTimes = [];     // [tagId => 'HH:MM']
+
+
     #[On('bulk-edit-action')]
     public function openModal(string $entity='tasks', array $ids=[])
     {
@@ -55,7 +64,11 @@ class BulkEditModal extends Component
             'scheduled_end_date',
             'ended_at',
             'is_extra',
+            'tagMode',
+            'selectedTags',
+            'tagTimes',
         ]);
+        $this->tagMode = 'add';
     }
 
     public function save()
@@ -102,36 +115,64 @@ class BulkEditModal extends Component
             $taskFields['is_extra'] = $this->is_extra;
         }
 
-        /**
-         * Return if no fields to update
-         */
-        if (empty($lotFields) && empty($taskFields)) {
+        // If nothing to update (including tags), close quietly
+        $hasTagWork = !empty($this->selectedTags) && in_array($this->tagMode, ['add','remove','replace'], true);
+        if (empty($lotFields) && empty($taskFields) && !$hasTagWork) {
             $this->showModal = false;
             return;
         }
 
-        /**
-         * Bulk update tasks
-         */
-        if (!empty($taskFields)) {
-            Task::whereIn('id', $this->taskIds)->update($taskFields);
-        }
+        DB::transaction(function () use ($taskFields, $lotFields, $hasTagWork) {
 
-        /**
-         * Bulk update lots
-         */
-        if (!empty($lotFields)) {
-            $lotIds = Task::whereIn('id', $this->taskIds)
-                ->whereNotNull('lot_id')
-                ->pluck('lot_id')
-                ->unique()
-                ->values();
-
-            if ($lotIds->isNotEmpty()) {
-                Lot::whereIn('id', $lotIds)->update($lotFields);
+            // Bulk update tasks
+            if (!empty($taskFields) && !empty($this->taskIds)) {
+                Task::whereIn('id', $this->taskIds)->update($taskFields);
             }
 
-        }
+            // Bulk update lots
+            if (!empty($lotFields) && !empty($this->taskIds)) {
+                $lotIds = Task::whereIn('id', $this->taskIds)
+                    ->whereNotNull('lot_id')
+                    ->pluck('lot_id')
+                    ->unique()
+                    ->values();
+
+                if ($lotIds->isNotEmpty()) {
+                    Lot::whereIn('id', $lotIds)->update($lotFields);
+                }
+            }
+
+            // Bulk TAGS
+            if ($hasTagWork && !empty($this->taskIds)) {
+                $tagIds = array_map('intval', $this->selectedTags);
+                $tagIds = array_values(array_unique(array_filter($tagIds)));
+
+                if (!empty($tagIds)) {
+                    // Prepare times payload for add/replace
+                    $syncPayload = [];
+                    foreach ($tagIds as $tid) {
+                        $time = $this->tagTimes[$tid] ?? null; // 'HH:MM'
+                        $syncPayload[$tid] = ['time_of_day' => $time ? ($time . ':00') : null];
+                    }
+
+                    // chunk tasks to avoid huge single queries
+                    foreach (array_chunk($this->taskIds, 200) as $chunk) {
+                        $tasks = Task::whereIn('id', $chunk)->get(['id']);
+
+                        foreach ($tasks as $task) {
+                            if ($this->tagMode === 'add') {
+                                $task->tags()->syncWithoutDetaching($syncPayload);
+                            } elseif ($this->tagMode === 'remove') {
+                                $task->tags()->detach($tagIds);
+                            } elseif ($this->tagMode === 'replace') {
+                                // Replace: wipe then set exactly the chosen tags + times
+                                $task->tags()->sync($syncPayload);
+                            }
+                        }
+                    }
+                }
+            }
+        });
 
         Flux::toast(text: 'Updated ' . count($this->taskIds) . ' tasks.', heading:'All done!', variant:'success');
         $this->dispatch('contentUpdated');
@@ -158,5 +199,13 @@ class BulkEditModal extends Component
                 ->pluck('name', 'id')
                 ->toArray()
         );
+
+        $this->allTags = Cache::remember(
+            "allTags", 3600,
+            fn() => Tag::orderBy('name')->get(['id','name','color'])
+                ->map(fn($t) => ['id'=>$t->id,'name'=>$t->name,'color'=>$t->color])
+                ->toArray()
+        );
+
     }
 }
