@@ -210,6 +210,28 @@ class TaskProgress extends Component
                         $fieldType      = 'date';
                         $modelAttribute = 'ended_at';
                         break;
+                    case 'tags':
+                        // Build badges array to allow styled rendering in blade
+                        $badges = [];
+                        if ($task->tags && $task->tags->isNotEmpty()) {
+                            foreach ($task->tags as $tag) {
+                                $time = $tag->pivot?->time_of_day
+                                    ? \Carbon\Carbon::createFromFormat('H:i:s', $tag->pivot->time_of_day)->format('g:i A')
+                                    : null;
+                                $label = $time ? ($tag->name . ' @ ' . $time) : $tag->name;
+                                $badges[] = [
+                                    'label' => $label,
+                                    'color' => $tag->color, // hex or tailwind-compatible color string
+                                ];
+                            }
+                            $display = implode(', ', array_map(fn($b) => $b['label'], $badges)); // fallback plain text
+                            $rawValue = $display;
+                        } else {
+                            $display  = '-';
+                            $rawValue = '-';
+                        }
+                        break;
+
                     default:
                         if (isset($task->{$column['value']})) {
                             $display        = $task->{$column['value']};
@@ -235,6 +257,11 @@ class TaskProgress extends Component
                         ? $task->statusType->color
                         : null,
                 ];
+
+                // Attach badges only for tags
+                if ($column['value'] === 'tags') {
+                    $row['tags']['badges'] = $badges ?? [];
+                }
             }
 
             return $row;

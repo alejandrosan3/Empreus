@@ -17,6 +17,7 @@ class TaskProgressRepository
                 'taskType',
                 'statusType',
                 'taskNotes' => fn($q) => $q->latest('created_at')->limit(1),
+                'tags' => fn($q) => $q->orderBy('tag_task.created_at', 'desc'),
             ]);
 
         if ($searchTerm !== '') {
