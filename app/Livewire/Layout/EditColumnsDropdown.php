@@ -2,18 +2,21 @@
 
 namespace App\Livewire\Layout;
 
+use App\Services\ColumnPreferenceService;
 use Livewire\Component;
 use Livewire\Attributes\On;
-use Illuminate\Support\Facades\Log;
+use Livewire\Attributes\Modelable;
 
 class EditColumnsDropdown extends Component
 {
+    #[Modelable]
     public $columns= []	;
+    protected ColumnPreferenceService $columnPreferences;
+
 
     #[On('update-column-lists')]
-    public function updateColumnLists($fixedIds=[], $activeIds=[])
+    public function updateColumnLists($fixedIds=[], $activeIds=[], string $context='')
     {
-
         // Reorder and update group for fixed columns:
         $orderedFixed = collect($fixedIds)->map(function ($id) {
             $column = collect($this->columns)->firstWhere('id', (int)$id);
@@ -36,7 +39,6 @@ class EditColumnsDropdown extends Component
 
         // Merge back the two groups.
         $this->columns = array_merge($orderedFixed, $orderedActive);
-        Log::info('Merged:', ['Cols' => $this->columns,]);
 
         // Dispatch the updated version of the list
         $this->dispatch('column-list-updated', columns: $this->columns);
@@ -49,7 +51,10 @@ class EditColumnsDropdown extends Component
         $this->columns = $columns;
     }
 
-
+    public function boot(ColumnPreferenceService $svc) // <-- add this
+    {
+        $this->columnPreferences = $svc;
+    }
     public function render()
     {
         return view('livewire.layout.edit-columns-dropdown');

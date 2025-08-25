@@ -5,8 +5,10 @@ namespace App\Models;
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasMany as EloquentHasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use App\Models\ColumnPreference;
 
 class User extends Authenticatable
 {
@@ -95,6 +97,11 @@ class User extends Authenticatable
     {
         return $this->belongsToMany(Task::class, 'task_worker', 'worker_id', 'task_id')
             ->withTimestamps();
+    }
+
+    public function columnPreferences(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(ColumnPreference::class);
     }
 
 }

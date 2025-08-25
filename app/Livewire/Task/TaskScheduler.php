@@ -11,9 +11,11 @@ use Carbon\Carbon;
 use App\Models\TaskType;
 use App\Models\Task;
 use App\Models\Lot;
+use App\Models\Team;
 
 
-#[AllowDynamicProperties] class TaskScheduler extends Component
+#[AllowDynamicProperties]
+class TaskScheduler extends Component
 {
     public DateRange $range;
     public $activeTab="calendar";
@@ -21,6 +23,7 @@ use App\Models\Lot;
         'board'    => false,
         'calendar' => false,
         'map'      => false,
+        'team'     => false,
     ];
     public array $weekDays = [];
     public int       $rangeDays      = 7;
@@ -28,12 +31,12 @@ use App\Models\Lot;
     public array $tasksByDay = [];
     public array $lots = [];
     public array $tasks = [];
+    public array $teams = [];
+    public array $tasksByTeam = [];
     public array $subdivisions = [];
     public $currentRangeStart;
-
     public array $statuses = [];
     public array $hasMore = [];
-
     public array $howManyMore = [];
     public array $totalTasksByDay = [];
     public array $totalTasksByStatus = [];
@@ -46,10 +49,15 @@ use App\Models\Lot;
 
     protected $listeners = [
         'refreshView'     => 'loadData',
+        'contentUpdated'  => '$refresh',
+        'company-updated' => '$refresh',
+        'search-tasks'    => 'updateSearch',
         'taskDateUpdated' => 'taskDateUpdated',
         'taskStatusUpdated' => 'taskStatusUpdated',
         'load-more'       => 'loadMore',
         'global-filters-updated' => 'filtersUpdated',
+        'taskTeamUpdated' => 'taskTeamUpdated',
+        'assignTaskToTeam' => 'assignTaskToTeam',
     ];
 
     public function statuses(): array
@@ -107,17 +115,17 @@ use App\Models\Lot;
    {
        $this->tasks        = [];
        $this->tasksByDay   = [];
+       $this->tasksByTeam  = [];
        $this->lots         = [];
        $this->subdivisions = [];
+       $this->teams        = [];
    }
 
     protected function slideRange(int $direction): void
     {
         $this->currentRangeStart->addDays($direction * $this->rangeDays);
-
         $start = $this->currentRangeStart->copy();
         $end   = $start->copy()->addDays($this->rangeDays - 1);
-
         $this->range = new DateRange($start, $end);
     }
 
@@ -409,7 +417,147 @@ use App\Models\Lot;
             $this->hasMore[$date]   = $allTasks->count() > $this->pageSize;
             $this->howManyMore[$date] = $allTasks->count() - $this->pageSize;
         }
+
+        $this->loadTeams();
+        $this->loadTasksByTeam();
         $this->updateTimeStamp();
+    }
+
+    public function loadTeams(): void
+    {
+        $this->teams = Team::query()
+            ->orderBy('name')
+            ->with(['workers:id,name']) // preload workers
+            ->get(['id', 'name'])
+            ->map(fn ($t) => [
+                'id'          => $t->id,
+                'name'        => $t->name,
+                'members'     => $t->workers->pluck('name')->all(),
+                'member_ids'  => $t->workers->pluck('id')->all(), // for fast lookup
+            ])->toArray();
+    }
+
+    protected function loadTasksByTeam(): void
+    {
+        $startDate   = $this->range->copy()->start();
+        $endDate     = $this->range->copy()->end();
+        $taskTypeIds = $this->filterIds($this->selectedFilters['task_type'] ?? []);
+
+        // Build a map of team_id => member_ids for quick “external” computation
+        $teamMembersMap = collect($this->teams)
+            ->keyBy('id')
+            ->map(fn ($t) => $t['member_ids'] ?? [])
+            ->all();
+
+        $tasks = Task::query()
+            ->select(
+                'tasks.*',
+                'lots.subdivision as subdivision',
+                'lots.lot_number  as lot_number',
+                'lots.num_of_floors as num_of_floors',
+                'lots.address     as address',
+                'task_types.name  as task_type_name'
+            )
+            ->join('task_types', 'tasks.task_type_id', '=', 'task_types.id')
+            ->join('lots',       'tasks.lot_id',       '=', 'lots.id')
+            ->join('status_types','tasks.status_type_id','=','status_types.id')
+            ->where('tasks.company_id', session('company_id'))
+            ->whereIn('status_types.identifier', ['confirmed','in_progress'])
+            ->whereBetween('tasks.scheduled_start_date', [$startDate, $endDate])
+            ->when($taskTypeIds, fn ($q) => $q->whereIn('tasks.task_type_id', $taskTypeIds))
+            ->with(['workers:id,name']) // preload assigned workers
+            ->orderBy('tasks.scheduled_start_date')
+            ->get();
+
+        $this->tasksByTeam = [
+            'none' => [], // No Team bucket
+        ];
+
+        foreach ($this->teams as $t) {
+            $this->tasksByTeam[$t['id']] = [];
+        }
+
+        foreach ($tasks as $task) {
+            $bucket = $task->team_id ?? 'none';
+
+            // Compute external workers only for tasks assigned to a team
+            $externalNames = [];
+            if ($bucket !== 'none' && $task->team_id) {
+                $memberIds = $teamMembersMap[$task->team_id] ?? [];
+                $externalNames = $task->workers
+                    ->reject(fn ($w) => in_array($w->id, $memberIds, true))
+                    ->pluck('name')
+                    ->values()
+                    ->all();
+            }
+
+            $this->tasksByTeam[$bucket][] = [
+                'id'          => $task->id,
+                'title'       => $task->task_type_name ?: 'Task #'.$task->id,
+                'subdivision' => $task->subdivision,
+                'lot_number'  => $task->lot_number,
+                'floor_area_category' => $task->floor_area_category ?? 'unknown',
+                'address'     => $task->address,
+                'date'        => \Carbon\Carbon::parse($task->scheduled_start_date)->format('Y-m-d'),
+                'external'    => $externalNames,
+            ];
+        }
+    }
+
+    public function assignTaskToTeam(int $taskId, $teamId): void
+    {
+        try {
+            $task = Task::where('company_id', session('company_id'))->find($taskId);
+            if (! $task) {
+                return;
+            }
+
+            $newTeamId = ($teamId === 'none' || $teamId === null || $teamId === '')
+                ? null
+                : (int) $teamId;
+
+            // Capture the previous team before updating
+            $previousTeamId = $task->team_id;
+
+            \DB::transaction(function () use ($task, $newTeamId, $previousTeamId) {
+                // 1) Update the primary team on the task
+                $task->update(['team_id' => $newTeamId]);
+
+                // 2) If assigned to a team, add all team members to the task_user pivot (no detaching)
+                if ($newTeamId) {
+                    if ($team = Team::find($newTeamId)) {
+                        $workerIds = $team->workers()->pluck('users.id')->all();
+                        if (! empty($workerIds)) {
+                            $task->workers()->syncWithoutDetaching($workerIds);
+                        }
+                    }
+                    return;
+                }
+
+                // 3) If moved to "No Team", detach only members from the previous team
+                if ($previousTeamId) {
+                    if ($prevTeam = Team::find($previousTeamId)) {
+                        $prevWorkerIds = $prevTeam->workers()->pluck('users.id')->all();
+                        if (! empty($prevWorkerIds)) {
+                            // Detach only these users; others (from other teams or manual) remain attached
+                            $task->workers()->detach($prevWorkerIds);
+                        }
+                    }
+                }
+            });
+
+            // Rebuild UI data and notify
+            $this->loadTasksByTeam();
+            $this->dispatch('taskTeamUpdated');
+            Flux::toast(text:'Team assigned successfully.', variant: 'success');
+        } catch (\Throwable $e) {
+            \Log::error('Failed to update task team', [
+                'task_id' => $taskId,
+                'team_id' => $teamId,
+                'error'   => $e->getMessage(),
+            ]);
+            Flux::toast(text:'Failed to assign team.', variant: 'danger');
+        }
     }
 
     public function loadMore(string $status=null, $date=null): void
@@ -502,7 +650,6 @@ use App\Models\Lot;
         return $this->currentRangeStart->copy()->eq(Carbon::now()->startOfWeek());
         $this->updateTimeStamp();
     }
-
 
     public function render()
     {

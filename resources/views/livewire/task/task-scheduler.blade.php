@@ -5,6 +5,7 @@
             <flux:tabs wire:model.live="activeTab" variant="segmented">
                 <flux:tab name="board" icon="squares-2x2">Board</flux:tab>
                 <flux:tab name="calendar" icon="calendar">Calendar</flux:tab>
+                <flux:tab name="team" icon="users">Teams</flux:tab>
                 <flux:tab name="map" icon="map">Map</flux:tab>
             </flux:tabs>
         </div>
@@ -106,23 +107,21 @@
                 />
             @endif
         </flux:tab.panel>
+
+        {{-- Team panel --}}
+        <flux:tab.panel name="team">
+            @if ($loadedTabs['team'])
+                <livewire:task.task-team
+                    :range="$range"
+                    :teams="$teams"
+                    :tasksByTeam="$tasksByTeam"
+                    :key="'team-'.$refreshKey"
+                />
+            @endif
+        </flux:tab.panel>
     </flux:tab.group>
 
 
-        {{--         @if ($activeTab === 'board')
-            <livewire:task.task-board :$range :$tasks :$hasMore :$howManyMore :$totalTasksByStatus :$statuses :key="'board-'. $range->start(). '-'. $range->end().'-'.$refreshKey" />
-        @endif
-
-    @if ($activeTab === 'calendar')
-        <livewire:task.task-calendar :$range :$tasks :$hasMore :$howManyMore :$statuses :$tasksByDay :$totalTasksByDay :$rangeDays :key="'calendar-'. $range->start(). '-'. $range->end().'-'.$refreshKey"/>
-    @endif
-
-    @if ($activeTab === 'map')
-        <livewire:maps.lot-map :$range :$lots :$subdivisions :$howManyMore :key="'map-'. $range->start(). '-'. $range->end()" />
-    @endif
---}}
-    {{-- Centralized Scripts --}}
-    @vite(['resources/js/lot-map.js'])
     @script
     <script>
         console.log('TaskScheduler: Initializing centralized scripts');
@@ -131,9 +130,10 @@
             let boardInitialized = false;
             let calendarInitialized = false;
             let mapInitialized = false;
+            let teamInitialized = false;
 
             // Debounce helpers
-            let boardTimeout, calendarTimeout, mapTimeout;
+            let boardTimeout, calendarTimeout, mapTimeout, teamTimeout;
 
             // Board initialization
             const initBoard = () => {
@@ -213,14 +213,46 @@
                     if (!mapElement) return;
 
                     console.log('🗺️ Initializing Map');
-                    document.dispatchEvent(new Event('lot-map-added'));
 
-/*                    try {
+                    try {
                         const { default: mapInit } = await import('{{ Vite::asset('resources/js/lot-map.js') }}');
                         mapInit();
                     } catch (error) {
                         console.error('Map initialization failed:', error);
-                    } */
+                    }
+                }, 16);
+            };
+
+            // Team initializer
+            const initTeams = () => {
+                if (teamTimeout) clearTimeout(teamTimeout);
+                teamTimeout = setTimeout(() => {
+                    const containers = document.querySelectorAll('.teamTasks.sortable:not([data-sortable-init])');
+                    if (containers.length === 0) return;
+
+                    console.log('👥 Initializing Team buckets (', containers.length, 'elements)');
+                    containers.forEach((el) => {
+                        el.dataset.sortableInit = '1';
+                        new Sortable(el, {
+                            group: { name: 'team-buckets', pull: true, put: true },
+                            animation: 150,
+                            draggable: '.task-item',
+                            onEnd(evt) {
+                                const taskId = evt.item?.dataset?.taskId;
+                                const newTeamId = evt.to?.dataset?.teamId;
+                                const oldTeamId = evt.from?.dataset?.teamId;
+
+                                if (!taskId) return;
+
+                                // Skip if no change
+                                if ((newTeamId ?? 'none') === (oldTeamId ?? 'none')) return;
+
+                                Livewire.dispatchTo('task.task-scheduler','assignTaskToTeam', [taskId, newTeamId ?? 'none']);
+
+                            }
+                        });
+                    });
+                    teamInitialized = true;
                 }, 16);
             };
 
@@ -239,6 +271,9 @@
                         break;
                     case 'map':
                         initMap();
+                        break;
+                    case 'team':
+                        initTeams()
                         break;
                 }
             };
@@ -262,6 +297,7 @@
 
             // Custom events
             document.addEventListener('taskDateUpdated', initializeActiveTab);
+            document.addEventListener('taskTeamUpdated', initializeActiveTab); // <-- MIGHT NOT BE NEEDED?
 
         })();
     </script>

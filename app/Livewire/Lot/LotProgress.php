@@ -10,6 +10,7 @@ use Livewire\Attributes\On;
 use Livewire\Attributes\Computed;
 use App\Repositories\LotProgressRepository;
 use App\Traits\WithToast;
+use App\Services\ColumnPreferenceService;
 
 class LotProgress extends Component
 {
@@ -44,10 +45,12 @@ class LotProgress extends Component
         ];
 
         protected LotProgressRepository $repository;
+        protected ColumnPreferenceService $columnPreferences;
 
-        public function boot(LotProgressRepository $repo)
+        public function boot(LotProgressRepository $repo, ColumnPreferenceService $columnPreferenceService)
         {
             $this->repository = $repo;
+            $this->columnPreferences = $columnPreferenceService;
         }
 
         /**
@@ -144,15 +147,6 @@ class LotProgress extends Component
          */
         public function loadDetails($lotId)
         {
-            /* Dynamic loading
-            if ($this->isRouteRequest()) {
-                return request()->routeIs('content-details');
-            } *
-
-            // Dynamically load the lot
-            $this->selectedLot = Lot::findOrFail($lotId);
-            */
-
             // Dynamic loading
             if (!$this->isRouteRequest()) {
                 $this->selectedLot = Lot::findOrFail($lotId);
@@ -196,6 +190,7 @@ class LotProgress extends Component
         public function updateColumns($columns)
         {
             $this->columns = $columns;
+            $this->columnPreferences->setColumns(auth()->user(), 'lot-progress', $columns);
         }
 
         /**
@@ -238,22 +233,9 @@ class LotProgress extends Component
             }
             $this->repository = $repository;
 
-            $this->columns = [
-                // Fixed columns (always selected)
-                ['id' => 1, 'label' => 'Builder', 'value' => 'builder', 'group' => 'fixed', 'selected' => true, 'sortable' => true, 'editable'=> false, 'filterable' => true, 'color' => 'purple'],
-                ['id' => 2, 'label' => 'Subdivision', 'value' => 'subdivision', 'group' => 'fixed', 'selected' => true, 'sortable' => true, 'editable'=> false, 'filterable' => true, 'color' => 'amber'],
-                ['id' => 3, 'label' => 'Lot', 'value' => 'lot_number', 'group' => 'fixed', 'selected' => true, 'sortable' => true, 'editable'=> false, 'filterable' => true, 'color' => 'cyan'],
-                // Active columns (user can toggle visibility)
-                ['id' => 4, 'label' => 'Stories', 'value' => 'stories', 'group' => 'active', 'selected' => false, 'sortable' => false, 'editable'=> true, 'filterable' => false],
-                ['id' => 5, 'label' => 'Last Completed Task', 'value' => 'last_completed_date', 'group' => 'active', 'selected' => true, 'sortable' => true, 'editable'=> false],
-                ['id' => 6, 'label' => 'Standard Tasks', 'value' => 'standard_po', 'group' => 'active', 'selected' => true, 'sortable' => false, 'editable'=> false],
-                ['id' => 7, 'label' => 'EPOs', 'value' => 'epo', 'group' => 'active', 'selected' => true, 'sortable' => false, 'editable'=> false],
-                // Additional columns hidden by default
-                ['id' => 8,  'label' => 'Address',            'value' => 'address',            'group' => 'active', 'selected' => false, 'sortable' => true,  'editable'=> true, 'filterable' => false],
-                ['id' => 9,  'label' => 'Phase',              'value' => 'phase',              'group' => 'active', 'selected' => false, 'sortable' => true,  'editable'=> true, 'filterable' => false, 'color' => 'indigo'],
-                ['id' => 10, 'label' => 'Supervisor',         'value' => 'supervisor',         'group' => 'active', 'selected' => false, 'sortable' => true,  'editable'=> true, 'filterable' => true, 'color' => 'rose'],
-                ['id' => 11, 'label' => 'SQ FT',              'value' => 'floor_area',         'group' => 'active', 'selected' => false, 'sortable' => true,  'editable'=> true, 'filterable' => false],
-            ];
+            $this->columns       = $this->columnPreferences->getColumns(auth()->user(), 'lot-progress');
+            $this->sortBy        = config('lot-progress.default_sort_by');
+            $this->sortDirection = config('lot-progress.default_sort_direction');
 
             // Dispatch initial filters when the component loads
             $this->dispatchFilters();
