@@ -121,6 +121,8 @@
         </flux:tab.panel>
     </flux:tab.group>
 
+    {{-- Mount a single global Edit Tags modal component --}}
+    <livewire:task.edit-task-tags-modal :key="'global-edit-task-tags-modal'" />
 
     @script
     <script>

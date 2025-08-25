@@ -157,6 +157,22 @@ class Task extends Model
         }
     }
 
+    public function tags(): \Illuminate\Database\Eloquent\Relations\BelongsToMany
+    {
+        return $this->belongsToMany(\App\Models\Tag::class, 'tag_task')
+            ->withPivot(['time_of_day'])
+            ->withTimestamps();
+    }
+
+    public function getTagLabelsAttribute(): array
+    {
+        return $this->tags->map(function ($tag) {
+            $time = $tag->pivot?->time_of_day;
+            $formatted = $time ? \Carbon\Carbon::createFromFormat('H:i:s', $time)->format('g:i A') : null;
+            return $formatted ? "{$tag->name} @ {$formatted}" : $tag->name;
+        })->all();
+    }
+
     public static function getGroupedTasksByStatusForCurrentCompany(array $statuses = [])
     {
         $companyId = session('company_id');
@@ -268,6 +284,7 @@ class Task extends Model
             ->join('supervisors', 'lots.supervisor_id', '=', 'supervisors.id')
             ->join('status_types','tasks.status_type_id','=', 'status_types.id')
             ->join('builders',    'lots.builder_id',    '=', 'builders.id')
+            ->leftJoin('tag_task', 'tasks.id', '=', 'tag_task.task_id')
             ->where('tasks.company_id', $companyId)
             ->whereBetween('tasks.scheduled_start_date', [$startDate, $endDate])
             ->orderBy('tasks.scheduled_start_date', 'asc');

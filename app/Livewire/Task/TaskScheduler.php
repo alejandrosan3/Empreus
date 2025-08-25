@@ -360,6 +360,7 @@ class TaskScheduler extends Component
                 'statusType:id,identifier,name,color,color_dark',
                 'lot:id,address,subdivision,builder_id,num_of_floors',
                 'lot.builder:id,name',
+                'tags:id,name,color',
             ])
             ->where('company_id', $companyId)
             ->whereBetween('scheduled_start_date', [$start, $end])
