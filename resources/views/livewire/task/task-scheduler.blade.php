@@ -111,7 +111,12 @@
         {{-- Team panel --}}
         <flux:tab.panel name="team">
             @if ($loadedTabs['team'])
-                <livewire:task.task-team :key="'team-'.$refreshKey" />
+                <livewire:task.task-team
+                    :range="$range"
+                    :teams="$teams"
+                    :tasksByTeam="$tasksByTeam"
+                    :key="'team-'.$refreshKey"
+                />
             @endif
         </flux:tab.panel>
     </flux:tab.group>
@@ -218,33 +223,36 @@
                 }, 16);
             };
 
-            // Team initialization
-            const initTeam = () => {
+            // Team initializer
+            const initTeams = () => {
                 if (teamTimeout) clearTimeout(teamTimeout);
                 teamTimeout = setTimeout(() => {
-                    const teamElements = document.querySelectorAll('.teamTasks.sortable:not([data-sortable-init])');
-                    if (teamElements.length === 0) return;
+                    const containers = document.querySelectorAll('.teamTasks.sortable:not([data-sortable-init])');
+                    if (containers.length === 0) return;
 
-                    console.log('👥 Initializing Team view (', teamElements.length, 'elements)');
-
-                    teamElements.forEach(column => {
-                        column.dataset.sortableInit = '1';
-
-                        new Sortable(column, {
-                            group: { name: 'team-tasks', pull: true, put: true },
+                    console.log('👥 Initializing Team buckets (', containers.length, 'elements)');
+                    containers.forEach((el) => {
+                        el.dataset.sortableInit = '1';
+                        new Sortable(el, {
+                            group: { name: 'team-buckets', pull: true, put: true },
                             animation: 150,
                             draggable: '.task-item',
                             onEnd(evt) {
-                                const taskId = evt.item.dataset.taskId;
-                                const newTeam = evt.to.dataset.team;
-                                const oldTeam = evt.from.dataset.team;
+                                const taskId = evt.item?.dataset?.taskId;
+                                const newTeamId = evt.to?.dataset?.teamId;
+                                const oldTeamId = evt.from?.dataset?.teamId;
 
-                                if (taskId && newTeam !== oldTeam) {
-                                    Livewire.dispatchTo('task.task-scheduler', 'taskTeamUpdated', [taskId, newTeam]);
-                                }
+                                if (!taskId) return;
+
+                                // Skip if no change
+                                if ((newTeamId ?? 'none') === (oldTeamId ?? 'none')) return;
+
+                                Livewire.dispatchTo('task.task-scheduler','assignTaskToTeam', [taskId, newTeamId ?? 'none']);
+
                             }
                         });
                     });
+                    teamInitialized = true;
                 }, 16);
             };
 
@@ -265,7 +273,7 @@
                         initMap();
                         break;
                     case 'team':
-                        initTeam();
+                        initTeams()
                         break;
                 }
             };

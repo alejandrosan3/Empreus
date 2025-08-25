@@ -2,58 +2,25 @@
 
 namespace App\Livewire\Task;
 
+use Flux\DateRange;
 use Livewire\Component;
 
 class TaskTeam extends Component
 {
+    public DateRange $range;
+
+    /** @var array<int,array{id:int,name:string,members:array}> */
     public array $teams = [];
 
-    public function mount(): void
-    {
-        $this->teams = [
-            [
-                'id' => 1,
-                'name' => 'Team Alpha',
-                'members' => ['Alice', 'Bob'],
-                'tasks' => [
-                    [
-                        'id' => 101,
-                        'title' => 'Prepare report',
-                        'external' => [],
-                    ],
-                    [
-                        'id' => 102,
-                        'title' => 'Onboard client',
-                        'external' => ['Charlie'],
-                    ],
-                ],
-            ],
-            [
-                'id' => 2,
-                'name' => 'Team Beta',
-                'members' => ['Dave', 'Eve'],
-                'tasks' => [
-                    [
-                        'id' => 201,
-                        'title' => 'Update website',
-                        'external' => [],
-                    ],
-                ],
-            ],
-            [
-                'id' => null,
-                'name' => 'No Team',
-                'members' => [],
-                'tasks' => [
-                    [
-                        'id' => 301,
-                        'title' => 'Miscellaneous task',
-                        'external' => [],
-                    ],
-                ],
-            ],
-        ];
-    }
+    /**
+     * tasksByTeam keys are team_id or "none", values are arrays of task DTOs
+     * [
+     *    'none' => [ ['id'=>..,'title'=>..,'subdivision'=>..,'lot_number'=>..,'address'=>..,'date'=>..], ... ],
+     *    1 => [ ... ],
+     * ]
+     * @var array<string|int,array<int,array<string,mixed>>>
+     */
+    public array $tasksByTeam = [];
 
     public function render()
     {

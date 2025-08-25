@@ -6,7 +6,7 @@ use Carbon\CarbonInterface;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Builder as EloquentBuilder; // avoid clash with your Builder model
+use Illuminate\Database\Eloquent\Builder as EloquentBuilder;
 use Laravel\Scout\Searchable;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
@@ -25,6 +25,7 @@ class Task extends Model
         'task_type_id',
         'price',
         'status_type_id',
+        'team_id',
         'scheduled_start_date',
         'scheduled_end_date',
         'started_at',
@@ -40,7 +41,6 @@ class Task extends Model
         'started_at'           => 'datetime',
         'ended_at'             => 'datetime',
     ];
-
 
     public function lot()
     {
@@ -72,6 +72,11 @@ class Task extends Model
         return $this->statusType();
     }
 
+    public function team(): BelongsTo
+    {
+        return $this->belongsTo(Team::class);
+    }
+
     public function endedAt(): Attribute
     {
         return Attribute::make(
@@ -80,16 +85,24 @@ class Task extends Model
     }
 
     public function startedAt(): Attribute
-    {    return Attribute::make(
-            get: fn ($value) => $value ? \Carbon\Carbon::parse($value)->format('M d, Y') : null,    );
+    {
+        return Attribute::make(
+            get: fn ($value) => $value ? \Carbon\Carbon::parse($value)->format('M d, Y') : null,
+        );
     }
+
     public function scheduledStartDate(): Attribute
     {
-        return Attribute::make(get: fn ($value) => $value ? \Carbon\Carbon::parse($value)->format('M d, Y') : null,);
+        return Attribute::make(
+            get: fn ($value) => $value ? \Carbon\Carbon::parse($value)->format('M d, Y') : null,
+        );
     }
+
     public function scheduledEndDate(): Attribute
-    {    return Attribute::make(
-            get: fn ($value) => $value ? \Carbon\Carbon::parse($value)->format('M d, Y') : null,    );
+    {
+        return Attribute::make(
+            get: fn ($value) => $value ? \Carbon\Carbon::parse($value)->format('M d, Y') : null,
+        );
     }
 
     public function workers(): BelongsToMany
@@ -98,9 +111,6 @@ class Task extends Model
             ->where('role', 'worker');
     }
 
-    /**
-     * Specify the data to be indexed by Meilisearch.
-     */
     public function toSearchableArray(): array
     {
         $this->loadMissing(['lot.builder', 'lot.supervisor', 'taskType', 'statusType']);
