@@ -98,7 +98,7 @@ class TaskProgress extends Component
                 // Prepare defaults
                 $display        = '-';
                 $rawValue       = null;
-                $fieldType      = 'input';
+                $fieldType      = $column['filterType'];
                 $modelClass     = \App\Models\Task::class;
                 $modelAttribute = $column['value'];
                 $optionKey      = '';

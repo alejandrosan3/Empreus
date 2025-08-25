@@ -4,23 +4,26 @@ namespace App\Livewire\Task;
 
 use Livewire\Attributes\On;
 use Livewire\Component;
+use Flux\Flux;
 
 class EditTaskTagsModal extends Component
 {
-    public bool $showModal = false;
-    public ?int $taskId = null;
+    //public bool $showModal = false;
+    public ?int $taskId;
 
     // Receives { taskId: 123 } from JS
     #[On('open-edit-tags')]
-    public function handleOpen(int $taskId): void
+    public function handleOpen(int $taskId=null): void
     {
         $this->taskId = $taskId;
-        $this->showModal = true;
+        //$this->showModal = true;
+        Flux::modal('tag-modal')->show();
     }
 
     public function close(): void
     {
-        $this->showModal = false;
+        Flux::modal('tag-modal')->close();
+        //$this->showModal = false;
         $this->taskId = null;
     }
 

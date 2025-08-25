@@ -1,5 +1,5 @@
 <div>
-    <flux:modal wire:model.self="showModal" class="md:w-96">
+    <flux:modal name="dbl-click-modal" class="md:w-96">
         <div class="space-y-6">
             <div>
                 <flux:heading size="lg">Edit Field</flux:heading>

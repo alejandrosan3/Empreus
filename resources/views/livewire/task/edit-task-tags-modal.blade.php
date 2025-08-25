@@ -1,5 +1,5 @@
 <div>
-    <flux:modal wire:model.self="showModal" class="p-4 min-w-[28rem]">
+    <flux:modal name="tag-modal" class="p-4 min-w-[28rem]">
         <div class="space-y-3">
             <div class="flex items-center justify-between">
                 <h3 class="text-base font-semibold">Edit Tags</h3>

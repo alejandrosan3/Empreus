@@ -18,8 +18,8 @@ return [
         ['id' => 4,  'label' => 'Task Type',         'value' => 'task_type',             'group' => 'active', 'selected' => true,  'sortable' => true,  'editable' => false, 'filterable' => true, 'filterType' =>'select', 'color' => 'green'],
         ['id' => 5,  'label' => 'Status',            'value' => 'status',                'group' => 'active', 'selected' => true,  'sortable' => true,  'editable' => true,  'filterable' => true, 'filterType' =>'select','color' => 'pink'],
         ['id' => 6,  'label' => 'Stories',           'value' => 'num_of_floors',         'group' => 'active', 'selected' => true,  'sortable' => true,  'editable' => true,  'filterable' => false, 'filterType' =>'input',],
-        ['id' => 7,  'label' => 'Notes',             'value' => 'notes',                 'group' => 'active', 'selected' => true,  'sortable' => false, 'editable' => true,  'filterable' => false, 'filterType' =>'select',],
-        ['id' => 8,  'label' => 'SQ FT',             'value' => 'floor_area',            'group' => 'active', 'selected' => true,  'sortable' => true,  'editable' => true,  'filterable' => false, 'filterType' =>'select',],
+        ['id' => 7,  'label' => 'Notes',             'value' => 'notes',                 'group' => 'active', 'selected' => true,  'sortable' => false, 'editable' => true,  'filterable' => false, 'filterType' =>'input',],
+        ['id' => 8,  'label' => 'SQ FT',             'value' => 'floor_area',            'group' => 'active', 'selected' => true,  'sortable' => true,  'editable' => true,  'filterable' => false, 'filterType' =>'input',],
         ['id' => 9,  'label' => 'Supervisor',        'value' => 'supervisor',            'group' => 'active', 'selected' => true,  'sortable' => true,  'editable' => true,  'filterable' => true, 'filterType' =>'select', 'color' => 'rose'],
         ['id' => 10, 'label' => 'Purchase Order',    'value' => 'order_number',          'group' => 'active', 'selected' => true,  'sortable' => true,  'editable' => true,  'filterable' => false, 'filterType' =>'input',],
         ['id' => 11, 'label' => 'Planned Start',     'value' => 'scheduled_start_date',  'group' => 'active', 'selected' => true,  'sortable' => true,  'editable' => true,  'filterable' => true, 'filterType' =>'date',],
@@ -31,7 +31,7 @@ return [
         ['id' => 17, 'label' => 'Planned End',       'value' => 'scheduled_end_date',    'group' => 'active', 'selected' => false, 'sortable' => true,  'editable' => true,  'filterable' => false, 'filterType' =>'date',],
         ['id' => 18, 'label' => 'Phase',             'value' => 'phase',                 'group' => 'active', 'selected' => false, 'sortable' => true,  'editable' => true,  'filterable' => false, 'filterType' =>'select', 'color' => 'indigo'],
         // Existing "Tags" column (kept as-is, optional to show full list)
-        ['id' => 19, 'label' => 'Tags',              'value' => 'tags',                  'group' => 'active', 'selected' => true, 'sortable' => false,  'editable' => false,  'filterable' => false, 'filterType' =>'select', 'color' => 'indigo'],
+        ['id' => 19, 'label' => 'Tags',              'value' => 'tags',                  'group' => 'active', 'selected' => true, 'sortable' => false,  'editable' => true,  'filterable' => false, 'filterType' =>'tag', 'color' => 'indigo'],
     ],
 
     /*
