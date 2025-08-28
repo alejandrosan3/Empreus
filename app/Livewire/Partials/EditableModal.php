@@ -5,7 +5,6 @@ namespace App\Livewire\Partials;
 use Livewire\Component;
 use Flux\Flux;
 use Carbon\Carbon;
-use Livewire\Attributes\Validate;
 use Illuminate\Support\Facades\Cache;
 
 class EditableModal extends Component
@@ -41,7 +40,6 @@ class EditableModal extends Component
 
     public function editField($fieldId, $currentValue, $fieldType = 'input', $optionKey = null, $modelClass = null, $modelAttribute = 'content', $editable=true)
     {
-        $companyId = session('company_id');
         if(!$editable){
             $this->notEditableActions();
             return;
