@@ -139,6 +139,7 @@ class EditTaskTags extends Component
         Flux::toast(text:'Tags updated.', variant: 'success');
         $this->dispatch('refresh-task-tags'); // refresh this editor’s lists
         $this->dispatch('refreshView');       // ask parent (scheduler) to reload and update the task card
+        $this->dispatch('contentUpdated');  // update task progress
     }
 
     public function render()
