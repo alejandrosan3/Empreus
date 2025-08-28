@@ -75,10 +75,14 @@
                             @foreach($columns as $column)
                                 @if($column['selected'])
                                     @php($cell = $row[$column['value']])
+                                    @php($event = $column['filterType'] == 'tag' ? 'open-edit-tags' : 'editField' )
                                     <flux:table.cell
                                         wire:key="cell-{{ $row['id'] }}-{{ $column['value'] }}"
-                                        x-on:dblclick="
-                                            $dispatch('editField', {
+                                        x-data="{ev: '{{ $event }}'}"
+                                        x-on:dblclick=" ev == 'open-edit-tags' ?
+                                        Livewire.dispatchTo('task.edit-task-tags-modal','open-edit-tags', {taskId: {{ $cell['recordId'] }}} )
+                                        :
+                                            Livewire.dispatchTo('partials.editable-modal',ev, {
                                             fieldId: {{ $cell['recordId'] }},
                                             currentValue: '{{ $cell['rawValue'] }}',
                                             fieldType: '{{ $cell['fieldType'] }}',
@@ -128,6 +132,9 @@
                 </flux:table.rows>
             </flux:table>
         </div>
+
+        // Modal for tags editing
+        <livewire:task.edit-task-tags-modal />
 
         {{-- Include ManageTeams component for each task --}}
         @foreach($flatTasks as $row)

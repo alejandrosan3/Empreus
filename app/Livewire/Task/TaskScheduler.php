@@ -3,15 +3,17 @@
 namespace App\Livewire\Task;
 
 use AllowDynamicProperties;
-use App\Models\StatusType;
-use Flux\Flux;
+
 use Livewire\Component;
+use Livewire\Attributes\On;
+use Flux\Flux;
 use Flux\DateRange;
 use Carbon\Carbon;
 use App\Models\TaskType;
 use App\Models\Task;
 use App\Models\Lot;
 use App\Models\Team;
+use App\Models\StatusType;
 
 
 #[AllowDynamicProperties]
@@ -111,6 +113,15 @@ class TaskScheduler extends Component
     {
         $this->refreshKey = now()->timestamp;
     }
+
+    #[On('company-updated')]
+    public function handleCompanyUpdated(): void
+    {
+        $this->resetChildData();
+        $this->loadData();
+        $this->updateTimeStamp();
+    }
+
     private function resetChildData(): void
    {
        $this->tasks        = [];
@@ -360,6 +371,7 @@ class TaskScheduler extends Component
                 'statusType:id,identifier,name,color,color_dark',
                 'lot:id,address,subdivision,builder_id,num_of_floors',
                 'lot.builder:id,name',
+                'tags:id,name,color',
             ])
             ->where('company_id', $companyId)
             ->whereBetween('scheduled_start_date', [$start, $end])

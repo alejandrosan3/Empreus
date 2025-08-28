@@ -10,7 +10,7 @@ use Illuminate\Support\Facades\Cache;
 
 class EditableModal extends Component
 {
-    public $showModal = false;
+    //public $showModal = false;
     public $fieldValue = '';
     public $fieldId;
     public $fieldType = 'input'; // 'select' or any other type using https://fluxui.dev as reference
@@ -40,13 +40,13 @@ class EditableModal extends Component
     }
 
     public function editField($fieldId, $currentValue, $fieldType = 'input', $optionKey = null, $modelClass = null, $modelAttribute = 'content', $editable=true)
-    { 
+    {
         $companyId = session('company_id');
         if(!$editable){
             $this->notEditableActions();
             return;
         }
-        $this->selectOptions = match($optionKey) {    
+        $this->selectOptions = match($optionKey) {
             'builders'     =>  $this->builders,
             'taskTypes'    =>  $this->taskTypes,
             'statusTypes'  =>  $this->statusTypes,
@@ -68,11 +68,11 @@ class EditableModal extends Component
                     ? Carbon::parse($currentValue)->format('Y-m-d')
                     : '';
             }
-        
 
-            $this->showModal = true;
-        
-        
+
+            //$this->showModal = true;
+            Flux::modal('dbl-click-modal')->show();
+
 
 
     }
@@ -155,15 +155,15 @@ class EditableModal extends Component
             \App\Models\Team::class,
             \App\Models\User::class,
         ];
-    
+
         if (!in_array($this->modelClass, $allowedModels)) {
             Flux::toast(heading: "Warning" , text:'Invalid model specified.', variant: "danger" );
             return;
         }
         $model = $this->modelClass;
-        
+
         $record = $model::findOrFail($this->fieldId);
-        
+
 
         // transform empty String to null for select fields
         $value = $this->fieldValue;
@@ -175,7 +175,7 @@ class EditableModal extends Component
         if ($this->fieldType === 'date') {
             $value = $value ?: null;
         }
-        
+
         if ($model == \App\Models\TaskNote::class) {
             $note = $model::where('task_id', $this->fieldId)
                         ->latest('created_at')
@@ -191,7 +191,8 @@ class EditableModal extends Component
         }
         $record->update([ $this->modelAttribute => $value,]);
 
-        $this->showModal = false;
+        //$this->showModal = false;
+        Flux::modal('dbl-click-modal')->close();
 
         Flux::toast(text: 'Field updated successfully.', variant: 'success');
 
@@ -210,7 +211,7 @@ class EditableModal extends Component
     }
 
     public function render()
-    {   
+    {
         return view('livewire.partials.editable-modal');
     }
 
@@ -231,7 +232,7 @@ class EditableModal extends Component
                                                 ->pluck('name','id')
                                                 ->toArray()
         );
-    
+
         $this->supervisors  = Cache::remember(
             "supervisors.{$this->companyId}",
             3600,
@@ -239,7 +240,7 @@ class EditableModal extends Component
                                                     ->pluck('name','id')
                                                     ->toArray()
         );
-    
+
         $this->subdivisions = Cache::remember(
             "subdivisions.{$this->companyId}",
             3600,
@@ -248,14 +249,14 @@ class EditableModal extends Component
                                              ->pluck('subdivision')
                                              ->toArray()
         );
-    
-        
+
+
         $this->taskTypes    = Cache::remember(
             "taskTypes.{$this->companyId}",
             3600,
             fn() => \App\Models\TaskType::pluck('name','id')->toArray()
         );
-        
+
         $this->statusTypes  = Cache::remember(
             "statusTypes.{$this->companyId}",
             3600,

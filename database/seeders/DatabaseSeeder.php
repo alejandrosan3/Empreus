@@ -85,6 +85,10 @@ class DatabaseSeeder extends Seeder
             $this->call(TeamWorkerSeeder::class);
         }
 
+        if (DB::table('tags')->count() === 0) {
+            $this->call(TagSeeder::class);
+        }
+
         /*
         Builder::factory(50)->create();
 

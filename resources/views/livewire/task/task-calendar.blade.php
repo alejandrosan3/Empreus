@@ -107,6 +107,43 @@
                                             </dl>
 
                                         </flux:text>
+                                        {{-- Tags footer: open global modal --}}
+                                        <div class="w-full mt-2 pt-2 border-t border-zinc-200 dark:border-white/10 cursor-pointer select-none"
+                                             role="button"
+                                             aria-label="Edit tags for task {{ $task->id }}"
+                                             onclick="Livewire.dispatchTo('task.edit-task-tags-modal', 'open-edit-tags', { taskId: {{ $task->id }} })"
+                                        >
+
+                                        <div class="flex flex-wrap gap-1 w-full">
+                                                @if($task->tags && $task->tags->isNotEmpty())
+                                                    @foreach($task->tags as $tag)
+                                                        @php
+                                                            $time = $tag->pivot?->time_of_day
+                                                                ? \Carbon\Carbon::createFromFormat('H:i:s', $tag->pivot->time_of_day)->format('g:i A')
+                                                                : null;
+                                                            $label = $time ? ($tag->name . ' @ ' . $time) : $tag->name;
+                                                        @endphp
+                                                        <span
+                                                            class="inline-flex items-center rounded-md px-2 py-0.5 text-xs font-medium border border-zinc-200 dark:border-white/10"
+                                                            @if(!empty($tag->color))
+                                                                style="background-color: {{ $tag->color }}22; color: {{ $tag->color }}"
+                                                            @endif
+                                                            title="{{ $label }}"
+                                                        >
+                                                        {{ $label }}
+                                                    </span>
+                                                    @endforeach
+                                                @else
+                                                    <span
+                                                        class="inline-flex items-center rounded-md px-2 py-0.5 text-xs font-medium text-zinc-600 bg-zinc-100 border border-zinc-200 dark:text-zinc-300 dark:bg-zinc-700/50 dark:border-white/10"
+                                                        title="No tags"
+                                                    >
+                                                    No tags
+                                                </span>
+                                                @endif
+                                            </div>
+                                        </div>
+
                                     </div>
                                 @endforeach
                                     {{-- “Load more” for this day --}}
