@@ -55,6 +55,8 @@
 
                 <flux:input
                     label="Price"
+                    type="number"
+                    inputmode="decimal"
                     wire:model.defer="price"
                     :error="$errors->first('price')"
                 />
