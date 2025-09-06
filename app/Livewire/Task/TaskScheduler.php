@@ -478,6 +478,7 @@ class TaskScheduler extends Component
             ->whereBetween('tasks.scheduled_start_date', [$startDate, $endDate])
             ->when($taskTypeIds, fn ($q) => $q->whereIn('tasks.task_type_id', $taskTypeIds))
             ->with(['workers:id,name']) // preload assigned workers
+            ->withExists(['taskNotes']) // <-- add existence flag for notes
             ->orderBy('tasks.scheduled_start_date')
             ->get();
 
@@ -512,6 +513,8 @@ class TaskScheduler extends Component
                 'address'     => $task->address,
                 'date'        => \Carbon\Carbon::parse($task->scheduled_start_date)->format('Y-m-d'),
                 'external'    => $externalNames,
+                'is_extra'    => (bool) $task->is_extra,                 // <-- new
+                'has_notes'   => (bool) ($task->task_notes_exists ?? false), // <-- new
             ];
         }
     }

@@ -115,7 +115,7 @@
                     :range="$range"
                     :teams="$teams"
                     :tasksByTeam="$tasksByTeam"
-                    :key="'team-'.$refreshKey"
+                    :key="'team-'. $range->start().'-'. $range->end().'-'.$refreshKey"
                 />
             @endif
         </flux:tab.panel>
