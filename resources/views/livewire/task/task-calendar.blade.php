@@ -32,8 +32,17 @@
                 {{-- Calendar Content --}}
                 @foreach($weekDays as $day)
                     <div
-                        class="flex flex-col gap-2 px-2 sortable h-full calendarColumn {{ $day['isToday'] ? 'bg-blue-50/50 dark:bg-blue-900/10' : '' }}"
+                        class="grid auto-rows-max gap-2 px-2 sortable h-full calendarColumn {{ $day['isToday'] ? 'bg-blue-50/50 dark:bg-blue-900/10' : '' }}"
                         data-date="{{ $day['date'] }}"
+                        style="
+                            @if($rangeDays == 1)
+                                grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+                            @elseif($rangeDays == 2)
+                                grid-template-columns: repeat(2, minmax(0, 1fr));
+                            @else
+                                grid-template-columns: repeat(1, minmax(0, 1fr));
+                            @endif
+                        "
                     >
                         @if(isset($tasksByDay[$day['date']]))
                                 @foreach($tasksByDay[$day['date']] as $task)
