@@ -98,7 +98,9 @@
 
         {{-- Main Persistent. there's no need to add it anywhere else in the app --}}
         @persist('toast')
-            <flux:toast />
+            <flux:toast.group>
+                <flux:toast />
+            </flux:toast.group>
         @endpersist
     </body>
 </html>
