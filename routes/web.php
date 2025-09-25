@@ -12,7 +12,6 @@ use App\Livewire\Task\{TaskProgress, AddTaskForm} ;
 use App\Livewire\Pages\{LotDetails, TaskDetails};
 use App\Models\Task;
 use App\Http\Controllers\LotCoordsController;
-use App\Http\Controllers\CompanyController; // <-- add import
 
 Route::get('/', function () {
     return redirect()->route('login'); // Redirect to login or a public landing page
@@ -156,9 +155,6 @@ Route::middleware(['auth', 'verified', SetCurrentCompany::class])
                 ->name('companies.create')
                 ->defaults('label', 'Add Company')
                 ->defaults('icon', 'building-office');
-
-            Route::post('companies', [CompanyController::class, 'store'])
-                ->name('companies.store');
         });
 
 
