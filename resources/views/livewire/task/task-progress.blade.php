@@ -133,7 +133,7 @@
             </flux:table>
         </div>
 
-        // Modal for tags editing
+        {{-- Modal for tags editing --}}
         <livewire:task.edit-task-tags-modal />
 
         {{-- Include ManageTeams component for each task --}}

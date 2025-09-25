@@ -16,8 +16,8 @@
         "laravel/scout": "^10.15",
         "laravel/telescope": "^5.2",
         "laravel/tinker": "^2.9",
-        "livewire/flux": "^2.0",
-        "livewire/flux-pro": "^2.0",
+        "livewire/flux": "^2.3.0",
+        "livewire/flux-pro": "^2.3.0",
         "livewire/livewire": "^3.5",
         "livewire/volt": "^1.0",
         "meilisearch/meilisearch-php": "^1.14"

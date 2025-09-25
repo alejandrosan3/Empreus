@@ -149,6 +149,12 @@ Route::middleware(['auth', 'verified', SetCurrentCompany::class])
                 '/lots/{lot}/coords',
                 [LotCoordsController::class, 'store']
             )->name('lots.coords.store');
+
+            // Companies (admin-only)
+            Route::get('companies/create', \App\Livewire\Companies\CreateCompany::class)
+                ->name('companies.create')
+                ->defaults('label', 'Add Company')
+                ->defaults('icon', 'building-office');
         });
 
 
