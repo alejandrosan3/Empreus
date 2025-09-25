@@ -33,6 +33,8 @@ class Task extends Model
         'is_extra',
         'order_number',
         'original_task_name',
+        'invoice_number',
+        'check_number',
     ];
 
     protected $casts = [

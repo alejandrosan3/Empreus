@@ -30,8 +30,10 @@ return [
         ['id' => 16, 'label' => 'Start Date',        'value' => 'started_at',            'group' => 'active', 'selected' => false, 'sortable' => true,  'editable' => true,  'filterable' => false, 'filterType' =>'date',],
         ['id' => 17, 'label' => 'Planned End',       'value' => 'scheduled_end_date',    'group' => 'active', 'selected' => false, 'sortable' => true,  'editable' => true,  'filterable' => false, 'filterType' =>'date',],
         ['id' => 18, 'label' => 'Phase',             'value' => 'phase',                 'group' => 'active', 'selected' => false, 'sortable' => true,  'editable' => true,  'filterable' => false, 'filterType' =>'select', 'color' => 'indigo'],
-        // Existing "Tags" column (kept as-is, optional to show full list)
         ['id' => 19, 'label' => 'Tags',              'value' => 'tags',                  'group' => 'active', 'selected' => true, 'sortable' => false,  'editable' => true,  'filterable' => false, 'filterType' =>'tag', 'color' => 'indigo'],
+        ['id' => 20, 'label' => 'Invoice #',         'value' => 'invoice_number',        'group' => 'active', 'selected' => false, 'sortable' => true,  'editable' => true,  'filterable' => false, 'filterType' =>'input',],
+        ['id' => 21, 'label' => 'Check #',           'value' => 'check_number',          'group' => 'active', 'selected' => false, 'sortable' => true,  'editable' => true,  'filterable' => false, 'filterType' =>'input',],
+
     ],
 
     /*
