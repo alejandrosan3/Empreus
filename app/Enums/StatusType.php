@@ -11,6 +11,7 @@ enum StatusType: string
     case BLOCKED = 'blocked';
     case PAYMENT_PENDING = 'payment_pending';
     case CANCELLED = 'cancelled';
+    case REQUEST_PAYMENT = 'request_payment';
 
     public static function all(): array
     {
@@ -24,9 +25,10 @@ enum StatusType: string
             self::CONFIRMED->value => 'Confirmed',
             self::IN_PROGRESS->value => 'In Progress',
             self::COMPLETED->value => 'Completed',
-            self::BLOCKED->value => 'Blocked',
-            self::PAYMENT_PENDING->value => 'Payment Pending',
+            self::BLOCKED->value => 'On Hold',
+            self::PAYMENT_PENDING->value => 'Awaiting Payment',
             self::CANCELLED->value => 'Cancelled',
+            self::REQUEST_PAYMENT->value => 'Request Payment',
         ];
     }
 }

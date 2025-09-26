@@ -44,14 +44,14 @@ class StatusTypeSeeder extends Seeder
             ],
             [
                 'identifier' => 'blocked',
-                'name' => 'Blocked',
+                'name' => 'On Hold',
                 'description' => 'The task cannot proceed due to external factors.',
                 'color' => 'blue', // Standard Tailwind blue
                 'color_dark' => 'blue', // Darker shade for dark mode
             ],
             [
                 'identifier' => 'payment_pending',
-                'name' => 'Payment Pending',
+                'name' => 'Awaiting Payment',
                 'description' => 'Payment is required but not yet received.',
                 'color' => 'purple', // Tailwind-compatible purple
                 'color_dark' => 'purple', // Darker purple for readability
@@ -60,6 +60,13 @@ class StatusTypeSeeder extends Seeder
                 'identifier' => 'cancelled',
                 'name' => 'Cancelled',
                 'description' => 'The task was cancelled or voided.',
+                'color' => 'red', // Standard Tailwind red
+                'color_dark' => 'red', // Darker red for better contrast
+            ],
+            [
+                'identifier' => 'request_payment',
+                'name' => 'Request Payment',
+                'description' => 'The task has been completed and the payment for it is needed.',
                 'color' => 'red', // Standard Tailwind red
                 'color_dark' => 'red', // Darker red for better contrast
             ],

@@ -17,8 +17,9 @@ class EditableModal extends Component
     public $modelClass;
     public $modelAttribute;
     public $editable;
-
     // Needed for the select field loading.
+    public bool $createNewNote = false; // used to decide "edit latest" vs "add new" for Task Notes
+    // Add back these option lists used by optionKey in editField()
     public array $builders     = [];
     public array $taskTypes    = [];
     public array $statusTypes  = [];
@@ -38,41 +39,50 @@ class EditableModal extends Component
         Flux::toast(variant: 'warning', text:"This field can't be edited.", heading:'Stop right there! 🫸');
     }
 
-    public function editField($fieldId, $currentValue, $fieldType = 'input', $optionKey = null, $modelClass = null, $modelAttribute = 'content', $editable=true)
+    public function editField($fieldId, $currentValue, $fieldType = 'input', $optionKey = null, $modelClass = null, $modelAttribute = 'content', $editable=true, $createNewNote = false)
     {
         if(!$editable){
             $this->notEditableActions();
             return;
         }
+
+        // Temporary: log payload for debugging the Status Type column
+        \Log::debug('EditableModal@editField payload', [
+            'fieldId'        => $fieldId,
+            'currentValue'   => $currentValue,
+            'fieldType'      => $fieldType,
+            'optionKey'      => $optionKey,
+            'modelClass'     => $modelClass,
+            'modelAttribute' => $modelAttribute,
+            'editable'       => $editable,
+        ]);
+
+
         $this->selectOptions = match($optionKey) {
-            'builders'     =>  $this->builders,
-            'taskTypes'    =>  $this->taskTypes,
-            'statusTypes'  =>  $this->statusTypes,
-            'supervisors'  =>  $this->supervisors,
-            'subdivisions' =>  $this->subdivisions,
+            'builders'     => $this->builders,
+            'taskTypes'    => $this->taskTypes,
+            'statusTypes'  => $this->statusTypes,
+            'supervisors'  => $this->supervisors,
+            'subdivisions' => $this->subdivisions,
             'is_extra'     => ['0' => 'Standard','1' => 'EPO'],
             default        => [],
         };
 
-            $this->fieldId = $fieldId;
-            $this->fieldValue = $currentValue;
-            $this->fieldType = $fieldType;
-            $this->modelClass = $modelClass;
-            $this->modelAttribute = $modelAttribute;
-            $this->editable = $editable;
+        $this->fieldId        = $fieldId;
+        $this->fieldValue     = $currentValue;
+        $this->fieldType      = $fieldType;
+        $this->modelClass     = $modelClass;
+        $this->modelAttribute = $modelAttribute;
+        $this->editable       = $editable;
+        $this->createNewNote  = (bool) $createNewNote;
 
-            if ($fieldType === 'date') {
-                $this->fieldValue = $currentValue
-                    ? Carbon::parse($currentValue)->format('Y-m-d')
-                    : '';
-            }
+        if ($fieldType === 'date') {
+            $this->fieldValue = $currentValue
+                ? Carbon::parse($currentValue)->format('Y-m-d')
+                : '';
+        }
 
-
-            //$this->showModal = true;
-            Flux::modal('dbl-click-modal')->show();
-
-
-
+        Flux::modal('dbl-click-modal')->show();
     }
 
     /**
@@ -137,10 +147,8 @@ class EditableModal extends Component
 
     public function save()
     {
-        $this->validate(
-            $this->rules(),
-            $this->messages()
-        );
+        $this->validate($this->rules(), $this->messages());
+
         $allowedModels = [
             \App\Models\Builder::class,
             \App\Models\Subdivision::class,
@@ -155,13 +163,56 @@ class EditableModal extends Component
         ];
 
         if (!in_array($this->modelClass, $allowedModels)) {
-            Flux::toast(heading: "Warning" , text:'Invalid model specified.', variant: "danger" );
+            Flux::toast(heading: "Warning", text:'Invalid model specified.', variant: "danger");
             return;
         }
+
         $model = $this->modelClass;
 
-        $record = $model::findOrFail($this->fieldId);
+        // Notes: match subdivision-like toggle behavior (edit latest vs add new)
+        if ($model == \App\Models\TaskNote::class) {
+            try {
+                if ($this->createNewNote) {
+                    \App\Models\TaskNote::create([
+                        'task_id'     => $this->fieldId,   // fieldId is Task ID
+                        'description' => $this->fieldValue,
+                    ]);
+                    Flux::toast(text: 'Note added successfully.', variant: 'success');
+                } else {
+                    $note = \App\Models\TaskNote::where('task_id', $this->fieldId)->latest('created_at')->first();
+                    if ($note) {
+                        $note->update(['description' => $this->fieldValue]);
+                        Flux::toast(text: 'Note updated successfully.', variant: 'success');
+                    } else {
+                        \App\Models\TaskNote::create([
+                            'task_id'     => $this->fieldId,
+                            'description' => $this->fieldValue,
+                        ]);
+                        Flux::toast(text: 'Note added successfully.', variant: 'success');
+                    }
+                }
 
+                Flux::modal('dbl-click-modal')->close();
+                $this->dispatch('contentUpdated');
+
+                $this->reset([
+                    'fieldValue',
+                    'fieldId',
+                    'fieldType',
+                    'selectOptions',
+                    'modelClass',
+                    'modelAttribute',
+                    'editable',
+                    'createNewNote',
+                ]);
+                return;
+            } catch (\Throwable $e) {
+                Flux::toast(text: 'Failed to save note.', variant: 'danger');
+                return;
+            }
+        }
+
+        $record = $model::findOrFail($this->fieldId);
 
         // transform empty String to null for select fields
         $value = $this->fieldValue;
@@ -174,22 +225,8 @@ class EditableModal extends Component
             $value = $value ?: null;
         }
 
-        if ($model == \App\Models\TaskNote::class) {
-            $note = $model::where('task_id', $this->fieldId)
-                        ->latest('created_at')
-                        ->first();
-            if ($note) {
-                $note->update(['description' => $this->fieldValue]);
-            } else {
-                $model::create([
-                        'task_id'     => $this->fieldId,
-                        'description' => $this->fieldValue,
-                ]);
-            }
-        }
-        $record->update([ $this->modelAttribute => $value,]);
+        $record->update([$this->modelAttribute => $value]);
 
-        //$this->showModal = false;
         Flux::modal('dbl-click-modal')->close();
 
         Flux::toast(text: 'Field updated successfully.', variant: 'success');
@@ -204,8 +241,20 @@ class EditableModal extends Component
             'modelClass',
             'modelAttribute',
             'editable',
-          ]);
+            'createNewNote',
+        ]);
         return;
+    }
+
+    // Put the toggle logic in the component so Blade stays simple and consistent with subdivision UX
+    public function toggleCreateNewNote(): void
+    {
+        $this->createNewNote = ! $this->createNewNote;
+
+        // Clear the input when switching to "Add new" (same behavior you expect when adding)
+        if ($this->createNewNote) {
+            $this->fieldValue = '';
+        }
     }
 
     public function render()
