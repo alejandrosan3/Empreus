@@ -19,6 +19,12 @@ class EditableModal extends Component
     public $editable;
     // Needed for the select field loading.
     public bool $createNewNote = false; // used to decide "edit latest" vs "add new" for Task Notes
+    // Add back these option lists used by optionKey in editField()
+    public array $builders     = [];
+    public array $taskTypes    = [];
+    public array $statusTypes  = [];
+    public array $supervisors  = [];
+    public array $subdivisions = [];
 
     protected $listeners = ['editField'];
 
@@ -39,6 +45,19 @@ class EditableModal extends Component
             $this->notEditableActions();
             return;
         }
+
+        // Temporary: log payload for debugging the Status Type column
+        \Log::debug('EditableModal@editField payload', [
+            'fieldId'        => $fieldId,
+            'currentValue'   => $currentValue,
+            'fieldType'      => $fieldType,
+            'optionKey'      => $optionKey,
+            'modelClass'     => $modelClass,
+            'modelAttribute' => $modelAttribute,
+            'editable'       => $editable,
+        ]);
+
+
         $this->selectOptions = match($optionKey) {
             'builders'     => $this->builders,
             'taskTypes'    => $this->taskTypes,
