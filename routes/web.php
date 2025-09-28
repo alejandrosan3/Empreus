@@ -9,7 +9,7 @@ use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Auth;
 use App\Livewire\Lot\{LotProgress, AddLotForm};
 use App\Livewire\Task\{TaskProgress, AddTaskForm} ;
-use App\Livewire\Pages\{LotDetails, TaskDetails};
+use App\Livewire\Pages\{Dashboard, LotDetails, TaskDetails};
 use App\Models\Task;
 use App\Http\Controllers\LotCoordsController;
 
@@ -28,7 +28,7 @@ Route::post('/logout', function () {
 Route::middleware(['auth', 'verified', SetCurrentCompany::class])
     ->group(function () {
 
-        Route::view('dashboard', 'dashboard')
+        Route::get('dashboard', Dashboard::class)
             ->name('dashboard')
             ->defaults('label', 'Dashboard')
             ->defaults('icon', 'home');
