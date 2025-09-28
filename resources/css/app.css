@@ -61,3 +61,60 @@
         @apply !bg-slate-100 dark:!bg-zinc-700;
     }
 }
+
+/* === Mobile Responsiveness Improvements === */
+
+@layer components {
+    /* Mobile-friendly touch targets */
+    .mobile-touch-target {
+        @apply min-h-[44px] min-w-[44px];
+    }
+    
+    /* Mobile sidebar improvements */
+    .mobile-sidebar {
+        @apply w-full max-w-sm;
+    }
+    
+    /* Mobile-friendly spacing */
+    .mobile-padding {
+        @apply px-4 sm:px-6 lg:px-8;
+    }
+    
+    /* Mobile grid adjustments */
+    .mobile-grid {
+        @apply grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4;
+    }
+    
+    /* Mobile text sizing */
+    .mobile-text {
+        @apply text-sm sm:text-base;
+    }
+    
+    /* Mobile button sizing */
+    .mobile-button {
+        @apply h-10 sm:h-11 px-4 sm:px-6;
+    }
+}
+
+/* Mobile-specific overrides */
+@media (max-width: 640px) {
+    /* Ensure sidebar is properly sized on mobile */
+    [data-sidebar] {
+        @apply w-full max-w-sm;
+    }
+    
+    /* Improve touch targets on mobile */
+    button, [role="button"], a {
+        @apply min-h-[44px] min-w-[44px];
+    }
+    
+    /* Better spacing for mobile cards */
+    .card-mobile {
+        @apply p-4 mx-2;
+    }
+    
+    /* Mobile-friendly form inputs */
+    input, select, textarea {
+        @apply text-base; /* Prevents zoom on iOS */
+    }
+}
