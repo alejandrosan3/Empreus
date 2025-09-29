@@ -46,7 +46,6 @@
          */
         public function filtersUpdated($filterData)
         {
-        
             // Update the filters property with the received data (explicitly)
             foreach ($filterData as $column => $options) {
                 $this->filters[$column] = $options;
@@ -79,12 +78,19 @@
         public function removeFilterValue($key, $value)
         {
             if (isset($this->selectedFilters[$key])) {
-                $this->selectedFilters[$key] = array_values(array_filter(
-                    $this->selectedFilters[$key],
-                    fn($v) => (string)$v !== (string)$value
-                ));
+                // Handle both array and string filter values
+                if (is_array($this->selectedFilters[$key])) {
+                    // For array filters (like multi-select), filter out the value
+                    $this->selectedFilters[$key] = array_values(array_filter(
+                        $this->selectedFilters[$key],
+                        fn($v) => (string)$v !== (string)$value
+                    ));
 
-                if (empty($this->selectedFilters[$key])) {
+                    if (empty($this->selectedFilters[$key])) {
+                        unset($this->selectedFilters[$key]);
+                    }
+                } else {
+                    // For string filters (like date), just remove the entire filter
                     unset($this->selectedFilters[$key]);
                 }
 
@@ -108,7 +114,7 @@
             $this->showColumns = $showColumns;
             $this->currentAddable = $currentAddable;
         }
-    
+
         public function render()
         {
             // Just render your Blade file

@@ -66,6 +66,7 @@
                                         placeholder="— select date —"
                                         clearable
                                         with-inputs
+                                        with-today
                                         class="size-auto"
                                     />
                                     @break
@@ -97,8 +98,19 @@
 
                     <div class="flex">
                         <flux:spacer />
-                        <flux:button type="submit" variant="primary" wire:click="applyGlobalFilters">
-                            Save changes
+                        <flux:button
+                            type="submit"
+                            variant="primary"
+                            wire:click="applyGlobalFilters"
+                            wire:loading.attr="disabled"
+                            wire:target="applyGlobalFilters"
+                        >
+                            <span wire:loading.remove wire:target="applyGlobalFilters">
+                                Save changes
+                            </span>
+                            <span wire:loading wire:target="applyGlobalFilters">
+                                Loading...
+                            </span>
                         </flux:button>
                     </div>
                 </flux:modal>
@@ -124,7 +136,7 @@
         <div class="px-4 py-2 flex flex-wrap gap-2 border-b border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900">
             @foreach($selectedFilters as $key => $vals)
                 @continue(empty($vals))
-                {{ucfirst(str_replace('_',' ', $key))}}: 
+                {{ucfirst(str_replace('_',' ', $key))}}:
                 @foreach((array)$vals as $val)
                     @php
                         $label = collect($filters[$key] ?? [])

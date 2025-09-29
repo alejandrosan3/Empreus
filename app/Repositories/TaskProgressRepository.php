@@ -5,6 +5,7 @@ namespace App\Repositories;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
 use App\Models\Task;
+use Carbon\Carbon;
 
 class TaskProgressRepository
 {
@@ -74,6 +75,24 @@ class TaskProgressRepository
                     break;
                 case 'phase':
                     $query->whereHas('lot', fn($q) => $q->whereIn('phase', $values));
+                    break;
+                case 'scheduled_start_date':
+                    // Handle date filtering - values should be a single date string
+                    if (!empty($values)) {
+                        // Handle both array and string cases
+                        $date = is_array($values) ? $values[0] : $values;
+                        if ($date) {
+                            try {
+                                // Parse the date and format it properly
+                                $parsedDate = Carbon::parse($date)->format('Y-m-d');
+                                // Filter tasks where scheduled_start_date is on the selected date
+                                $query->whereDate('scheduled_start_date', $parsedDate);
+                            } catch (\Exception $e) {
+                                // If date parsing fails, skip this filter
+                                \Log::warning('Failed to parse date filter', ['date' => $date, 'error' => $e->getMessage()]);
+                            }
+                        }
+                    }
                     break;
             }
         }
