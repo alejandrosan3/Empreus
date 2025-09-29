@@ -244,18 +244,17 @@
                                      onclick="Livewire.dispatchTo('task.edit-task-tags-modal', 'open-edit-tags', { taskId: {{ $task['id'] }} })"
                                 >
                                     <div class="flex flex-wrap gap-1 w-full">
-                                        @if($task->tags && $task->tags->isNotEmpty())
-                                            @foreach($task->tags as $tag)
+                                        @if(isset($task['tags']) && is_array($task['tags']) && count($task['tags']) > 0)
+                                            @foreach($task['tags'] as $tag)
                                                 @php
-                                                    $time = $tag->pivot?->time_of_day
-                                                        ? \Carbon\Carbon::createFromFormat('H:i:s', $tag->pivot->time_of_day)->format('g:i A')
-                                                        : null;
-                                                    $label = $time ? ($tag->name . ' @ ' . $time) : $tag->name;
+                                                    $time = !empty($tag['time']) ? $tag['time'] : null;
+                                                    $label = $time ? ($tag['name'] . ' @ ' . $time) : $tag['name'];
+                                                    $color = $tag['color'] ?? null;
                                                 @endphp
                                                 <span
                                                     class="inline-flex items-center rounded-md px-2 py-0.5 text-xs font-medium border border-zinc-200 dark:border-white/10"
-                                                    @if(!empty($tag->color))
-                                                        style="background-color: {{ $tag->color }}22; color: {{ $tag->color }}"
+                                                    @if(!empty($color))
+                                                        style="background-color: {{ $color }}22; color: {{ $color }}"
                                                     @endif
                                                     title="{{ $label }}"
                                                 >

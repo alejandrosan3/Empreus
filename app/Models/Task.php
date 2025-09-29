@@ -286,9 +286,9 @@ class Task extends Model
             ->join('supervisors', 'lots.supervisor_id', '=', 'supervisors.id')
             ->join('status_types','tasks.status_type_id','=', 'status_types.id')
             ->join('builders',    'lots.builder_id',    '=', 'builders.id')
-            ->leftJoin('tag_task', 'tasks.id', '=', 'tag_task.task_id')
             ->where('tasks.company_id', $companyId)
             ->whereBetween('tasks.scheduled_start_date', [$startDate, $endDate])
+            ->with(['tags:id,name,color']) // Load tags relationship for Calendar view
             ->orderBy('tasks.scheduled_start_date', 'asc');
 
         // Apply offset if provided

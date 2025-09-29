@@ -411,23 +411,33 @@ class TaskScheduler extends Component
         // Reset the total counts array
         $this->totalTasksByDay = [];
 
+        // Retrieves all tasks for a specific date range.
+        $allTasksForRange = Task::getTasksByDatesForCurrentCompany(
+            $start,
+            $end,
+            1000, // High limit to get all tasks for the range
+            0
+        );
+
+        // Group tasks by day
+        $tasksByDayGrouped = $allTasksForRange->groupBy(function ($task) {
+            return \Carbon\Carbon::parse($task->scheduled_start_date)->format('Y-m-d');
+        });
+
+        // Process each day in the range
         foreach ($this->range->days() as $carbonDate) {
             $date = $carbonDate->toDateString();
-
-            $allTasks = Task::getTasksByDatesForCurrentCompany(
-                \Carbon\Carbon::parse($date)->startOfDay(),
-                \Carbon\Carbon::parse($date)->endOfDay(),
-            );
+            $dayTasks = $tasksByDayGrouped->get($date, collect());
 
             // Store the total count for each day
-            $this->totalTasksByDay[$date] = $allTasks->count();
+            $this->totalTasksByDay[$date] = $dayTasks->count();
 
-            // 1️⃣ keep only the first page in the public property
-            $this->tasksByDay[$date] = $allTasks->take($this->pageSize)->values()->all();
+            // Keep only the first page in the public property
+            $this->tasksByDay[$date] = $dayTasks->take($this->pageSize)->values()->all();
 
-            // 2️⃣ tell the Blade whether there is more to load
-            $this->hasMore[$date]   = $allTasks->count() > $this->pageSize;
-            $this->howManyMore[$date] = $allTasks->count() - $this->pageSize;
+            // Tell the Blade whether there is more to load
+            $this->hasMore[$date]   = $dayTasks->count() > $this->pageSize;
+            $this->howManyMore[$date] = $dayTasks->count() - $this->pageSize;
         }
 
         $this->loadTeams();
