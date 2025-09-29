@@ -478,6 +478,7 @@ class TaskScheduler extends Component
             ->whereBetween('tasks.scheduled_start_date', [$startDate, $endDate])
             ->when($taskTypeIds, fn ($q) => $q->whereIn('tasks.task_type_id', $taskTypeIds))
             ->with(['workers:id,name']) // preload assigned workers
+            ->with(['tags:id,name,color']) // preload tags relationship
             ->withExists(['taskNotes']) // <-- add existence flag for notes
             ->orderBy('tasks.scheduled_start_date')
             ->get();
@@ -515,6 +516,15 @@ class TaskScheduler extends Component
                 'external'    => $externalNames,
                 'is_extra'    => (bool) $task->is_extra,                 // <-- new
                 'has_notes'   => (bool) ($task->task_notes_exists ?? false), // <-- new
+                'tags'        => $task->tags->map(function ($tag) {
+                    return [
+                        'name'  => $tag->name,
+                        'color' => $tag->color,
+                        'time'  => $tag->pivot?->time_of_day
+                            ? \Carbon\Carbon::createFromFormat('H:i:s', $tag->pivot->time_of_day)->format('g:i A')
+                            : null,
+                    ];
+                })->toArray(),
             ];
         }
     }
@@ -663,7 +673,6 @@ class TaskScheduler extends Component
     public function isCurrentRange(): bool
     {
         return $this->currentRangeStart->copy()->eq(Carbon::now()->startOfWeek());
-        $this->updateTimeStamp();
     }
 
     public function render()
