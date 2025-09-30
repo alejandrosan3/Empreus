@@ -12,8 +12,8 @@ return [
     |
     */
     'columns' => [
-        ['id' => 1,  'label' => 'Builder',            'value' => 'builder',             'group' => 'fixed',  'selected' => true,  'sortable' => true,  'editable' => false, 'filterable' => true,  'color' => 'purple'],
-        ['id' => 2,  'label' => 'Subdivision',        'value' => 'subdivision',         'group' => 'fixed',  'selected' => true,  'sortable' => true,  'editable' => false, 'filterable' => true,  'color' => 'amber'],
+        ['id' => 1,  'label' => 'Subdivision',        'value' => 'subdivision',         'group' => 'fixed',  'selected' => true,  'sortable' => true,  'editable' => false, 'filterable' => true,  'color' => 'amber'],
+        ['id' => 2,  'label' => 'Builder',            'value' => 'builder',             'group' => 'fixed',  'selected' => true,  'sortable' => true,  'editable' => false, 'filterable' => true,  'color' => 'purple'],
         ['id' => 3,  'label' => 'Lot',                'value' => 'lot_number',          'group' => 'fixed',  'selected' => true,  'sortable' => true,  'editable' => false, 'filterable' => true,  'color' => 'cyan'],
         ['id' => 4,  'label' => 'Stories',            'value' => 'stories',             'group' => 'active', 'selected' => false, 'sortable' => false, 'editable' => true,  'filterable' => false],
         ['id' => 5,  'label' => 'Last Completed Task','value' => 'last_completed_date',  'group' => 'active', 'selected' => true,  'sortable' => true,  'editable' => false, 'filterable' => false],

@@ -12,8 +12,8 @@ return [
     |
     */
     'columns' => [
-        ['id' => 1,  'label' => 'Builder',           'value' => 'builder',               'group' => 'fixed',  'selected' => true,  'sortable' => true,  'editable' => false, 'filterable' => true, 'filterType' =>'select', 'color' => 'purple'],
-        ['id' => 2,  'label' => 'Subdivision',       'value' => 'subdivision',           'group' => 'fixed',  'selected' => true,  'sortable' => true,  'editable' => false, 'filterable' => true, 'filterType' =>'select', 'color' => 'amber'],
+        ['id' => 1,  'label' => 'Subdivision',       'value' => 'subdivision',           'group' => 'fixed',  'selected' => true,  'sortable' => true,  'editable' => false, 'filterable' => true, 'filterType' =>'select', 'color' => 'amber'],
+        ['id' => 2,  'label' => 'Builder',           'value' => 'builder',               'group' => 'fixed',  'selected' => true,  'sortable' => true,  'editable' => false, 'filterable' => true, 'filterType' =>'select', 'color' => 'purple'],
         ['id' => 3,  'label' => 'Lot',               'value' => 'lot_number',            'group' => 'fixed',  'selected' => true,  'sortable' => true,  'editable' => false, 'filterable' => true, 'filterType' =>'select', 'color' => 'cyan'],
         ['id' => 4,  'label' => 'Task Type',         'value' => 'task_type',             'group' => 'active', 'selected' => true,  'sortable' => true,  'editable' => true, 'filterable' => true, 'filterType' =>'select', 'color' => 'green'],
         ['id' => 5,  'label' => 'Status',            'value' => 'status',                'group' => 'active', 'selected' => true,  'sortable' => true,  'editable' => true,  'filterable' => true, 'filterType' =>'select','color' => 'pink'],
