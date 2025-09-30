@@ -74,16 +74,16 @@ class DatabaseSeeder extends Seeder
         /**
          * Populate teams if empty
          */
-        if (DB::table('teams')->count() === 0) {
+        /*if (DB::table('teams')->count() === 0) {
             $this->call(TeamSeeder::class);
-        }
+        }*/
 
         /**
          * Populate team_worker pivot table if empty
          */
-        if (DB::table('team_worker')->count() === 0) {
+        /*if (DB::table('team_worker')->count() === 0) {
             $this->call(TeamWorkerSeeder::class);
-        }
+        }*/
 
         if (DB::table('tags')->count() === 0) {
             $this->call(TagSeeder::class);
