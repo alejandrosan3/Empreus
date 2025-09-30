@@ -67,9 +67,9 @@ class TaskScheduler extends Component
         return [
             \App\Enums\StatusType::CONFIRMED->value      => 'Confirmed',
             \App\Enums\StatusType::IN_PROGRESS->value    => 'In Progress',
-            \App\Enums\StatusType::PAYMENT_PENDING->value => 'Payment Pending',
+            \App\Enums\StatusType::REQUEST_PAYMENT->value => 'Request Payment',
             \App\Enums\StatusType::COMPLETED->value      => 'Completed',
-            \App\Enums\StatusType::BLOCKED->value        => 'Blocked',
+            \App\Enums\StatusType::BLOCKED->value        => 'On Hold',
         ];
     }
 

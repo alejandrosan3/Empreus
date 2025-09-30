@@ -60,15 +60,15 @@
                             @switch($column['filterType'] ?? 'select')
                                 {{-- Date picker --}}
                                 @case('date')
-                                    <flux:date-picker
-                                        wire:model="selectedFilters.{{ $name }}"
-                                        label="{{ $label }}"
-                                        placeholder="— select date —"
-                                        clearable
-                                        with-inputs
-                                        with-today
-                                        class="size-auto"
-                                    />
+                                    <flux:date-picker class="size-auto"
+                                                      wire:model="selectedFilters.{{ $name }}"
+                                                      label="{{ $label }}"
+                                                      placeholder="— select date —"
+                                                      with-today>
+                                        <x-slot name="trigger">
+                                            <flux:date-picker.input />
+                                        </x-slot>
+                                    </flux:date-picker>
                                     @break
 
                                 {{-- Multi-select listbox --}}

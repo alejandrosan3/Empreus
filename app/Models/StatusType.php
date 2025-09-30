@@ -37,9 +37,10 @@ class StatusType extends Model
         return $this->identifier === 'blocked';
     }
 
+    // Changing payment_pending to request_payment, we might want to refactor this function's name later
     public function isPaymentPending(): bool
     {
-        return $this->identifier === 'payment_pending';
+        return $this->identifier === 'request_payment';
     }
 
     public function isCancelled(): bool

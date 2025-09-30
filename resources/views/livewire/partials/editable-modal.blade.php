@@ -53,7 +53,12 @@
                 </flux:select>
 
             @elseif($fieldType === 'date')
-                <flux:date-picker class="size-auto" wire:model="fieldValue" label="Select the date" clearable with-inputs with-today />
+                <flux:date-picker class="size-auto" wire:model="fieldValue" label="Select the date" with-today>
+                    <x-slot name="trigger">
+                        <flux:date-picker.input />
+                    </x-slot>
+                </flux:date-picker>
+
             @endif
 
             <div class="flex">
