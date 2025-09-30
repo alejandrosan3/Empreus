@@ -4,6 +4,7 @@
     use Livewire\Component;
     use Livewire\Attributes\On;
     use Livewire\Attributes\Computed;
+    use Flux\Flux;
 
     class Navigation extends Component
     {
@@ -60,6 +61,7 @@
         public function applyGlobalFilters()
         {
             $this->dispatch('global-filters-updated', filters:$this->selectedFilters);
+            Flux::modal('filters')->close();
         }
 
         public function resetFilters($choice="all")
@@ -104,6 +106,7 @@
         public function submitSearch()
         {
             $this->dispatch('search-tasks', query: $this->searchTerm);
+
         }
 
         public function mount($showAddNew=false, $showFilters=false, $showSearch=false, $showColumns=false, $currentAddable="task" )
