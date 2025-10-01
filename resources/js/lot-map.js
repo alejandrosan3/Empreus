@@ -256,4 +256,7 @@ if (window.Livewire) {
   });
 }
 
+// Expose init function globally for dynamic calls
+window.initLotMap = init;
+
 export default init;

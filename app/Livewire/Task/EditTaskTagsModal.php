@@ -8,7 +8,7 @@ use Flux\Flux;
 
 class EditTaskTagsModal extends Component
 {
-    //public bool $showModal = false;
+    public bool $showModal = false;
     public ?int $taskId;
 
     // Receives { taskId: 123 } from JS
@@ -16,15 +16,21 @@ class EditTaskTagsModal extends Component
     public function handleOpen(int $taskId=null): void
     {
         $this->taskId = $taskId;
-        //$this->showModal = true;
-        Flux::modal('tag-modal')->show();
+        $this->showModal = true;
     }
 
     public function close(): void
     {
-        Flux::modal('tag-modal')->close();
-        //$this->showModal = false;
+        $this->showModal = false;
         $this->taskId = null;
+    }
+
+    public function updatedShowModal($value)
+    {
+        if (!$value) {
+            // Modal was closed, clean up
+            $this->taskId = null;
+        }
     }
 
     public function render()

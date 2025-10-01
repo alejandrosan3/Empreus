@@ -12,7 +12,7 @@
         <link href="https://fonts.bunny.net/css?family=inter:400,500,600&display=swap" rel="stylesheet" />
 
         <!-- Scripts -->
-        @vite(['resources/css/app.css', 'resources/js/app.js'])
+        @vite(['resources/css/app.css', 'resources/js/app.js', 'resources/js/lot-map.js'])
 
         @fluxAppearance
         @livewireStyles
@@ -94,7 +94,7 @@
                         <flux:radio value="light" icon="sun" />
                         <flux:radio value="dark" icon="moon" />
                     </flux:radio.group>
-                    
+
                     <!-- Profile Dropdown for Mobile -->
                     <flux:dropdown position="bottom" align="end">
                         <flux:profile avatar="https://fluxui.dev/img/demo/user.png" />
@@ -110,7 +110,7 @@
                     </flux:dropdown>
                 </div>
             </div>
-            
+
             <!-- Desktop Navigation -->
             <div class="hidden lg:block">
                 <livewire:layout.navigation
@@ -131,7 +131,8 @@
         </flux:main>
 
         @fluxScripts
-        @livewireScriptConfig
+
+        @livewireScripts
 
         {{-- Main Persistent. there's no need to add it anywhere else in the app --}}
         @persist('toast')

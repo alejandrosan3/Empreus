@@ -217,8 +217,14 @@
                     console.log('🗺️ Initializing Map');
 
                     try {
-                        const { default: mapInit } = await import('{{ Vite::asset('resources/js/lot-map.js') }}');
-                        mapInit();
+                        // Use the global function that should be available
+                        if (typeof window.initLotMap === 'function') {
+                            window.initLotMap();
+                        } else {
+                            console.warn('initLotMap function not available, trying to trigger lot-map initialization via event');
+                            // Trigger the existing event listeners
+                            document.dispatchEvent(new Event('lot-map-added'));
+                        }
                     } catch (error) {
                         console.error('Map initialization failed:', error);
                     }
