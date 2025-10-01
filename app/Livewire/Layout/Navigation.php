@@ -61,6 +61,7 @@
         public function applyGlobalFilters()
         {
             $this->dispatch('global-filters-updated', filters:$this->selectedFilters);
+            $this->dispatch('resetSelected');
             Flux::modal('filters')->close();
         }
 

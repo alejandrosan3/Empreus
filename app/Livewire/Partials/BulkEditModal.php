@@ -175,6 +175,7 @@ class BulkEditModal extends Component
         });
 
         Flux::toast(text: 'Updated ' . count($this->taskIds) . ' tasks.', heading:'All done!', variant:'success');
+        $this->dispatch('resetSelected');
         $this->dispatch('contentUpdated');
         $this->showModal = false;
     }

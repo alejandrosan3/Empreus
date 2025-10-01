@@ -215,8 +215,20 @@
                 selectedIds: [],
                 allIds: @js(array_column($flatTasks, 'id')),
 
+                init() {
+                    // listen for browser/Livewire events after a successful submit
+                    window.addEventListener('clear-selection', () => this.resetSelection());
+                    Livewire.on('resetSelected', () => this.resetSelection());
+                },
+
                 toggleAll(e) {
                     this.selectedIds = e.detail.all ? this.allIds : [];
+                },
+
+                resetSelection() {
+                    this.selectedIds = [];
+                    // optional: hard-uncheck any stray checkboxes not bound by x-bind
+                    this.$el.querySelectorAll('input[type="checkbox"]').forEach(cb => cb.checked = false);
                 }
             }));
         });

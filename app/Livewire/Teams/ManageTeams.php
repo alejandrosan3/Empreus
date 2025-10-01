@@ -26,7 +26,7 @@ class ManageTeams extends Component
     {
         $this->assignedWorkers = collect();
         $this->taskId = $taskId;
-        
+
         if ($this->taskId) {
             $this->task = Task::find($taskId);
             $this->loadAssignedWorkers();
@@ -49,7 +49,7 @@ class ManageTeams extends Component
             ->whereHas('companies', function ($query) use ($companyId) {
                 $query->where('company_id', $companyId);
             });
-            
+
             if (! $this->bulk && $this->assignedWorkers) {
                 $query->whereNotIn('id', $this->assignedWorkers->pluck('id'));
             }
@@ -132,7 +132,7 @@ class ManageTeams extends Component
 
             // Remove duplicates and already assigned workers
             $workersToAssign = $workersToAssign->unique('id');
-            
+
             if ($this->bulk) {
                 if ($workersToAssign->isEmpty()) {
                     Flux::toast(
@@ -172,6 +172,7 @@ class ManageTeams extends Component
 
             $this->closeModal();
             $this->dispatch('contentUpdated');
+            $this->dispatch('resetSelected');
 
         } catch (\Exception $e) {
             Flux::toast(
