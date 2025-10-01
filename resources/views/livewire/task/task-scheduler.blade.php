@@ -217,8 +217,8 @@
                     console.log('🗺️ Initializing Map');
 
                     try {
-                        const { default: mapInit } = await import('{{ Vite::asset('resources/js/lot-map.js') }}');
-                        mapInit();
+                        const { default: init } = await import('{{ Vite::asset('resources/js/lot-map.js') }}');
+                        init();
                     } catch (error) {
                         console.error('Map initialization failed:', error);
                     }
