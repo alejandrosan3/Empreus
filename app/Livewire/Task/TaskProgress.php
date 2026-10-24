@@ -63,7 +63,17 @@ class TaskProgress extends Component
     public function updateSearch($query)
     {
         $this->searchTerm = $query;
+        $this->checkedTasks = [];
         $this->resetPage();
+    }
+
+    /**
+     * Drop the selection when the page changes, so a bulk action never
+     * touches tasks that are no longer on screen.
+     */
+    public function updatedPage()
+    {
+        $this->checkedTasks = [];
     }
 
     /**
@@ -270,7 +280,9 @@ class TaskProgress extends Component
 
     public function startBulkEdit()
     {
-        $this->dispatch('bulk-edit-action', entity: 'task', ids: $this->checkedTasks );
+        if (! empty($this->checkedTasks)) {
+            $this->dispatch('bulk-edit-action', entity: 'task', ids: $this->checkedTasks);
+        }
     }
 
     public function startBulkAssign()
@@ -288,6 +300,7 @@ class TaskProgress extends Component
     public function handleGlobalFilters(array $filters)
     {
         $this->selectedFilters = $filters;
+        $this->checkedTasks = [];
 
         $this->resetPage();
         $this->dispatchFilters();
