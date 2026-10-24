@@ -33,6 +33,7 @@ return [
         ['id' => 19, 'label' => 'Tags',              'value' => 'tags',                  'group' => 'active', 'selected' => true, 'sortable' => false,  'editable' => true,  'filterable' => false, 'filterType' =>'tag', 'color' => 'indigo'],
         ['id' => 20, 'label' => 'Invoice #',         'value' => 'invoice_number',        'group' => 'active', 'selected' => false, 'sortable' => true,  'editable' => true,  'filterable' => false, 'filterType' =>'input',],
         ['id' => 21, 'label' => 'Check #',           'value' => 'check_number',          'group' => 'active', 'selected' => false, 'sortable' => true,  'editable' => true,  'filterable' => false, 'filterType' =>'input',],
+        ['id' => 22, 'label' => 'Crew Pay',          'value' => 'crew_pay',              'group' => 'active', 'selected' => true,  'sortable' => true,  'editable' => true,  'filterable' => false, 'filterType' =>'input',],
 
     ],
 

@@ -32,7 +32,21 @@ class Lot extends Model
     protected $casts = [
         'latitude'  => 'float',
         'longitude' => 'float',
+        'geocode_attempted_at' => 'datetime',
     ];
+
+    protected static function booted(): void
+    {
+        // A new address means the saved coordinates are stale: clear them so
+        // the next `lots:geocode` run (or map view) locates the lot again.
+        static::updating(function (Lot $lot) {
+            if ($lot->isDirty('address') && ! $lot->isDirty(['latitude', 'longitude'])) {
+                $lot->latitude = null;
+                $lot->longitude = null;
+                $lot->geocode_attempted_at = null;
+            }
+        });
+    }
 
     public function builder(): BelongsTo
     {

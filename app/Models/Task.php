@@ -24,6 +24,7 @@ class Task extends Model
         'company_id',
         'task_type_id',
         'price',
+        'crew_pay',
         'status_type_id',
         'team_id',
         'scheduled_start_date',
