@@ -111,8 +111,9 @@ class BulkEditModal extends Component
             $taskFields['ended_at'] = $this->ended_at;
         }
 
-        if (isset($this->is_extra) && in_array((int)$this->is_extra, [0, 1])) {
-            $taskFields['is_extra'] = $this->is_extra;
+        // "Don't update" sends an empty string, which must not be written as 0/''
+        if (in_array((string) $this->is_extra, ['0', '1'], true)) {
+            $taskFields['is_extra'] = (int) $this->is_extra;
         }
 
         // If nothing to update (including tags), close quietly

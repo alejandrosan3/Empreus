@@ -6,21 +6,17 @@
     <livewire:partials.bulk-edit-modal />
     <livewire:teams.manage-teams :key="'manage-teams'" />
 
-    <flux:checkbox.group x-data="bulkEditCheckboxes()">
+    {{-- Selection lives in $checkedTasks (deferred), so the select-all checkbox, pagination
+         and re-renders all stay in sync, and the buttons send the selection with the action call. --}}
+    <flux:checkbox.group wire:model="checkedTasks">
         <div class="h-8 flex items-center gap-2">
-            <div x-show="selectedIds.length > 0" x-transition
-                class="transition-opacity duration-300 opacity-0"
-                :class="{ 'opacity-100': selectedIds.length > 0 }"
-            >
-                <flux:button @click="$wire.set('checkedTasks', selectedIds); $wire.startBulkEdit()" size="sm">
+            <div x-show="$wire.checkedTasks.length > 0" x-transition @style(['display: none' => empty($checkedTasks)])>
+                <flux:button wire:click="startBulkEdit" size="sm">
                     Bulk Edit
                 </flux:button>
             </div>
-            <div x-show="selectedIds.length > 0" x-transition
-                class="transition-opacity duration-300 opacity-0"
-                :class="{ 'opacity-100': selectedIds.length > 0 }"
-            >
-                <flux:button @click="$wire.set('checkedTasks', selectedIds); $wire.startBulkAssign()" size="sm">
+            <div x-show="$wire.checkedTasks.length > 0" x-transition @style(['display: none' => empty($checkedTasks)])>
+                <flux:button wire:click="startBulkAssign" size="sm">
                     Assign Workers
                 </flux:button>
             </div>
@@ -62,15 +58,7 @@
                     @foreach($flatTasks as $row)
                         <flux:table.row :key="$row['id']">
                         <flux:table.cell class="sticky frozen-cell left-0 z-20 bg-white dark:bg-zinc-800" data-fixed-index="0" >
-                            <flux:checkbox
-                                x-data="{ id: {{ $row['id'] }} }"
-                                value="{{ $row['id'] }}"
-                                x-bind:checked="selectedIds.includes(id)"
-                                @change="e => {
-                                    if (e.target.checked) selectedIds.push(id);
-                                    else selectedIds = selectedIds.filter(i => i !== id);
-                                }"
-                            />
+                            <flux:checkbox value="{{ $row['id'] }}" />
                         </flux:table.cell>
                             @foreach($columns as $column)
                                 @if($column['selected'])
@@ -208,17 +196,4 @@
 
     </flux:checkbox.group>
 
-
-    <script>
-        document.addEventListener('alpine:init', () => {
-            Alpine.data('bulkEditCheckboxes', () => ({
-                selectedIds: [],
-                allIds: @js(array_column($flatTasks, 'id')),
-
-                toggleAll(e) {
-                    this.selectedIds = e.detail.all ? this.allIds : [];
-                }
-            }));
-        });
-    </script>
 </div>
