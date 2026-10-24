@@ -60,6 +60,15 @@
                     wire:model.defer="price"
                     :error="$errors->first('price')"
                 />
+
+                <flux:input
+                    label="Crew Pay"
+                    description="What we pay the crew for this task (optional)."
+                    type="number"
+                    inputmode="decimal"
+                    wire:model.defer="crew_pay"
+                    :error="$errors->first('crew_pay')"
+                />
             </flux:card>
         </div>
         <livewire:partials.cards :items="$card3" mode="add" />

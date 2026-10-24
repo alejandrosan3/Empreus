@@ -18,6 +18,8 @@
     "dependencies": {
         "@googlemaps/js-api-loader": "^1.16.10",
         "@googlemaps/markerclusterer": "^2.6.2",
+        "chart.js": "^4.4.7",
+        "leaflet": "^1.9.4",
         "sortablejs": "^1.15.6"
     }
 }

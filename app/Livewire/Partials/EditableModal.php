@@ -113,6 +113,7 @@ class EditableModal extends Component
                 'num_of_floors'    => 'required|integer',
                 'floor_area'       => 'required|numeric',
                 'price'            => 'required|numeric',
+                'crew_pay'         => 'nullable|numeric|min:0',
 
                 // dates (optional—you can skip if you’re certain the picker always gives valid Y-m-d)
                 'scheduled_start_date' => 'nullable|date',
@@ -217,6 +218,11 @@ class EditableModal extends Component
         // transform empty String to null for select fields
         $value = $this->fieldValue;
         if ($this->fieldType === 'select' && $value === '') {
+            $value = null;
+        }
+
+        // Optional numbers: blank → null
+        if ($this->modelAttribute === 'crew_pay' && $value === '') {
             $value = null;
         }
 

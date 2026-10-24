@@ -40,6 +40,7 @@ class AddTaskForm extends Component
     public $task_type_id          = null;
     public $order_number          = null;
     public $price                 = null;
+    public $crew_pay              = null;
     public $is_extra              = null;
     public $scheduled_start_date  = null;
     public $status_type_id        = null;
@@ -74,6 +75,7 @@ class AddTaskForm extends Component
             'newTaskType'          => $this->showTaskInput ? 'required|string|max:255' : 'nullable',
             'order_number'         => 'required|string',
             'price'                => 'required|numeric|min:0',
+            'crew_pay'             => 'nullable|numeric|min:0',
             'is_extra'             => 'required|in:0,1',
             'status_type_id'       => 'required|integer',
         ];
@@ -86,6 +88,7 @@ class AddTaskForm extends Component
         'lot_number.required'  => 'Pick a lot.',
         'price.numeric'        => 'Price must be a number.',
         'price.required'       => 'Price can\'t be empty',
+        'crew_pay.numeric'     => 'Crew pay must be a number.',
         'task_type_id.required' => 'Pick a task',
         'task_type_id.unique'     => 'This task already exists for this Subdivision and Lot',
         'newTaskType.required'  => 'Enter a task name.',
@@ -160,6 +163,7 @@ class AddTaskForm extends Component
             ['label'=>'Task Name',    'field'=>'task_type_id', 'type'=>'select', 'options'=>$this->taskTypeOptions],
             ['label'=>'Order Number', 'field'=>'order_number'],
             ['label'=>'Price',        'field'=>'price'],
+            ['label'=>'Crew Pay',     'field'=>'crew_pay'],
         ];
 
         $this->card3 = [
