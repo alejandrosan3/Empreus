@@ -21,6 +21,12 @@ class ListWorker extends Component
         'contentUpdated' => '$refresh',
     ];
 
+    public function mount(): void
+    {
+        // Email only shows when the role allows contact details.
+        $this->columns = \App\Support\EditableFields::visibleColumns($this->columns);
+    }
+
     public function startBulkAssign(): void
     {
         if (! empty($this->checkedWorkers)) {

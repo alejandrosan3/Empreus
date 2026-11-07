@@ -14,12 +14,13 @@
         ])
 
         @livewire('partials.cards', [
-            'items' => [
+            'items' => array_values(array_filter([
                 ['label' => 'Task Name', 'value' => $task->taskType?->name ?? 'Missing Task Name'],
                 ['label' => 'Order Number', 'value' => $task?->order_number ?? '-'],
                 ['label' => 'Order Type', 'value' => $task->is_extra ? "EPO" : "PO"],
-                ['label' => 'Price', 'value' => '$' . $task?->price ?? '-'],
-            ]
+                // Price only for roles that can see money.
+                Gate::allows('see-money') ? ['label' => 'Price', 'value' => '$' . $task?->price ?? '-'] : null,
+            ]))
         ])
 
             @livewire('partials.cards', [
@@ -36,9 +37,11 @@
     <div class="grid grid-cols-1 gap-4 mt-4">
         <!-- Notes Section -->
 
-        @livewire('partials.task-notes', [
-            'tasks' => $task,
-        ])
+        @can('see-notes')
+            @livewire('partials.task-notes', [
+                'tasks' => $task,
+            ])
+        @endcan
 
     </div>
 

@@ -73,6 +73,8 @@ class LotProgress extends Component
          */
         public function startBulkEdit(): void
         {
+            $this->authorize('edit-lots');
+
             // <livewire:partials.bulk-edit-modal> listens for this
             $this->dispatch('bulk-edit-action', entity: 'lot', ids: $this->checkedLots);
         }
@@ -189,6 +191,7 @@ class LotProgress extends Component
         #[On('column-list-updated')]
         public function updateColumns($columns)
         {
+            $columns = \App\Support\EditableFields::visibleColumns($columns);
             $this->columns = $columns;
             $this->columnPreferences->setColumns(auth()->user(), 'lot-progress', $columns);
         }
@@ -198,6 +201,8 @@ class LotProgress extends Component
         */
         public function duplicateLot(int $lotId): void
         {
+            $this->authorize('edit-lots');
+
             try {
                 $original = Lot::with('tasks')->findOrFail($lotId);
 
@@ -233,7 +238,7 @@ class LotProgress extends Component
             }
             $this->repository = $repository;
 
-            $this->columns       = $this->columnPreferences->getColumns(auth()->user(), 'lot-progress');
+            $this->columns       = \App\Support\EditableFields::visibleColumns($this->columnPreferences->getColumns(auth()->user(), 'lot-progress'));
             $this->sortBy        = config('lot-progress.default_sort_by');
             $this->sortDirection = config('lot-progress.default_sort_direction');
 
