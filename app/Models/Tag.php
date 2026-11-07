@@ -6,10 +6,11 @@ use Illuminate\Database\Eloquent\Model;
 use App\Models\Concerns\BelongsToBusiness;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Tag extends Model
 {
-    use HasFactory, BelongsToBusiness;
+    use HasFactory, BelongsToBusiness, SoftDeletes;
 
     protected $fillable = [
         'business_id',

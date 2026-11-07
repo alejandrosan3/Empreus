@@ -191,6 +191,8 @@ class AddTaskForm extends Component
         $this->lots         = [];
         $this->card1[2]['options'] = [];
         $this->lot_number   = null;
+
+        $this->suggestPrice();
     }
 
     // Cascade: subdivision → lots
@@ -210,6 +212,21 @@ class AddTaskForm extends Component
 
         // reset downstream
         $this->lot_number = null;
+    }
+
+    // Suggest the price from Settings › Task types & prices: the builder's own price, or the default.
+    public function updatedTaskTypeId(): void
+    {
+        $this->suggestPrice();
+    }
+
+    private function suggestPrice(): void
+    {
+        if (! auth()->user()?->sees('money') || ($this->price !== null && $this->price !== '') || ! $this->task_type_id) {
+            return;
+        }
+
+        $this->price = TaskType::find($this->task_type_id)?->priceFor($this->builder_id ? (int) $this->builder_id : null);
     }
 
     public function toggleTaskInput(): void
@@ -233,10 +250,13 @@ class AddTaskForm extends Component
         try {
                  
             if ($this->showTaskInput && !empty($this->newTaskType)) {
-                $taskType = TaskType::firstOrCreate(
+                $taskType = TaskType::withTrashed()->firstOrCreate(
                     ['name' => $this->newTaskType],
                     ['description' => $this->newTaskType]
                 );
+                if ($taskType->trashed()) {
+                    $taskType->restore(); // typing an archived task type's name brings it back
+                }
                 Cache::forget("task_types.{$this->companyId}");
                 $this->taskTypeOptions[] = (object)[
                     'id'   => $taskType->id,

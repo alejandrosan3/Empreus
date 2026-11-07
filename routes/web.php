@@ -40,6 +40,7 @@ Route::middleware(['auth', 'verified', SetCurrentCompany::class])
         Route::middleware('area:settings')->group(function () {
             Route::get('settings/organization', \App\Livewire\Settings\OrganizationSettings::class)->name('settings.organization');
             Route::get('settings/structure', \App\Livewire\Settings\Structure::class)->name('settings.structure');
+            Route::get('settings/task-types', \App\Livewire\Settings\TaskTypes::class)->name('settings.task-types');
         });
         Route::get('platform/organizations', \App\Livewire\Settings\Organizations::class)
             ->middleware('can:platform')->name('platform.organizations');

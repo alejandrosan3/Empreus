@@ -57,7 +57,8 @@ class Task extends Model
 
     public function taskType(): BelongsTo
     {
-        return $this->belongsTo(TaskType::class);
+        // Old tasks keep showing their task type even after it's archived.
+        return $this->belongsTo(TaskType::class)->withTrashed();
     }
 
     public function taskNotes(): HasMany
