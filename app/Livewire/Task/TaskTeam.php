@@ -56,7 +56,7 @@ class TaskTeam extends Component
 
             // Add selected individual workers
             if ($this->selectedWorkerIds) {
-                $individualWorkers = User::whereIn('id', $this->selectedWorkerIds)->get();
+                $individualWorkers = User::workersInDivision()->whereIn('users.id', $this->selectedWorkerIds)->get();
                 $workersToAssign = $workersToAssign->merge($individualWorkers);
             }
 

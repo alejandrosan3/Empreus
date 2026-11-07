@@ -4,12 +4,13 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use App\Models\Concerns\BelongsToBusiness;
 
 class TaskType extends Model
 {
-    use HasFactory;
+    use HasFactory, BelongsToBusiness;
 
-    protected $fillable = ['name', 'description'];
+    protected $fillable = ['business_id', 'name', 'description'];
 
     public function tasks()
     {

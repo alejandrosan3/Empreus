@@ -28,17 +28,24 @@ class DatabaseSeeder extends Seeder
         }
 
         /**
+         * Populate organization, business and divisions if empty
+         */
+        if (DB::table('companies')->count() === 0) {
+            $this->call(CompanySeeder::class);
+        }
+
+        // Everything below is created inside the first division, so builders, task
+        // types and tags land in its organization and business.
+        tenancy()->runIn(\App\Models\Company::orderBy('id')->first(), fn () => $this->seedInsideFirstDivision());
+    }
+
+    private function seedInsideFirstDivision(): void
+    {
+        /**
          * Populate task types if empty
          */
         if (DB::table('task_types')->count() === 0) {
             $this->call(TaskTypeSeeder::class);
-        }
-
-        /**
-         * Populate accounts table if empty
-         */
-        if (DB::table('companies')->count() === 0) {
-            $this->call(CompanySeeder::class);
         }
 
         /**

@@ -9,6 +9,13 @@ class TagSeeder extends Seeder
 {
     public function run(): void
     {
+        // When run on its own, seed the first division's business.
+        if (! tenancy()->businessId() && ($division = \App\Models\Company::orderBy('id')->first())) {
+            tenancy()->runIn($division, fn () => $this->run());
+
+            return;
+        }
+
         $defaults = [
             ['name' => 'Walk', 'color' => '#0284c7'],
             ['name' => 'Closing', 'color' => '#16a34a'],

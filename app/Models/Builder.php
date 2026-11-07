@@ -5,11 +5,12 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use App\Models\Concerns\BelongsToOrganization;
 use Laravel\Scout\Searchable;
 
 class Builder extends Model
 {
-    use HasFactory, Searchable;
+    use HasFactory, Searchable, BelongsToOrganization;
 
     /**
      * @var array

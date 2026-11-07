@@ -50,7 +50,7 @@ class ListWorker extends Component
     #[\Livewire\Attributes\Computed]
     public function getWorkersProperty()
     {
-        $query = User::where('role', 'worker');
+        $query = User::workersInDivision();
 
         if ($this->searchTerm !== '') {
             $query->where(function ($q) {

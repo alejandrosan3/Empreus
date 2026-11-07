@@ -52,8 +52,10 @@ class LotImportService
                 // Validate the item
                 $this->validateItem($item);
 
-                // Import the item
-                $result = $this->importItem($item);
+                // Import the item inside its division, so builders, supervisors and
+                // task types are looked up and created in the right organization.
+                $division = Company::find($item['company_id']);
+                $result = tenancy()->runIn($division, fn () => $this->importItem($item));
                 $results[] = $result;
             } catch (Exception $e) {
                 // Log the error and continue with the next item

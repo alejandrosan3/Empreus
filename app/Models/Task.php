@@ -13,11 +13,12 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use App\Traits\Duplicatable;
+use App\Models\Concerns\BelongsToDivision;
 use Flux\DateRange;
 
 class Task extends Model
 {
-    use HasFactory, Searchable, Duplicatable;
+    use HasFactory, Searchable, Duplicatable, BelongsToDivision;
 
     protected $fillable = [
         'lot_id',
