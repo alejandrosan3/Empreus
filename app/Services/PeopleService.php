@@ -73,6 +73,81 @@ class PeopleService
         return $assignment;
     }
 
+    /**
+     * Give access on behalf of someone, checking that they may: the role is no
+     * stronger than their own, and the place is one they manage.
+     */
+    public function grantAs(User $actor, User $user, Role $role, string $scopeType, int $scopeId): RoleAssignment
+    {
+        if (! app(RoleService::class)->canGrant($actor, $role)) {
+            throw new InvalidArgumentException("You can't give the {$role->name} role: it has more access than you do.");
+        }
+        if (! $this->canManagePlace($actor, $scopeType, $scopeId)) {
+            throw new InvalidArgumentException("You can't give access there.");
+        }
+
+        return $this->grant($user, $role, $scopeType, $scopeId);
+    }
+
+    /** Remove an access line on behalf of someone, checking the role and place like grantAs(). */
+    public function revokeAs(User $actor, RoleAssignment $assignment): void
+    {
+        if (! $assignment->role || ! app(RoleService::class)->canGrant($actor, $assignment->role)
+            || ! $this->canManagePlace($actor, $assignment->scope_type, $assignment->scope_id)) {
+            throw new InvalidArgumentException("You can't remove that access line.");
+        }
+
+        $this->revoke($assignment);
+    }
+
+    /**
+     * Whether someone can hand out access in a place: they need Edit in "People & roles"
+     * from a line that covers that place. A Jacksonville admin can't give access to all
+     * of Cleaning; a Cleaning admin can give access in any Cleaning division.
+     */
+    public function canManagePlace(User $actor, string $scopeType, int $scopeId): bool
+    {
+        $organizationId = $this->organizationIdOf($scopeType, $scopeId);
+        if (! $organizationId) {
+            return false;
+        }
+        if ($actor->isPlatformAdmin()) {
+            return true;
+        }
+        if ($actor->isDeactivated()) {
+            return false;
+        }
+
+        $businessId = match ($scopeType) {
+            RoleAssignment::BUSINESS => $scopeId,
+            RoleAssignment::DIVISION => Company::whereKey($scopeId)->value('business_id'),
+            default => null,
+        };
+        $needed = Role::levelToValue('edit');
+
+        return $actor->roleAssignments()->with('role')->get()->contains(function (RoleAssignment $line) use ($scopeType, $scopeId, $organizationId, $businessId, $needed) {
+            if (! $line->role || $line->role->levelValue('people') < $needed) {
+                return false;
+            }
+
+            return match ($line->scope_type) {
+                RoleAssignment::ORGANIZATION => $line->scope_id === $organizationId,
+                RoleAssignment::BUSINESS => $businessId !== null && $line->scope_id === $businessId,
+                RoleAssignment::DIVISION => $scopeType === RoleAssignment::DIVISION && $line->scope_id === $scopeId,
+                default => false,
+            };
+        });
+    }
+
+    /** Places in an organization where someone can hand out access (for pickers). */
+    public function placesManagedBy(User $actor, Organization $organization): array
+    {
+        return array_values(array_filter(
+            $this->placesIn($organization),
+            fn ($place) => $this->canManagePlace($actor, $place['scope_type'], $place['scope_id'])
+        ));
+    }
+
     /** Remove one access line. The last Owner of an organization can't be removed. */
     public function revoke(RoleAssignment $assignment): void
     {
@@ -147,14 +222,19 @@ class PeopleService
     }
 
     /** A role can only be given inside its own organization. */
-    private function assertPlaceMatchesRole(Role $role, string $scopeType, int $scopeId): void
+    public function organizationIdOf(string $scopeType, int $scopeId): ?int
     {
-        $organizationId = match ($scopeType) {
+        return match ($scopeType) {
             RoleAssignment::ORGANIZATION => Organization::whereKey($scopeId)->value('id'),
             RoleAssignment::BUSINESS => Business::whereKey($scopeId)->value('organization_id'),
             RoleAssignment::DIVISION => Company::with('business')->find($scopeId)?->business?->organization_id,
             default => null,
         };
+    }
+
+    private function assertPlaceMatchesRole(Role $role, string $scopeType, int $scopeId): void
+    {
+        $organizationId = $this->organizationIdOf($scopeType, $scopeId);
 
         if (! $organizationId || $organizationId !== $role->organization_id) {
             throw new InvalidArgumentException("That role can't be given in that place.");
