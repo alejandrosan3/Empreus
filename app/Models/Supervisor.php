@@ -16,6 +16,12 @@ class Supervisor extends Model
      */
     protected $guarded = [];
 
+    /** The login linked to this supervisor, if any (used for "only their own work"). */
+    public function user()
+    {
+        return $this->belongsTo(User::class);
+    }
+
     public function lots()
     {
         return $this->hasMany(Lot::class);

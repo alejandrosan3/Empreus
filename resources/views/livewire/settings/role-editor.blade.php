@@ -85,7 +85,9 @@
         <flux:heading size="lg">Who has it</flux:heading>
         @forelse ($this->holders as $line)
             <div class="flex items-center justify-between border-b border-zinc-200 py-2 dark:border-zinc-700" wire:key="holder-{{ $line->id }}">
-                <span>{{ $line->user->name }}</span>
+                @can('view-people')
+                    <a href="{{ route('settings.people.show', $line->user) }}" wire:navigate class="hover:underline">{{ $line->user->name }}</a>
+                @endcan
                 <flux:text size="sm">{{ $line->placeLabel() }}</flux:text>
             </div>
         @empty

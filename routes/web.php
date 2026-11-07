@@ -37,6 +37,8 @@ Route::middleware(['auth', 'verified', SetCurrentCompany::class])
         Route::get('settings', [\App\Http\Controllers\SettingsController::class, 'index'])->name('settings');
         Route::post('settings/view-as/stop', [\App\Http\Controllers\SettingsController::class, 'stopViewingAs'])->name('settings.view-as.stop');
         Route::middleware('area:people')->group(function () {
+            Route::get('settings/people', \App\Livewire\Settings\People::class)->name('settings.people');
+            Route::get('settings/people/{user}', \App\Livewire\Settings\Person::class)->name('settings.people.show');
             Route::get('settings/roles', \App\Livewire\Settings\Roles::class)->name('settings.roles');
             Route::get('settings/roles/{role}', \App\Livewire\Settings\RoleEditor::class)->name('settings.roles.edit');
         });
