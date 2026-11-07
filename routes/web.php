@@ -42,6 +42,7 @@ Route::middleware(['auth', 'verified', SetCurrentCompany::class])
             Route::get('settings/structure', \App\Livewire\Settings\Structure::class)->name('settings.structure');
             Route::get('settings/task-types', \App\Livewire\Settings\TaskTypes::class)->name('settings.task-types');
             Route::get('settings/statuses', \App\Livewire\Settings\Statuses::class)->name('settings.statuses');
+            Route::get('settings/tags', \App\Livewire\Settings\Tags::class)->name('settings.tags');
         });
         Route::get('platform/organizations', \App\Livewire\Settings\Organizations::class)
             ->middleware('can:platform')->name('platform.organizations');
