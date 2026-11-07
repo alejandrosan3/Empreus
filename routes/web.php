@@ -1,7 +1,6 @@
 <?php
 
 use App\Http\Middleware\SetCurrentCompany;
-use App\Http\Middleware\CheckUserRole;
 use App\Livewire\Builders\{CreateBuilder, ListBuilder};
 use App\Livewire\Subdivisions\ListSubdivision;
 use App\Livewire\Supervisors\{CreateSupervisor, ListSupervisor};
@@ -33,6 +32,14 @@ Route::middleware(['auth', 'verified', SetCurrentCompany::class])
             ->name('dashboard')
             ->defaults('label', 'Dashboard')
             ->defaults('icon', 'home');
+
+        // Settings. Each tab checks its own area; see config/settings.php.
+        Route::get('settings', [\App\Http\Controllers\SettingsController::class, 'index'])->name('settings');
+        Route::post('settings/view-as/stop', [\App\Http\Controllers\SettingsController::class, 'stopViewingAs'])->name('settings.view-as.stop');
+        Route::middleware('area:people')->group(function () {
+            Route::get('settings/roles', \App\Livewire\Settings\Roles::class)->name('settings.roles');
+            Route::get('settings/roles/{role}', \App\Livewire\Settings\RoleEditor::class)->name('settings.roles.edit');
+        });
 
         Route::view('profile', 'profile')
             ->name('profile')

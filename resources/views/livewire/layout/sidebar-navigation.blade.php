@@ -48,6 +48,10 @@ $directory = collect([
         <flux:navlist.item icon="{{ $link['icon'] }}" href="{{ $link['href'] }}" :current="$link['current']">{{ $link['label'] }}</flux:navlist.item>
     @endcan
 
+    @if(Gate::any(['view-people', 'view-settings']))
+        <flux:navlist.item icon="cog-6-tooth" href="{{ route('settings') }}" :current="request()->is('settings*')">Settings</flux:navlist.item>
+    @endif
+
     {{-- Statistics and Projections - WIP
     @can('view-reports') … @endcan
     --}}

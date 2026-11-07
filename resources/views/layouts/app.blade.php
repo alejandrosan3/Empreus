@@ -52,7 +52,7 @@
 
                     <flux:menu>
                         <flux:menu.item icon="user-circle" :href="route('profile')">Profile</flux:menu.item>
-                        <flux:menu.item icon="cog-8-tooth" :href="route('profile')">Settings</flux:menu.item>
+                        <flux:menu.item icon="cog-8-tooth" :href="route('settings')">Settings</flux:menu.item>
 
                         <flux:menu.separator />
                         <form method="POST" action="{{ route('logout') }}">
@@ -100,7 +100,7 @@
                         <flux:profile avatar="https://fluxui.dev/img/demo/user.png" />
                         <flux:menu>
                             <flux:menu.item icon="user-circle" :href="route('profile')">Profile</flux:menu.item>
-                            <flux:menu.item icon="cog-8-tooth" :href="route('profile')">Settings</flux:menu.item>
+                            <flux:menu.item icon="cog-8-tooth" :href="route('settings')">Settings</flux:menu.item>
                             <flux:menu.separator />
                             <form method="POST" action="{{ route('logout') }}">
                                 @csrf
@@ -124,6 +124,16 @@
         </flux:header>
 
         <flux:main>
+            @if ($viewingAs = auth()->user()?->viewingAsRole())
+                {{-- "View as this role" is on: say so on every page, with a way back. --}}
+                <div class="mb-4 flex flex-wrap items-center justify-between gap-2 rounded-lg bg-amber-100 px-4 py-2 text-amber-900 dark:bg-amber-900 dark:text-amber-50" role="status">
+                    <span>You're seeing the app as <strong>{{ $viewingAs->name }}</strong>. Nothing you can't normally do is unlocked.</span>
+                    <form method="POST" action="{{ route('settings.view-as.stop') }}">
+                        @csrf
+                        <flux:button size="sm" type="submit">Back to my own access</flux:button>
+                    </form>
+                </div>
+            @endif
              <!-- Page Content -->
              <main>
                 {{ $slot }}
