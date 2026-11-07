@@ -79,4 +79,18 @@ class PageAccessTest extends TestCase
 
         $this->actingAs($stranger)->get(route('dashboard'))->assertForbidden();
     }
+
+    public function test_roles_without_a_dashboard_land_on_their_first_page(): void
+    {
+        $overseer = Role::create([
+            'organization_id' => $this->place['organization']->id,
+            'name' => 'Scheduler watcher',
+            'levels' => Role::expandLevels(['scheduler' => 'view']),
+            'details' => [],
+        ]);
+        $person = $this->makePerson($this->place['division'], $overseer, 'Watcher');
+        $this->workIn($person, $this->place['division']);
+
+        $this->get(route('dashboard'))->assertRedirect(route('task-scheduler'));
+    }
 }

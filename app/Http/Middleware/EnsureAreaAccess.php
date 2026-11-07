@@ -23,9 +23,36 @@ class EnsureAreaAccess
         }
 
         if (! $user->hasLevel($area, $level)) {
+            // The dashboard is everyone's landing page (after sign-in, after "View as").
+            // Roles without it go to the first page they can open instead.
+            if ($area === 'dashboard' && ($home = self::firstPageFor($user))) {
+                return redirect()->route($home);
+            }
+
             abort(403, "You don't have access to this page. Ask an admin to change your role if you need it.");
         }
 
         return $next($request);
+    }
+
+    /** Landing pages in order of preference, with the area each needs. */
+    private const HOME_PAGES = [
+        'task-progress' => 'tasks',
+        'task-scheduler' => 'scheduler',
+        'lot-progress' => 'lots',
+        'builders' => 'directory',
+        'workers' => 'crews',
+        'settings' => 'people',
+    ];
+
+    public static function firstPageFor($user): ?string
+    {
+        foreach (self::HOME_PAGES as $route => $area) {
+            if ($user->hasLevel($area, 'view')) {
+                return $route;
+            }
+        }
+
+        return $user->hasLevel('settings', 'view') ? 'settings' : null;
     }
 }
