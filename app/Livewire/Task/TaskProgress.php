@@ -239,6 +239,9 @@ class TaskProgress extends Component
                         }
                 }
 
+                // Only offer inline editing when the role may change this field.
+                $editable = $editable && \App\Support\EditableFields::allows(auth()->user(), $modelClass, $modelAttribute);
+
                 // Map column keys for option lists if needed
                 $optionKey = $map[$column['value']] ?? '';
 
@@ -270,11 +273,15 @@ class TaskProgress extends Component
 
     public function startBulkEdit()
     {
+        $this->authorize('edit-tasks');
+
         $this->dispatch('bulk-edit-action', entity: 'task', ids: $this->checkedTasks );
     }
 
     public function startBulkAssign()
     {
+        $this->authorize('edit-tasks');
+
         if (! empty($this->checkedTasks)) {
             $this->dispatch('open-bulk-assign-modal', ids: $this->checkedTasks);
         }
@@ -325,6 +332,7 @@ class TaskProgress extends Component
     #[On('column-list-updated')]
     public function updateColumns($columns)
     {
+        $columns = \App\Support\EditableFields::visibleColumns($columns);
         $this->columns = $columns;
         $this->columnPreferences->setColumns(auth()->user(),'task-progress', $columns);
         $this->dispatchFilters();
@@ -337,6 +345,8 @@ class TaskProgress extends Component
      */
     public function duplicateTask(int $taskId): void
     {
+        $this->authorize('edit-tasks');
+
         try {
             $original = Task::findOrFail($taskId);
             // Look up the “Pending” status ID
@@ -367,7 +377,8 @@ class TaskProgress extends Component
         $this->repository = $repository;
 
         // load everything from config/task-progress.php
-        $this->columns       = $this->columnPreferences->getColumns(auth()->user(), 'task-progress');
+        // Price, invoice and note columns only show when the role allows those details.
+        $this->columns       = \App\Support\EditableFields::visibleColumns($this->columnPreferences->getColumns(auth()->user(), 'task-progress'));
         $this->sortBy        = config('task-progress.default_sort_by');
         $this->sortDirection = config('task-progress.default_sort_direction');
 

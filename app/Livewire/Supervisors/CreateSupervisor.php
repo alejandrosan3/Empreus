@@ -23,6 +23,8 @@ class CreateSupervisor extends Component
 
     public function save()
     {
+        $this->authorize('edit-directory');
+
         $validated = $this->validate();
 
         try {

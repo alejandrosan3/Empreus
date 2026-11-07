@@ -187,6 +187,8 @@ class AddLotForm extends Component
 
     public function save()
     {
+        $this->authorize('edit-lots');
+
         try
         {
             if ($this->showSubdivisionInput && !empty($this->newSubdivision)) {

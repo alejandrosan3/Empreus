@@ -135,6 +135,8 @@
             let teamInitialized = false;
 
             // Debounce helpers
+            // View-only roles can look at the schedule but not drag tasks around.
+            const canEditSchedule = @js(Gate::allows('edit-scheduler'));
             let boardTimeout, calendarTimeout, mapTimeout, teamTimeout;
 
             // Board initialization
@@ -150,6 +152,7 @@
                         column.dataset.sortableInit = '1';
 
                         new Sortable(column, {
+                            disabled: !canEditSchedule,
                             group: { name: 'kanban', pull: true, put: true },
                             animation: 150,
                             draggable: '.cursor-move',
@@ -184,6 +187,7 @@
                         column.dataset.sortableInit = '1';
 
                         new Sortable(column, {
+                            disabled: !canEditSchedule,
                             group: { name: 'calendar-tasks', pull: true, put: true },
                             animation: 150,
                             draggable: '.task-item',
@@ -242,6 +246,7 @@
                     containers.forEach((el) => {
                         el.dataset.sortableInit = '1';
                         new Sortable(el, {
+                            disabled: !canEditSchedule,
                             group: { name: 'team-buckets', pull: true, put: true },
                             animation: 150,
                             draggable: '.task-item',

@@ -8,6 +8,7 @@
 
     <flux:checkbox.group x-data="bulkEditCheckboxes()">
         <div class="h-8 flex items-center gap-2">
+            @can('edit-tasks')
             <div x-show="selectedIds.length > 0" x-transition
                 class="transition-opacity duration-300 opacity-0"
                 :class="{ 'opacity-100': selectedIds.length > 0 }"
@@ -24,6 +25,7 @@
                     Assign Workers
                 </flux:button>
             </div>
+            @endcan
         </div>
 
         <div
@@ -114,6 +116,7 @@
                                             Details
                                         </flux:menu.item>
 
+                                        @can('edit-tasks')
                                         {{-- DUPLICATE --}}
                                         <flux:menu.item icon="document-duplicate" wire:click="duplicateTask({{ $row['id'] }})" >
                                             Duplicate
@@ -123,6 +126,7 @@
                                         <flux:menu.item icon="user-group" @click="$dispatch('openModal', { taskId: {{ $row['id'] }} })">
                                             Workers
                                         </flux:menu.item>
+                                        @endcan
 
                                     </flux:menu>
                                 </flux:dropdown>

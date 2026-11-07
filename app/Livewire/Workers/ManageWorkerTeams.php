@@ -51,6 +51,8 @@ class ManageWorkerTeams extends Component
 
     public function assign(): void
     {
+        $this->authorize('edit-crews');
+
         if (empty($this->teamIds)) {
             $this->showModal = false;
             return;

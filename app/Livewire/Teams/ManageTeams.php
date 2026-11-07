@@ -98,6 +98,8 @@ class ManageTeams extends Component
 
     public function assignWorkers()
     {
+        $this->authorize('edit-tasks');
+
         try {
             $workersToAssign = collect();
 
@@ -170,6 +172,8 @@ class ManageTeams extends Component
 
     public function removeWorker($workerId)
     {
+        $this->authorize('edit-tasks');
+
         $this->task->workers()->detach($workerId);
         $this->loadAssignedWorkers();
         $this->loadAvailableWorkers();

@@ -51,6 +51,8 @@ class TaskTeam extends Component
     }
     public function assignWorkers()
     {
+        $this->authorize('edit-tasks');
+
         try {
             $workersToAssign = collect();
 

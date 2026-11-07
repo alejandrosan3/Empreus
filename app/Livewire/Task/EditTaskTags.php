@@ -56,6 +56,8 @@ class EditTaskTags extends Component
 
     public function addSelectedTag(): void
     {
+        $this->authorize('edit-tasks');
+
         // Normalize to int to avoid string/empty issues right after opening
         $id = (int) ($this->tagToAdd ?? 0);
         if ($id <= 0) {
@@ -93,6 +95,8 @@ class EditTaskTags extends Component
 
     public function removeTag(int $tagId): void
     {
+        $this->authorize('edit-tasks');
+
         $this->attached = array_values(array_filter($this->attached, fn ($t) => $t['id'] !== $tagId));
 
         $tag = Tag::find($tagId);
@@ -106,6 +110,8 @@ class EditTaskTags extends Component
 
     public function updateTime(int $tagId, ?string $time): void
     {
+        $this->authorize('edit-tasks');
+
         if ($time !== null && !preg_match('/^\d{2}:\d{2}$/', $time)) {
             $this->dispatch('toast', text: 'Invalid time format', variant: 'danger');
             return;

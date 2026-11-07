@@ -73,7 +73,8 @@ class AddTaskForm extends Component
             ],
             'newTaskType'          => $this->showTaskInput ? 'required|string|max:255' : 'nullable',
             'order_number'         => 'required|string',
-            'price'                => 'required|numeric|min:0',
+            // People who can't see prices don't get the price field; the task starts at 0.
+            'price'                => auth()->user()?->sees('money') ? 'required|numeric|min:0' : 'nullable',
             'is_extra'             => 'required|in:0,1',
             'status_type_id'       => 'required|integer',
         ];
@@ -227,6 +228,8 @@ class AddTaskForm extends Component
 
     public function save()
     {
+        $this->authorize('edit-tasks');
+
         try {
                  
             if ($this->showTaskInput && !empty($this->newTaskType)) {
@@ -279,6 +282,14 @@ class AddTaskForm extends Component
                   ->first();
         if (! $lot) {
             Flux::toast(text:'Verify builder, subdivision & lot.', heading:'No lot found', variant:'warning');
+            return;
+        }
+
+        if (! auth()->user()->sees('money')) {
+            unset($taskFields['price']);
+        }
+        if (! \App\Support\EditableFields::allowsStatus(auth()->user(), (int) $this->status_type_id)) {
+            Flux::toast(text: 'Only people with Full access to Tasks can create cancelled tasks.', heading: 'Not allowed', variant: 'warning');
             return;
         }
 

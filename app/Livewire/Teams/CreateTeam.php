@@ -29,6 +29,8 @@ class CreateTeam extends Component
 
     public function save()
     {
+        $this->authorize('edit-crews');
+
         $validated = $this->validate();
 
         DB::transaction(function () use ($validated) {

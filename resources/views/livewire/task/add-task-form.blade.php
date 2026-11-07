@@ -53,13 +53,15 @@
                     :error="$errors->first('order_number')"
                 />
 
-                <flux:input
-                    label="Price"
-                    type="number"
-                    inputmode="decimal"
-                    wire:model.defer="price"
-                    :error="$errors->first('price')"
-                />
+                @can('see-money')
+                    <flux:input
+                        label="Price"
+                        type="number"
+                        inputmode="decimal"
+                        wire:model.defer="price"
+                        :error="$errors->first('price')"
+                    />
+                @endcan
             </flux:card>
         </div>
         <livewire:partials.cards :items="$card3" mode="add" />
