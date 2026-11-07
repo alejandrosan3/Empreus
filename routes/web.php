@@ -36,6 +36,11 @@ Route::middleware(['auth', 'verified', SetCurrentCompany::class])
         // Settings. Each tab checks its own area; see config/settings.php.
         Route::get('settings', [\App\Http\Controllers\SettingsController::class, 'index'])->name('settings');
         Route::post('settings/view-as/stop', [\App\Http\Controllers\SettingsController::class, 'stopViewingAs'])->name('settings.view-as.stop');
+        Route::get('settings/preferences', \App\Livewire\Settings\Preferences::class)->name('settings.preferences');
+        Route::middleware('area:settings')->group(function () {
+            Route::get('settings/organization', \App\Livewire\Settings\OrganizationSettings::class)->name('settings.organization');
+            Route::get('settings/structure', \App\Livewire\Settings\Structure::class)->name('settings.structure');
+        });
         Route::get('platform/organizations', \App\Livewire\Settings\Organizations::class)
             ->middleware('can:platform')->name('platform.organizations');
         Route::middleware('area:people')->group(function () {
@@ -185,12 +190,8 @@ Route::middleware(['auth', 'verified', SetCurrentCompany::class])
                 [LotCoordsController::class, 'store']
             )->name('lots.coords.store');
 
-            // Companies (admin-only)
-            Route::get('companies/create', \App\Livewire\Companies\CreateCompany::class)
-                ->middleware('area:settings,edit')
-                ->name('companies.create')
-                ->defaults('label', 'Add Company')
-                ->defaults('icon', 'building-office');
+            // Adding divisions moved to Settings › Businesses & divisions.
+            Route::redirect('companies/create', '/settings/structure');
         });
 
 

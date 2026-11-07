@@ -31,7 +31,7 @@ class PageAccessTest extends TestCase
         $this->get(route('builders'))->assertForbidden();
         $this->get(route('lot-progress'))->assertForbidden();
         $this->get(route('task-scheduler'))->assertForbidden();
-        $this->get(route('companies.create'))->assertForbidden();
+        $this->get(route('settings.structure'))->assertForbidden();
     }
 
     public function test_owners_see_every_menu_item(): void
@@ -70,7 +70,7 @@ class PageAccessTest extends TestCase
         $this->workIn($scheduler, $this->place['division']);
 
         $this->get(route('task-create'))->assertOk();
-        $this->get(route('companies.create'))->assertForbidden();
+        $this->get(route('settings.structure'))->assertForbidden();
     }
 
     public function test_people_with_no_access_anywhere_are_stopped(): void
