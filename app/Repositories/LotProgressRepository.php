@@ -16,7 +16,7 @@ class LotProgressRepository
                     $query->where('company_id', session('company_id'));
                     $this->applyLotFilters($query, $filters);
                 })
-                ->paginate(20);
+                ->paginate(rows_per_page());
         }
 
         $query = Auth::user()->lotsForCurrentCompany();
@@ -25,7 +25,7 @@ class LotProgressRepository
 
         $this->applySort($query, $sortBy, $sortDirection);
 
-        return $query->paginate(20);
+        return $query->paginate(rows_per_page());
     }
 
     private function applyLotFilters($query, array $filters): void

@@ -69,11 +69,11 @@ class ListSupervisor extends Component
     public function getSupervisorsProperty()
     {
         if ($this->searchTerm !== '') {
-            return Supervisor::search($this->searchTerm)->paginate(20);
+            return Supervisor::search($this->searchTerm)->paginate(rows_per_page());
         }
 
         return Supervisor::orderBy($this->sortBy, $this->sortDirection)
-            ->paginate(20);
+            ->paginate(rows_per_page());
     }
 
     #[On('company-updated')]

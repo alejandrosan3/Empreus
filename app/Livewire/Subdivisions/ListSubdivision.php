@@ -72,7 +72,7 @@ class ListSubdivision extends Component
                     ->distinct()
                     ->orderBy('subdivision', $this->sortDirection);
             })
-            ->paginate(20);
+            ->paginate(rows_per_page());
     }
 
     $query = Lot::query()
@@ -83,7 +83,7 @@ class ListSubdivision extends Component
         ->groupBy('subdivision')
         ->orderBy('subdivision', $this->sortDirection);
 
-    return $query->paginate(20);
+    return $query->paginate(rows_per_page());
 }
 
      #[On('company-updated')]

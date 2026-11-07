@@ -32,10 +32,10 @@ class SensitiveDetailsTest extends TestCase
         $this->place['task']->update(['price' => 4321]);
 
         $this->workIn($this->makePerson($this->place['division'], 'scheduler'), $this->place['division']);
-        $this->get(route('task-details', $this->place['task']->id))->assertOk()->assertDontSee('4321');
+        $this->get(route('task-details', $this->place['task']->id))->assertOk()->assertDontSee('4,321')->assertDontSee('4321');
 
         $this->workIn($this->place['admin'], $this->place['division']);
-        $this->get(route('task-details', $this->place['task']->id))->assertOk()->assertSee('4321');
+        $this->get(route('task-details', $this->place['task']->id))->assertOk()->assertSee('4,321');
     }
 
     public function test_contact_columns_are_hidden_without_contacts(): void

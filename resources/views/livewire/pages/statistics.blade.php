@@ -33,11 +33,11 @@
         </flux:card>
         <flux:card>
             <flux:heading size="lg">Completed Revenue</flux:heading>
-            <span class="text-2xl">${{ number_format($statistics['completed_revenue'], 2) }}</span>
+            <span class="text-2xl">{{ money($statistics['completed_revenue']) }}</span>
         </flux:card>
         <flux:card>
             <flux:heading size="lg">Projected Revenue</flux:heading>
-            <span class="text-2xl">${{ number_format($statistics['projected_revenue'], 2) }}</span>
+            <span class="text-2xl">{{ money($statistics['projected_revenue']) }}</span>
         </flux:card>
     </div>
 

@@ -56,6 +56,7 @@ class User extends Authenticatable
         return [
             'email_verified_at' => 'datetime',
             'deactivated_at' => 'datetime',
+            'preferences' => 'array',
             'is_platform_admin' => 'boolean',
             'password' => 'hashed',
         ];
@@ -68,6 +69,20 @@ class User extends Authenticatable
     {
         // Legacy membership table, kept for history. Access now comes from role assignments.
         return $this->belongsToMany(Company::class, 'company_users', 'user_id', 'company_id');
+    }
+
+    /** A personal setting, e.g. preference('rows_per_page'). */
+    public function preference(string $key): mixed
+    {
+        return data_get($this->preferences ?? [], $key, config("organization.preferences.$key"));
+    }
+
+    /** How many rows lists show for this person. */
+    public function rowsPerPage(): int
+    {
+        $rows = (int) $this->preference('rows_per_page');
+
+        return in_array($rows, config('organization.rows_per_page_options'), true) ? $rows : 20;
     }
 
     public function roleAssignments(): HasMany

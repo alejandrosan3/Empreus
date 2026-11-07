@@ -19,7 +19,7 @@
                 ['label' => 'Order Number', 'value' => $task?->order_number ?? '-'],
                 ['label' => 'Order Type', 'value' => $task->is_extra ? "EPO" : "PO"],
                 // Price only for roles that can see money.
-                Gate::allows('see-money') ? ['label' => 'Price', 'value' => '$' . $task?->price ?? '-'] : null,
+                Gate::allows('see-money') ? ['label' => 'Price', 'value' => $task?->price !== null ? money($task->price) : '-'] : null,
             ]))
         ])
 

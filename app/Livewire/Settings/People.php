@@ -63,7 +63,7 @@ class People extends Component
                 ->where('name', 'like', '%'.$this->search.'%')
                 ->orWhere('email', 'like', '%'.$this->search.'%')))
             ->orderBy('name')
-            ->paginate(25);
+            ->paginate(rows_per_page());
     }
 
     /** Roles this person may hand out. */

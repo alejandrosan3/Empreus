@@ -65,11 +65,11 @@ class ListBuilder extends Component
     public function getBuildersProperty()
     {
         if ($this->searchTerm !== '') {
-            return Builder::search($this->searchTerm)->paginate(20);
+            return Builder::search($this->searchTerm)->paginate(rows_per_page());
         }
 
         return Builder::orderBy($this->sortBy, $this->sortDirection)
-            ->paginate(20);
+            ->paginate(rows_per_page());
     }
 
     public function render()
