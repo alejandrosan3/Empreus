@@ -329,7 +329,7 @@ class EditableModal extends Component
         $this->statusTypes  = Cache::remember(
             "statusTypes.{$this->companyId}",
             3600,
-            fn() => \App\Models\StatusType::pluck('name','id')->toArray()
+            fn() => \App\Models\StatusType::all()->pluck('name','id')->toArray() // all() so business names apply
         );
     }
 }

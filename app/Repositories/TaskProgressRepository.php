@@ -237,11 +237,12 @@ class TaskProgressRepository
                     });
                     break;
                 case 'status':
-                    $filters[$colKey] = Cache::remember("taskProgress:{$companyId}:statusTypes:".md5(json_encode($selectedFilters)), $ttl, function() use ($optionsQuery){
+                    $names = \App\Models\StatusType::all()->pluck('name', 'id'); // with the business's own names
+                    $filters[$colKey] = Cache::remember("taskProgress:{$companyId}:statusTypes:".md5(json_encode($selectedFilters)), $ttl, function() use ($optionsQuery, $names){
                         return $optionsQuery->clone()->join('status_types','tasks.status_type_id','=','status_types.id')
                             ->distinct()->orderBy('status_types.name','asc')
                             ->get(['status_types.id','status_types.name'])
-                            ->map(fn($s)=>['value'=>$s->id,'label'=>$s->name])
+                            ->map(fn($s)=>['value'=>$s->id,'label'=>$names[$s->id] ?? $s->name])
                             ->toArray();
                     });
                     break;
