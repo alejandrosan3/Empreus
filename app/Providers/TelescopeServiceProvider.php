@@ -55,10 +55,7 @@ class TelescopeServiceProvider extends TelescopeApplicationServiceProvider
      */
     protected function gate(): void
     {
-        Gate::define('viewTelescope', function ($user) {
-            return in_array($user->email, [
-                //
-            ]);
-        });
+        // Only platform owners (users.is_platform_admin), never customers' admins.
+        Gate::define('viewTelescope', fn ($user) => $user->isPlatformAdmin());
     }
 }
