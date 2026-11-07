@@ -16,8 +16,7 @@ class Team extends Model
 
     public function workers(): BelongsToMany
     {
-        return $this->belongsToMany(User::class, 'team_worker', 'team_id', 'worker_id')
-            ->where('role', 'worker');
+        return $this->belongsToMany(User::class, 'team_worker', 'team_id', 'worker_id');
     }
 
     public function tasks(): HasMany

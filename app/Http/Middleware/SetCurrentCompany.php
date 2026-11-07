@@ -25,6 +25,13 @@ class SetCurrentCompany
             return $next($request);
         }
 
+        if ($user->isDeactivated()) {
+            auth()->guard('web')->logout();
+            $request->session()->invalidate();
+
+            return redirect()->route('login')->withErrors(['email' => 'This account has been deactivated.']);
+        }
+
         $division = null;
         if ($id = $request->session()->get('company_id')) {
             $division = Company::with('business.organization')->find($id);

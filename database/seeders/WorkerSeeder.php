@@ -6,7 +6,6 @@ use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
 use App\Models\User;
 use App\Models\Company;
-use App\Models\CompanyUser;
 
 class WorkerSeeder extends Seeder
 {
@@ -52,12 +51,11 @@ class WorkerSeeder extends Seeder
                 'email_verified_at' => now(),
             ]);
 
-            // Assign the worker to all companies
-            foreach ($companies as $company) {
-                CompanyUser::create([
-                    'user_id' => $user->id,
-                    'company_id' => $company->id,
-                ]);
+            // Worker in every division of each business
+            foreach ($companies->pluck('business_id')->unique() as $businessId) {
+                $business = \App\Models\Business::find($businessId);
+                $role = \App\Models\Role::where('organization_id', $business->organization_id)->where('key', 'worker')->first();
+                app(\App\Services\PeopleService::class)->grant($user, $role, \App\Models\RoleAssignment::BUSINESS, $businessId);
             }
         }
 

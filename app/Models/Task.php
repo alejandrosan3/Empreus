@@ -110,8 +110,7 @@ class Task extends Model
 
     public function workers(): BelongsToMany
     {
-        return $this->belongsToMany(User::class, 'task_user')
-            ->where('role', 'worker');
+        return $this->belongsToMany(User::class, 'task_user');
     }
 
     public function toSearchableArray(): array

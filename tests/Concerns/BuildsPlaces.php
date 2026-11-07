@@ -7,6 +7,9 @@ use App\Models\Business;
 use App\Models\Company;
 use App\Models\Lot;
 use App\Models\Organization;
+use App\Models\Role;
+use App\Models\RoleAssignment;
+use App\Services\PeopleService;
 use App\Models\StatusType;
 use App\Models\Supervisor;
 use App\Models\Tag;
@@ -39,8 +42,7 @@ trait BuildsPlaces
 
         return tenancy()->runIn($division, function () use ($label, $business, $division) {
             $admin = $this->makeAdmin($division, "$label Admin");
-            $worker = User::factory()->create(['name' => "$label Worker", 'role' => 'worker']);
-            $worker->companies()->attach($division);
+            $worker = $this->makePerson($division, 'worker', "$label Worker");
 
             $builder = Builder::factory()->create(['name' => "$label Builder"]);
             $supervisor = Supervisor::factory()->create(['name' => "$label Supervisor"]);
@@ -78,12 +80,36 @@ trait BuildsPlaces
         });
     }
 
+    /** An Owner of the division's whole organization. */
     protected function makeAdmin(Company $division, string $name = 'Admin'): User
     {
-        $admin = User::factory()->create(['name' => $name, 'role' => 'admin']);
-        $admin->companies()->attach($division);
+        $organization = $division->business->organization;
 
-        return $admin;
+        return $this->makePerson($organization, 'owner', $name);
+    }
+
+    /**
+     * A person with one starter role (owner, admin, scheduler, supervisor, worker,
+     * viewer) or a given Role, in an organization, business or division.
+     */
+    protected function makePerson(Organization|Business|Company $place, string|Role $role, string $name = 'Person'): User
+    {
+        $organization = match (true) {
+            $place instanceof Organization => $place,
+            $place instanceof Business => $place->organization,
+            $place instanceof Company => $place->business->organization,
+        };
+        $role = $role instanceof Role ? $role : $organization->roles()->where('key', $role)->firstOrFail();
+        $scopeType = match (true) {
+            $place instanceof Organization => RoleAssignment::ORGANIZATION,
+            $place instanceof Business => RoleAssignment::BUSINESS,
+            $place instanceof Company => RoleAssignment::DIVISION,
+        };
+
+        $user = User::factory()->create(['name' => $name]);
+        app(PeopleService::class)->grant($user, $role, $scopeType, $place->id);
+
+        return $user;
     }
 
     /** Log in as someone working in the given division. */

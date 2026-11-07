@@ -23,18 +23,16 @@ class CreateCompany extends Component
 
     public function save(): void
     {
+        $this->authorize('edit-settings');
         $data = $this->validate();
         try {
+            // New divisions go in the current business. People with access to the
+            // whole organization or business see it right away; nobody else is added.
             $company = Company::create([
+                'business_id' => tenancy()->businessId(),
                 'name' => $data['name'],
                 'description' => $data['description'] ?? null,
             ]);
-
-            // Assign the company to all admins
-            $adminIds = User::where('role', 'admin')->pluck('id');
-            if ($adminIds->isNotEmpty()) {
-                $company->users()->syncWithoutDetaching($adminIds->all());
-            }
 
             Flux::toast(
                 heading: 'All Done!',

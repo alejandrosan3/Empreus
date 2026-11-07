@@ -9,7 +9,7 @@ use Tests\TestCase;
 
 class AuthenticationTest extends TestCase
 {
-    use RefreshDatabase;
+    use RefreshDatabase, \Tests\Concerns\BuildsPlaces;
 
     public function test_login_screen_can_be_rendered(): void
     {
@@ -56,7 +56,8 @@ class AuthenticationTest extends TestCase
 
     public function test_navigation_menu_can_be_rendered(): void
     {
-        $user = User::factory()->create();
+        $division = \App\Models\Company::factory()->create();
+        $user = $this->makePerson($division, 'worker');
 
         $this->actingAs($user);
 

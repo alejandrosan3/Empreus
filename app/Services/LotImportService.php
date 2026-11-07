@@ -275,14 +275,24 @@ class LotImportService
                 $worker = \App\Models\User::firstOrCreate(
                     [
                         'name' => $workerName,
-                        'role' => 'worker',
                         'email' => strtolower($workerEmailName) . '@demo.com',
                     ],
                     [
-                        'password' => \Hash::make('demo'),
+                        'role' => 'worker',
+                        // Imported workers can't log in until someone invites them properly.
+                        'password' => \Hash::make(\Illuminate\Support\Str::random(40)),
                         'email_verified_at' => now(),
                     ]
                 );
+
+                // Make sure they show up as a worker in this division.
+                $workerRole = \App\Models\Role::where('organization_id', $company->organizationId())
+                    ->where('assignable', true)
+                    ->orderByRaw("`key` = 'worker' desc")
+                    ->first();
+                if ($workerRole && ! $worker->canAccessDivision($company)) {
+                    app(\App\Services\PeopleService::class)->grant($worker, $workerRole, \App\Models\RoleAssignment::DIVISION, $company->id);
+                }
 
                 if (!$lotTask->workers()->where('user_id', $worker->id)->exists()) {
                     $lotTask->workers()->attach($worker->id);

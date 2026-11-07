@@ -2,10 +2,10 @@
 
 namespace App\Livewire\Workers;
 
-use App\Models\User;
-use App\Models\CompanyUser;
+use App\Models\Role;
+use App\Models\RoleAssignment;
+use App\Services\PeopleService;
 use Flux\Flux;
-use Illuminate\Support\Facades\Hash;
 use Livewire\Component;
 
 class CreateWorker extends Component
@@ -20,28 +20,27 @@ class CreateWorker extends Component
     
      public function save()
     {
+        $this->authorize('edit-crews');
         $validated = $this->validate();
 
         try {
-            \DB::transaction(function () use ($validated) {
-                $user = User::create([
-                    'name'              => $validated['name'],
-                    'email'             => $validated['email'],
-                    'role'              => 'worker',
-                    'password'          => Hash::make('demo'),
-                    'email_verified_at' => now(),
-                ]);
+            // New workers get the organization's Worker role in this division and an
+            // email to choose their own password.
+            $role = Role::where('organization_id', tenancy()->organizationId())
+                ->where('assignable', true)
+                ->orderByRaw("`key` = 'worker' desc")
+                ->firstOrFail();
 
-                if ($companyId = session('company_id')) {
-                    CompanyUser::create([
-                        'user_id'    => $user->id,
-                        'company_id' => $companyId,
-                    ]);
-                }
-            });
+            app(PeopleService::class)->invite(
+                $validated['name'],
+                $validated['email'],
+                $role,
+                [['scope_type' => RoleAssignment::DIVISION, 'scope_id' => tenancy()->divisionId()]],
+                auth()->user(),
+            );
 
             Flux::toast(
-                text:    'Worker created successfully.',
+                text:    'Worker added. They will get an email to choose their password.',
                 heading: 'Success!',
                 variant: 'success'
             );

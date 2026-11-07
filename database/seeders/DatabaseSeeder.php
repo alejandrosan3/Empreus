@@ -67,8 +67,8 @@ class DatabaseSeeder extends Seeder
             ]);
         }
 
-        if (DB::table('company_users')->count() === 0) {
-            $this->call(CompanyUserSeeder::class);
+        if (DB::table('role_assignments')->count() === 0) {
+            $this->call(AccessSeeder::class);
         }
 
         /**
