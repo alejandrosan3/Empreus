@@ -59,6 +59,32 @@ class User extends Authenticatable
         return $this->belongsToMany(Company::class, 'company_users', 'user_id', 'company_id');
     }
 
+    /**
+     * Divisions (rows of the `companies` table) this person can work in.
+     */
+    public function accessibleDivisions(): \Illuminate\Database\Eloquent\Builder
+    {
+        return Company::query()
+            ->whereIn('companies.id', $this->companies()->select('companies.id'))
+            ->orderBy('companies.name');
+    }
+
+    /**
+     * People who can be given tasks in a division (the current one by default).
+     */
+    public function scopeWorkersInDivision(\Illuminate\Database\Eloquent\Builder $query, ?int $divisionId = null): void
+    {
+        $divisionId ??= tenancy()->divisionId();
+
+        $query->where('users.role', 'worker')
+            ->whereHas('companies', fn ($q) => $q->where('companies.id', $divisionId));
+    }
+
+    public function canAccessDivision(Company $division): bool
+    {
+        return $this->accessibleDivisions()->whereKey($division->id)->exists();
+    }
+
     public function lotsForCurrentCompany()
     {
         $companyId = session('company_id');
