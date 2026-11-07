@@ -31,6 +31,7 @@
             <flux:heading size="lg">Tasks Finished</flux:heading>
             <span class="text-2xl">{{ $statistics['tasks_finished'] }}</span>
         </flux:card>
+        @can('see-money')
         <flux:card>
             <flux:heading size="lg">Completed Revenue</flux:heading>
             <span class="text-2xl">{{ money($statistics['completed_revenue']) }}</span>
@@ -39,6 +40,7 @@
             <flux:heading size="lg">Projected Revenue</flux:heading>
             <span class="text-2xl">{{ money($statistics['projected_revenue']) }}</span>
         </flux:card>
+        @endcan
     </div>
 
     <flux:card class="mt-4">

@@ -71,4 +71,14 @@ class SensitiveDetailsTest extends TestCase
 
         return $this->makePerson($this->place['division'], $role, 'Dee Viewer');
     }
+
+    public function test_statistics_hide_revenue_from_roles_without_money(): void
+    {
+        $viewer = $this->makePerson($this->place['division'], 'viewer', 'Vic'); // reports: view, money: off
+        $this->workIn($viewer, $this->place['division']);
+        $this->get(route('statistics'))->assertOk()->assertDontSee('Completed Revenue');
+
+        $this->workIn($this->place['admin'], $this->place['division']);
+        $this->get(route('statistics'))->assertOk()->assertSee('Completed Revenue');
+    }
 }
