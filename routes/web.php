@@ -36,6 +36,8 @@ Route::middleware(['auth', 'verified', SetCurrentCompany::class])
         // Settings. Each tab checks its own area; see config/settings.php.
         Route::get('settings', [\App\Http\Controllers\SettingsController::class, 'index'])->name('settings');
         Route::post('settings/view-as/stop', [\App\Http\Controllers\SettingsController::class, 'stopViewingAs'])->name('settings.view-as.stop');
+        Route::get('platform/organizations', \App\Livewire\Settings\Organizations::class)
+            ->middleware('can:platform')->name('platform.organizations');
         Route::middleware('area:people')->group(function () {
             Route::get('settings/people', \App\Livewire\Settings\People::class)->name('settings.people');
             Route::get('settings/people/{user}', \App\Livewire\Settings\Person::class)->name('settings.people.show');
