@@ -9,7 +9,8 @@ new class extends Component
     public string $password = '';
 
     /**
-     * Delete the currently authenticated user.
+     * Close (deactivate) the current account. Nothing is deleted: tasks, notes and
+     * history keep their author, and an admin can reactivate the account later.
      */
     public function deleteUser(Logout $logout): void
     {
@@ -17,7 +18,24 @@ new class extends Component
             'password' => ['required', 'string', 'current_password'],
         ]);
 
-        tap(Auth::user(), $logout(...))->delete();
+        $user = Auth::user();
+        foreach ($user->roleAssignments()->where('scope_type', \App\Models\RoleAssignment::ORGANIZATION)->whereHas('role', fn ($q) => $q->where('is_owner', true))->get() as $line) {
+            $otherOwners = \App\Models\RoleAssignment::where('scope_type', \App\Models\RoleAssignment::ORGANIZATION)
+                ->where('scope_id', $line->scope_id)
+                ->where('user_id', '!=', $user->id)
+                ->whereHas('role', fn ($q) => $q->where('is_owner', true))
+                ->whereHas('user', fn ($q) => $q->whereNull('deactivated_at'))
+                ->exists();
+
+            if (! $otherOwners) {
+                $this->addError('password', 'You are the only Owner of your organization. Make someone else Owner before closing your account.');
+
+                return;
+            }
+        }
+
+        app(\App\Services\PeopleService::class)->deactivate($user);
+        $logout();
 
         $this->redirect('/', navigate: true);
     }
@@ -25,27 +43,27 @@ new class extends Component
 
 <section class="space-y-6">
     <header>
-            <flux:heading size="xl" level="2"> {{ __('Delete Account') }}</flux:heading>
+            <flux:heading size="xl" level="2"> {{ __('Close Account') }}</flux:heading>
 
         <p class="mt-1 text-sm">
-            {{ __('Once your account is deleted, all of its resources and data will be permanently deleted. Before deleting your account, please download any data or information that you wish to retain.') }}
+            {{ __("Closing your account logs you out and stops you from logging in again. Your work stays in place, and an admin can reopen the account later.") }}
         </p>
     </header>
 
     <x-danger-button
         x-data=""
         x-on:click.prevent="$dispatch('open-modal', 'confirm-user-deletion')"
-    >{{ __('Delete Account') }}</x-danger-button>
+    >{{ __('Close Account') }}</x-danger-button>
 
     <x-modal name="confirm-user-deletion" :show="$errors->isNotEmpty()" focusable>
         <form wire:submit="deleteUser" class="p-6">
 
             <h2 class="text-lg font-medium text-gray-900">
-                {{ __('Are you sure you want to delete your account?') }}
+                {{ __('Are you sure you want to close your account?') }}
             </h2>
 
             <p class="mt-1 text-sm text-gray-600">
-                {{ __('Once your account is deleted, all of its resources and data will be permanently deleted. Please enter your password to confirm you would like to permanently delete your account.') }}
+                {{ __('Enter your password to confirm. Your work stays in place and an admin can reopen the account.') }}
             </p>
 
             <div class="mt-6">
@@ -69,7 +87,7 @@ new class extends Component
                 </x-secondary-button>
 
                 <x-danger-button class="ms-3">
-                    {{ __('Delete Account') }}
+                    {{ __('Close Account') }}
                 </x-danger-button>
             </div>
         </form>
