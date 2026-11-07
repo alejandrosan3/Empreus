@@ -13,11 +13,13 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use App\Traits\Duplicatable;
+use App\Models\Concerns\BelongsToDivision;
+use App\Models\Concerns\LimitedToOwnWork;
 use Flux\DateRange;
 
 class Task extends Model
 {
-    use HasFactory, Searchable, Duplicatable;
+    use HasFactory, Searchable, Duplicatable, BelongsToDivision, LimitedToOwnWork;
 
     protected $fillable = [
         'lot_id',
@@ -56,7 +58,8 @@ class Task extends Model
 
     public function taskType(): BelongsTo
     {
-        return $this->belongsTo(TaskType::class);
+        // Old tasks keep showing their task type even after it's archived.
+        return $this->belongsTo(TaskType::class)->withTrashed();
     }
 
     public function taskNotes(): HasMany
@@ -109,8 +112,7 @@ class Task extends Model
 
     public function workers(): BelongsToMany
     {
-        return $this->belongsToMany(User::class, 'task_user')
-            ->where('role', 'worker');
+        return $this->belongsToMany(User::class, 'task_user');
     }
 
     public function toSearchableArray(): array

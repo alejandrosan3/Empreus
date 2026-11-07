@@ -21,6 +21,12 @@ class ListWorker extends Component
         'contentUpdated' => '$refresh',
     ];
 
+    public function mount(): void
+    {
+        // Email only shows when the role allows contact details.
+        $this->columns = \App\Support\EditableFields::visibleColumns($this->columns);
+    }
+
     public function startBulkAssign(): void
     {
         if (! empty($this->checkedWorkers)) {
@@ -50,7 +56,7 @@ class ListWorker extends Component
     #[\Livewire\Attributes\Computed]
     public function getWorkersProperty()
     {
-        $query = User::where('role', 'worker');
+        $query = User::workersInDivision();
 
         if ($this->searchTerm !== '') {
             $query->where(function ($q) {
@@ -60,7 +66,7 @@ class ListWorker extends Component
         }
 
         return $query->orderBy($this->sortBy, $this->sortDirection)
-                     ->paginate(20);
+                     ->paginate(rows_per_page());
     }
 
     public function render()

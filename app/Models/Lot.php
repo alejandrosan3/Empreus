@@ -9,10 +9,12 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Laravel\Scout\Searchable;
 use App\Traits\Duplicatable;
+use App\Models\Concerns\BelongsToDivision;
+use App\Models\Concerns\LimitedToOwnWork;
 
 class Lot extends Model
 {
-    use HasFactory, Searchable, Duplicatable;
+    use HasFactory, Searchable, Duplicatable, BelongsToDivision, LimitedToOwnWork;
 
     /**
      * @var array

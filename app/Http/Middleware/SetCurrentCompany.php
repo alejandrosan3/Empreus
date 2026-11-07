@@ -7,39 +7,48 @@ use Closure;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
 
+/**
+ * Picks the division (stored in the `companies` table) the person is working in.
+ *
+ * The choice is kept in the session as `company_id`. If it is missing, or points to
+ * a division the person can't access, the first division they can access is used.
+ */
 class SetCurrentCompany
 {
-    /**
-     * Handle an incoming request.
-     *
-     * @param  \Closure(\Illuminate\Http\Request): (\Symfony\Component\HttpFoundation\Response)  $next
-     */
     public function handle(Request $request, Closure $next): Response
     {
-        $companyId = null;
+        $user = $request->user();
 
-        if ($request->session()->has('company_id')) {
-            $companyId = $request->session()->get('company_id');
+        if (! $user) {
+            tenancy()->forget();
+
+            return $next($request);
+        }
+
+        if ($user->isDeactivated()) {
+            auth()->guard('web')->logout();
+            $request->session()->invalidate();
+
+            return redirect()->route('login')->withErrors(['email' => 'This account has been deactivated.']);
+        }
+
+        $division = null;
+        if ($id = $request->session()->get('company_id')) {
+            $division = Company::with('business.organization')->find($id);
+        }
+
+        if (! $division || ! $user->canAccessDivision($division)) {
+            $division = $user->accessibleDivisions()->with('business.organization')->first();
+        }
+
+        if ($division) {
+            $request->session()->put('company_id', $division->id);
         } else {
-            if ($request->user()) {
-                $company = $request->user()->companies()->first(); // Get the first company the user belongs to
-                if ($company) {
-                    $companyId = $company->id;
-                    $request->session()->put('company_id', $companyId);
-                }
-            }
+            $request->session()->forget('company_id');
         }
 
-        if ($companyId && $company = Company::find($companyId)) {
-            // Check if the logged-in user belongs to the selected company
-            if ($company->users->contains($request->user()->id)) {
-                $request->attributes->set('currentCompany', $company);
-            } else {
-                // Handle unauthorized access (e.g., clear session, redirect)
-                $request->session()->forget('company_id');
-                return redirect()->route('login');
-            }
-        }
+        tenancy()->setDivision($division);
+        $request->attributes->set('currentCompany', $division);
 
         return $next($request);
     }

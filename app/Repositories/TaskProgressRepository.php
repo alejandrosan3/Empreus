@@ -27,14 +27,14 @@ class TaskProgressRepository
                     $query->where('tasks.company_id', session('company_id'));
                     $this->applyTaskFilters($query, $filters);
                 })
-                ->paginate(20);
+                ->paginate(rows_per_page());
         }
 
         $this->applyTaskFilters($query, $filters);
 
         $this->applySort($query, $sortBy, $sortDirection);
 
-        return $query->paginate(20);
+        return $query->paginate(rows_per_page());
     }
 
     private function applyTaskFilters($query, array $filters): void
@@ -237,11 +237,12 @@ class TaskProgressRepository
                     });
                     break;
                 case 'status':
-                    $filters[$colKey] = Cache::remember("taskProgress:{$companyId}:statusTypes:".md5(json_encode($selectedFilters)), $ttl, function() use ($optionsQuery){
+                    $names = \App\Models\StatusType::all()->pluck('name', 'id'); // with the business's own names
+                    $filters[$colKey] = Cache::remember("taskProgress:{$companyId}:statusTypes:".md5(json_encode($selectedFilters)), $ttl, function() use ($optionsQuery, $names){
                         return $optionsQuery->clone()->join('status_types','tasks.status_type_id','=','status_types.id')
                             ->distinct()->orderBy('status_types.name','asc')
                             ->get(['status_types.id','status_types.name'])
-                            ->map(fn($s)=>['value'=>$s->id,'label'=>$s->name])
+                            ->map(fn($s)=>['value'=>$s->id,'label'=>$names[$s->id] ?? $s->name])
                             ->toArray();
                     });
                     break;

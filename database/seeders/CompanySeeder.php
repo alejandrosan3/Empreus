@@ -4,7 +4,9 @@ namespace Database\Seeders;
 
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
+use App\Models\Business;
 use App\Models\Company;
+use App\Models\Organization;
 
 class CompanySeeder extends Seeder
 {
@@ -20,9 +22,12 @@ class CompanySeeder extends Seeder
             ['name' => 'Volusia', 'description' => 'East Central Florida region'],
         ];
 
+        $organization = Organization::firstOrCreate(['name' => config('app.name', 'Demo organization')]);
+        $business = Business::firstOrCreate(['organization_id' => $organization->id, 'name' => 'Cleaning']);
+
         foreach ($accounts as $account) {
             Company::updateOrCreate(
-                ['name' => $account['name']],
+                ['business_id' => $business->id, 'name' => $account['name']],
                 $account
             );
         }

@@ -35,8 +35,11 @@ class ListBuilder extends Component
         // Filter out unwanted columns
         $this->columns = array_filter(
             Schema::getColumnListing((new Builder)->getTable()),
-            fn ($column) => !in_array($column, ['id', 'created_at', 'updated_at'])
+            fn ($column) => !in_array($column, ['id', 'organization_id', 'created_at', 'updated_at'])
         );
+
+        // Email and phone only show when the role allows contact details.
+        $this->columns = \App\Support\EditableFields::visibleColumns($this->columns);
         
     }
 
@@ -62,11 +65,11 @@ class ListBuilder extends Component
     public function getBuildersProperty()
     {
         if ($this->searchTerm !== '') {
-            return Builder::search($this->searchTerm)->paginate(20);
+            return Builder::search($this->searchTerm)->paginate(rows_per_page());
         }
 
         return Builder::orderBy($this->sortBy, $this->sortDirection)
-            ->paginate(20);
+            ->paginate(rows_per_page());
     }
 
     public function render()

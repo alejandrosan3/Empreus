@@ -8,8 +8,7 @@ class CompanyStoreRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        // Reuse simple role check; routes are also protected by 'role:admin'
-        return $this->user()?->role === 'admin';
+        return (bool) $this->user()?->can('edit-settings');
     }
 
     public function rules(): array

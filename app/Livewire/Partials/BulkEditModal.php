@@ -122,6 +122,21 @@ class BulkEditModal extends Component
             return;
         }
 
+        // Permissions: task fields and tags need Edit in Tasks, lot fields need Edit in Lots,
+        // and cancelling needs Full in Tasks.
+        if (! empty($taskFields) || $hasTagWork) {
+            $this->authorize('edit-tasks');
+        }
+        if (! empty($lotFields)) {
+            $this->authorize('edit-lots');
+        }
+        if (isset($taskFields['status_type_id']) && ! \App\Support\EditableFields::allowsStatus(auth()->user(), (int) $taskFields['status_type_id'])) {
+            abort(403, 'Cancelling tasks needs Full access to Tasks.');
+        }
+        if (isset($lotFields['supervisor_id']) && ! \App\Models\Supervisor::whereKey($lotFields['supervisor_id'])->exists()) {
+            abort(422, 'Unknown supervisor.');
+        }
+
         DB::transaction(function () use ($taskFields, $lotFields, $hasTagWork) {
 
             // Bulk update tasks
@@ -146,6 +161,8 @@ class BulkEditModal extends Component
             if ($hasTagWork && !empty($this->taskIds)) {
                 $tagIds = array_map('intval', $this->selectedTags);
                 $tagIds = array_values(array_unique(array_filter($tagIds)));
+                // Only this business's tags.
+                $tagIds = Tag::whereIn('id', $tagIds)->pluck('id')->all();
 
                 if (!empty($tagIds)) {
                     // Prepare times payload for add/replace
@@ -191,7 +208,7 @@ class BulkEditModal extends Component
 
         $this->statusTypes = Cache::remember(
             "statusTypes.{$companyId}", 3600,
-            fn() => \App\Models\StatusType::pluck('name', 'id')->toArray()
+            fn() => \App\Models\StatusType::all()->pluck('name', 'id')->toArray() // all() so business names apply
         );
 
         $this->supervisors = Cache::remember(
@@ -202,7 +219,7 @@ class BulkEditModal extends Component
         );
 
         $this->allTags = Cache::remember(
-            "allTags", 3600,
+            "allTags.".tenancy()->businessId(), 3600, // tags belong to a business
             fn() => Tag::orderBy('name')->get(['id','name','color'])
                 ->map(fn($t) => ['id'=>$t->id,'name'=>$t->name,'color'=>$t->color])
                 ->toArray()

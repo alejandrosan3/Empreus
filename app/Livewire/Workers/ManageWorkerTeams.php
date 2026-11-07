@@ -38,10 +38,7 @@ class ManageWorkerTeams extends Component
 
     public function loadTeams(): void
     {
-        $companyId   = session('company_id');
-        $this->teams = Team::whereHas('workers.companies', function ($q) use ($companyId) {
-            $q->where('company_id', $companyId);
-        })->get();
+        $this->teams = Team::orderBy('name')->get();
     }
 
     #[On('open-worker-team-modal')]
@@ -54,14 +51,16 @@ class ManageWorkerTeams extends Component
 
     public function assign(): void
     {
+        $this->authorize('edit-crews');
+
         if (empty($this->teamIds)) {
             $this->showModal = false;
             return;
         }
 
         foreach ($this->workerIds as $id) {
-            if ($worker = User::find($id)) {
-                $worker->teams()->syncWithoutDetaching($this->teamIds);
+            if ($worker = User::workersInDivision()->find($id)) {
+                $worker->teams()->syncWithoutDetaching(Team::whereIn('id', $this->teamIds)->pluck('id'));
             }
         }
 

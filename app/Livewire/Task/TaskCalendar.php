@@ -48,6 +48,11 @@ class TaskCalendar extends Component
 
     public function mount()
     {
+        // Nothing sets the range when the page first opens, so start on this week.
+        if (! isset($this->range)) {
+            $this->range = DateRange::thisWeek();
+        }
+
         $this->buildWeekDays();
         $this->rangeDays = count($this->weekDays);
     }

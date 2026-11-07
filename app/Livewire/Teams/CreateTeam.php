@@ -17,23 +17,20 @@ class CreateTeam extends Component
     protected $rules = [
         'name' => 'required|string|max:255',
         'workerIds' => 'array',
-        'workerIds.*' => 'exists:users,id',
+        'workerIds.*' => 'integer',
     ];
 
     public function mount()
     {
-        $companyId = session('company_id');
-
-        $this->workers = User::where('role', 'worker')
-            ->whereHas('companies', function ($query) use ($companyId) {
-                $query->where('company_id', $companyId);
-            })
+        $this->workers = User::workersInDivision()
             ->orderBy('name')
             ->get();
     }
 
     public function save()
     {
+        $this->authorize('edit-crews');
+
         $validated = $this->validate();
 
         DB::transaction(function () use ($validated) {
@@ -42,7 +39,10 @@ class CreateTeam extends Component
             ]);
 
             if (! empty($validated['workerIds'])) {
-                $team->workers()->attach($validated['workerIds']);
+                // Only people who work in this division can join its teams.
+                $team->workers()->attach(
+                    User::workersInDivision()->whereIn('users.id', $validated['workerIds'])->pluck('users.id')
+                );
             }
         });
 

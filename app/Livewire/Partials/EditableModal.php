@@ -2,6 +2,7 @@
 
 namespace App\Livewire\Partials;
 
+use App\Support\EditableFields;
 use Livewire\Component;
 use Flux\Flux;
 use Carbon\Carbon;
@@ -43,6 +44,11 @@ class EditableModal extends Component
     {
         if(!$editable){
             $this->notEditableActions();
+            return;
+        }
+
+        if (! EditableFields::allows(auth()->user(), $modelClass, $modelAttribute)) {
+            Flux::toast(variant: 'warning', heading: 'View only', text: "Your role can see this but can't change it.");
             return;
         }
 
@@ -149,6 +155,15 @@ class EditableModal extends Component
     {
         $this->validate($this->rules(), $this->messages());
 
+        // The browser says which model and field to change, so check both here:
+        // only fields listed in EditableFields, and only if the role allows it.
+        if (! EditableFields::allows(auth()->user(), $this->modelClass, $this->modelAttribute)) {
+            abort(403, "Your role can't change this field.");
+        }
+        if ($this->modelAttribute === 'status_type_id' && ! EditableFields::allowsStatus(auth()->user(), (int) $this->fieldValue)) {
+            abort(403, 'Cancelling needs Full access to Tasks.');
+        }
+
         $allowedModels = [
             \App\Models\Builder::class,
             \App\Models\Subdivision::class,
@@ -171,6 +186,9 @@ class EditableModal extends Component
 
         // Notes: match subdivision-like toggle behavior (edit latest vs add new)
         if ($model == \App\Models\TaskNote::class) {
+            // fieldId is the task; it must be a task in the current division.
+            \App\Models\Task::findOrFail($this->fieldId);
+
             try {
                 if ($this->createNewNote) {
                     \App\Models\TaskNote::create([
@@ -212,7 +230,11 @@ class EditableModal extends Component
             }
         }
 
-        $record = $model::findOrFail($this->fieldId);
+        // Lots, tasks, builders, supervisors and teams are already limited to the current
+        // place; people must be workers in this division.
+        $record = $model === \App\Models\User::class
+            ? \App\Models\User::workersInDivision()->findOrFail($this->fieldId)
+            : $model::findOrFail($this->fieldId);
 
         // transform empty String to null for select fields
         $value = $this->fieldValue;
@@ -307,7 +329,7 @@ class EditableModal extends Component
         $this->statusTypes  = Cache::remember(
             "statusTypes.{$this->companyId}",
             3600,
-            fn() => \App\Models\StatusType::pluck('name','id')->toArray()
+            fn() => \App\Models\StatusType::all()->pluck('name','id')->toArray() // all() so business names apply
         );
     }
 }

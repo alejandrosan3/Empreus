@@ -50,7 +50,7 @@ class ListTeam extends Component
         }
 
         return $query->orderBy($this->sortBy, $this->sortDirection)
-                     ->paginate(20);
+                     ->paginate(rows_per_page());
     }
 
     public function render()

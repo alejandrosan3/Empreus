@@ -13,6 +13,13 @@ class TaskTypeSeeder extends Seeder
      */
     public function run(): void
     {
+        // When run on its own, seed the first division's business.
+        if (! tenancy()->businessId() && ($division = \App\Models\Company::orderBy('id')->first())) {
+            tenancy()->runIn($division, fn () => $this->run());
+
+            return;
+        }
+
         $task_types = \App\Enums\TaskType::all();
 
         foreach ($task_types as $task_type) {

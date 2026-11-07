@@ -7,6 +7,7 @@
 
     <flux:checkbox.group x-data="bulkEditCheckboxes()">
         <div class="h-8 flex items-center">
+            @can('edit-lots')
             <div x-show="selectedIds.length > 0" x-transition
                 class="transition-opacity duration-300 opacity-0"
                 :class="{ 'opacity-100': selectedIds.length > 0 }"
@@ -15,6 +16,7 @@
                     Bulk Edit
                 </flux:button>
             </div>
+            @endcan
         </div>
 
         <flux:table :paginate="$lots">
@@ -287,9 +289,11 @@
                                         Details
                                     </flux:menu.item>
                                     {{-- DUPLICATE --}}
+                                    @can('edit-lots')
                                     <flux:menu.item icon="document-duplicate" wire:click="duplicateLot({{ $lot->id }})" >
                                         Duplicate
                                     </flux:menu.item>
+                                    @endcan
                                 </flux:menu>
                             </flux:dropdown>
                         </flux:table.cell>

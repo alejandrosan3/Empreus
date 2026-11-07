@@ -73,7 +73,8 @@ class AddTaskForm extends Component
             ],
             'newTaskType'          => $this->showTaskInput ? 'required|string|max:255' : 'nullable',
             'order_number'         => 'required|string',
-            'price'                => 'required|numeric|min:0',
+            // People who can't see prices don't get the price field; the task starts at 0.
+            'price'                => auth()->user()?->sees('money') ? 'required|numeric|min:0' : 'nullable',
             'is_extra'             => 'required|in:0,1',
             'status_type_id'       => 'required|integer',
         ];
@@ -190,6 +191,8 @@ class AddTaskForm extends Component
         $this->lots         = [];
         $this->card1[2]['options'] = [];
         $this->lot_number   = null;
+
+        $this->suggestPrice();
     }
 
     // Cascade: subdivision → lots
@@ -211,6 +214,21 @@ class AddTaskForm extends Component
         $this->lot_number = null;
     }
 
+    // Suggest the price from Settings › Task types & prices: the builder's own price, or the default.
+    public function updatedTaskTypeId(): void
+    {
+        $this->suggestPrice();
+    }
+
+    private function suggestPrice(): void
+    {
+        if (! auth()->user()?->sees('money') || ($this->price !== null && $this->price !== '') || ! $this->task_type_id) {
+            return;
+        }
+
+        $this->price = TaskType::find($this->task_type_id)?->priceFor($this->builder_id ? (int) $this->builder_id : null);
+    }
+
     public function toggleTaskInput(): void
     {
         $this->showTaskInput = ! $this->showTaskInput;
@@ -227,13 +245,18 @@ class AddTaskForm extends Component
 
     public function save()
     {
+        $this->authorize('edit-tasks');
+
         try {
                  
             if ($this->showTaskInput && !empty($this->newTaskType)) {
-                $taskType = TaskType::firstOrCreate(
+                $taskType = TaskType::withTrashed()->firstOrCreate(
                     ['name' => $this->newTaskType],
                     ['description' => $this->newTaskType]
                 );
+                if ($taskType->trashed()) {
+                    $taskType->restore(); // typing an archived task type's name brings it back
+                }
                 Cache::forget("task_types.{$this->companyId}");
                 $this->taskTypeOptions[] = (object)[
                     'id'   => $taskType->id,
@@ -279,6 +302,14 @@ class AddTaskForm extends Component
                   ->first();
         if (! $lot) {
             Flux::toast(text:'Verify builder, subdivision & lot.', heading:'No lot found', variant:'warning');
+            return;
+        }
+
+        if (! auth()->user()->sees('money')) {
+            unset($taskFields['price']);
+        }
+        if (! \App\Support\EditableFields::allowsStatus(auth()->user(), (int) $this->status_type_id)) {
+            Flux::toast(text: 'Only people with Full access to Tasks can create cancelled tasks.', heading: 'Not allowed', variant: 'warning');
             return;
         }
 

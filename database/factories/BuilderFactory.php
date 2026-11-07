@@ -3,6 +3,7 @@
 namespace Database\Factories;
 
 use App\Models\Builder;
+use App\Models\Organization;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
@@ -18,6 +19,7 @@ class BuilderFactory extends Factory
     public function definition(): array
     {
         return [
+            'organization_id' => fn () => tenancy()->organizationId() ?? Organization::factory(),
             'name' => $this->faker->name(),
             'email' => $this->faker->unique()->safeEmail(),
             'phone' => '+1 (' . $this->faker->numerify('###') . ') ' . $this->faker->numerify('###-####'),

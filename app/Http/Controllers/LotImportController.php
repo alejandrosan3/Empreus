@@ -33,6 +33,17 @@ class LotImportController extends Controller
             return response()->json(['error' => 'Invalid JSON format'], 400);
         }
 
+        // Every division in the file must be one the person can edit lots in.
+        foreach (collect($items)->pluck('company_id')->unique() as $divisionId) {
+            $division = \App\Models\Company::find($divisionId);
+            if (! $division || ! $request->user()->canAccessDivision($division)
+                || ! $request->user()->hasLevel('lots', 'edit', $division)) {
+                Storage::delete($filePath);
+
+                return response()->json(['error' => "You can't import lots into division {$divisionId}."], 403);
+            }
+        }
+
         if ($request->boolean('use_queue')) {
             // Queue the batch processing job
             ProcessLotImportFile::dispatch($filePath);

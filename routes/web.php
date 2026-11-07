@@ -1,7 +1,6 @@
 <?php
 
 use App\Http\Middleware\SetCurrentCompany;
-use App\Http\Middleware\CheckUserRole;
 use App\Livewire\Builders\{CreateBuilder, ListBuilder};
 use App\Livewire\Subdivisions\ListSubdivision;
 use App\Livewire\Supervisors\{CreateSupervisor, ListSupervisor};
@@ -29,132 +28,173 @@ Route::middleware(['auth', 'verified', SetCurrentCompany::class])
     ->group(function () {
 
         Route::get('dashboard', Dashboard::class)
+            ->middleware('area:dashboard')
             ->name('dashboard')
             ->defaults('label', 'Dashboard')
             ->defaults('icon', 'home');
+
+        // Settings. Each tab checks its own area; see config/settings.php.
+        Route::get('settings', [\App\Http\Controllers\SettingsController::class, 'index'])->name('settings');
+        Route::post('settings/view-as/stop', [\App\Http\Controllers\SettingsController::class, 'stopViewingAs'])->name('settings.view-as.stop');
+        Route::get('settings/preferences', \App\Livewire\Settings\Preferences::class)->name('settings.preferences');
+        Route::middleware('area:settings')->group(function () {
+            Route::get('settings/organization', \App\Livewire\Settings\OrganizationSettings::class)->name('settings.organization');
+            Route::get('settings/structure', \App\Livewire\Settings\Structure::class)->name('settings.structure');
+            Route::get('settings/task-types', \App\Livewire\Settings\TaskTypes::class)->name('settings.task-types');
+            Route::get('settings/statuses', \App\Livewire\Settings\Statuses::class)->name('settings.statuses');
+            Route::get('settings/tags', \App\Livewire\Settings\Tags::class)->name('settings.tags');
+        });
+        Route::get('platform/organizations', \App\Livewire\Settings\Organizations::class)
+            ->middleware('can:platform')->name('platform.organizations');
+        Route::middleware('area:people')->group(function () {
+            Route::get('settings/people', \App\Livewire\Settings\People::class)->name('settings.people');
+            Route::get('settings/people/{user}', \App\Livewire\Settings\Person::class)->name('settings.people.show');
+            Route::get('settings/roles', \App\Livewire\Settings\Roles::class)->name('settings.roles');
+            Route::get('settings/roles/{role}', \App\Livewire\Settings\RoleEditor::class)->name('settings.roles.edit');
+        });
 
         Route::view('profile', 'profile')
             ->name('profile')
             ->defaults('label', 'Profile')
             ->defaults('icon', 'user-circle');
 
-        Route::middleware(['role:admin'])->group(function () {
+        // Each page needs at least "View" in its area; pages that create things need "Edit".
+        // Areas and levels are set per role on Settings › Roles (see config/permissions.php).
+        Route::group([], function () {
             Route::get('builders', ListBuilder::class)
+                ->middleware('area:directory')
                 ->name('builders')
                 ->defaults('label', 'Builders')
                 ->defaults('icon', 'building-office-2');
 
             Route::get('builders/create', CreateBuilder::class)
+                ->middleware('area:directory,edit')
                 ->name('builder-create')
                 ->defaults('label', 'Add Builder')
                 ->defaults('icon', 'user-plus');
 
             Route::get('subdivisions', ListSubdivision::class)
+                ->middleware('area:directory')
                 ->name('subdivisions')
                 ->defaults('label', 'Subdivisions')
                 ->defaults('icon', 'home');
 
 
             Route::get('supervisors', ListSupervisor::class)
+                ->middleware('area:directory')
                 ->name('supervisors')
                 ->defaults('label', 'Supervisors')
                 ->defaults('icon', 'user');
 
             Route::get('workers', \App\Livewire\Workers\ListWorker::class)
+                ->middleware('area:crews')
                 ->name('workers')
                 ->defaults('label', 'Workers')
                 ->defaults('icon', 'user-group');
 
             Route::get('workers/create', \App\Livewire\Workers\CreateWorker::class)
+                ->middleware('area:crews,edit')
                 ->name('worker-create')
                 ->defaults('label', 'Add Worker')
                 ->defaults('icon', 'user-plus');
 
             Route::get('teams', \App\Livewire\Teams\ListTeam::class)
+                ->middleware('area:crews')
                 ->name('teams')
                 ->defaults('label', 'Teams')
                 ->defaults('icon', 'users');
 
             Route::get('teams/create', \App\Livewire\Teams\CreateTeam::class)
+                ->middleware('area:crews,edit')
                 ->name('team-create')
                 ->defaults('label', 'Add Team')
                 ->defaults('icon', 'plus');
 
             Route::get('supervisors/create', CreateSupervisor::class)
+                ->middleware('area:directory,edit')
                 ->name('supervisor-create')
                 ->defaults('label', 'Add Supervisor')
                 ->defaults('icon', 'user-plus');
 
             Route::get('lot-progress', LotProgress::class)
+                ->middleware('area:lots')
                 ->name('lot-progress')
                 ->defaults('label', 'Lots Progress')
                 ->defaults('icon', 'clipboard-document-check');
 
             Route::get('/lots/create', AddLotForm::class)
+                ->middleware('area:lots,edit')
                 ->name('lot-create')
                 ->defaults('label', 'Create Lot')
                 ->defaults('icon', 'plus');
 
             Route::get('task-progress', TaskProgress::class)
+                ->middleware('area:tasks')
                 ->name('task-progress')
                 ->defaults('label', 'Tasks Progress')
                 ->defaults('icon', 'queue-list');
 
             Route::get('task-board', \App\Livewire\Task\TaskBoard::class)
+                ->middleware('area:tasks')
                 ->name('task-board')
                 ->defaults('label', 'Tasks Board')
                 ->defaults('icon', 'view-columns');
 
             Route::get('task-calendar', \App\Livewire\Task\TaskCalendar::class)
+                ->middleware('area:tasks')
                 ->name('task-calendar')
                 ->defaults('label', 'Tasks Calendar')
                 ->defaults('icon', 'calendar');
 
             Route::get('task-scheduler', \App\Livewire\Task\TaskScheduler::class)
+                ->middleware('area:scheduler')
                 ->name('task-scheduler')
                 ->defaults('label', 'Tasks Scheduler')
                 ->defaults('icon', 'calendar');
 
             Route::get('lot-map', \App\Livewire\Maps\LotMap::class)
+                ->middleware('area:lots')
                 ->name('lot-map')
                 ->defaults('label', 'Lot Map')
                 ->defaults('icon', 'map');
 
             Route::get('/lots/{lot_id}/details', LotDetails::class)
+                ->middleware('area:lots')
                 ->name('lot-details')
                 ->defaults('label', 'Lot Details view example')
                 ->defaults('icon', 'clipboard-document-check');
 
             Route::get('/tasks/{task_id}/details', TaskDetails::class)
+                ->middleware('area:tasks')
                 ->name('task-details')
                 ->defaults('label', 'Task Details view example')
                 ->defaults('icon', 'queue-list');
 
             Route::get('/tasks/create', AddTaskForm::class)
+                ->middleware('area:tasks,edit')
                 ->name('task-create')
                 ->defaults('label', 'Create Task')
                 ->defaults('icon', 'clipboard-document-check');
 
             Route::get('statistics', \App\Livewire\Pages\Statistics::class)
+                ->middleware('area:reports')
                 ->name('statistics')
                 ->defaults('label', 'Statistics')
                 ->defaults('icon', 'chart-bar-square');
 
             Route::get('projections', \App\Livewire\Pages\Projections::class)
+                ->middleware('area:reports')
                 ->name('projections')
                 ->defaults('label', 'Projections')
                 ->defaults('icon', 'chart-bar');
 
-            Route::middleware(['auth', 'throttle:30,1'])->post(
+            Route::middleware(['auth', 'throttle:30,1', 'area:lots,edit'])->post(
                 '/lots/{lot}/coords',
                 [LotCoordsController::class, 'store']
             )->name('lots.coords.store');
 
-            // Companies (admin-only)
-            Route::get('companies/create', \App\Livewire\Companies\CreateCompany::class)
-                ->name('companies.create')
-                ->defaults('label', 'Add Company')
-                ->defaults('icon', 'building-office');
+            // Adding divisions moved to Settings › Businesses & divisions.
+            Route::redirect('companies/create', '/settings/structure');
         });
 
 

@@ -9,7 +9,7 @@ use Tests\TestCase;
 
 class ProfileTest extends TestCase
 {
-    use RefreshDatabase;
+    use RefreshDatabase, \Tests\Concerns\BuildsPlaces;
 
     public function test_profile_page_is_displayed(): void
     {
@@ -79,7 +79,24 @@ class ProfileTest extends TestCase
             ->assertRedirect('/');
 
         $this->assertGuest();
-        $this->assertNull($user->fresh());
+        // Accounts are closed, never deleted, so their history stays.
+        $this->assertNotNull($user->fresh());
+        $this->assertNotNull($user->fresh()->deactivated_at);
+    }
+
+    public function test_the_only_owner_cannot_close_their_account(): void
+    {
+        $division = \App\Models\Company::factory()->create();
+        $owner = $this->makePerson($division->business->organization, 'owner');
+
+        $this->actingAs($owner);
+
+        Volt::test('profile.delete-user-form')
+            ->set('password', 'password')
+            ->call('deleteUser')
+            ->assertHasErrors('password');
+
+        $this->assertNull($owner->fresh()->deactivated_at);
     }
 
     public function test_correct_password_must_be_provided_to_delete_account(): void

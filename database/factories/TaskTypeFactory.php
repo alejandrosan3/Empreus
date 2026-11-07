@@ -3,6 +3,7 @@
 namespace Database\Factories;
 
 use App\Enums\TaskType as TaskTypeList;
+use App\Models\Business;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 class TaskTypeFactory extends Factory
@@ -12,6 +13,7 @@ class TaskTypeFactory extends Factory
         $taskType = $this->faker->randomElement(TaskTypeList::all());
 
         return [
+            'business_id' => fn () => tenancy()->businessId() ?? Business::factory(),
             'name' => $taskType,
             'description' => $taskType,
         ];

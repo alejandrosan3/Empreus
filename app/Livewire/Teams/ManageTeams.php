@@ -43,12 +43,7 @@ class ManageTeams extends Component
 
     public function loadAvailableWorkers()
     {
-        $companyId = session('company_id');
-
-        $query = User::where('role', 'worker')
-            ->whereHas('companies', function ($query) use ($companyId) {
-                $query->where('company_id', $companyId);
-            });
+        $query = User::workersInDivision();
 
             if (! $this->bulk && $this->assignedWorkers) {
                 $query->whereNotIn('id', $this->assignedWorkers->pluck('id'));
@@ -59,17 +54,7 @@ class ManageTeams extends Component
 
     public function loadTeams()
     {
-        $companyId = session('company_id');
-
-        $this->teams = Team::with(['workers' => function ($query) use ($companyId) {
-            $query->whereHas('companies', function ($q) use ($companyId) {
-                $q->where('company_id', $companyId);
-            });
-        }])
-            ->whereHas('workers.companies', function ($query) use ($companyId) {
-                $query->where('company_id', $companyId);
-            })
-            ->get();
+        $this->teams = Team::with('workers')->orderBy('name')->get();
 
     }
 
@@ -113,12 +98,14 @@ class ManageTeams extends Component
 
     public function assignWorkers()
     {
+        $this->authorize('edit-tasks');
+
         try {
             $workersToAssign = collect();
 
             // Add selected individual workers
             if ($this->selectedWorkerIds) {
-                $individualWorkers = User::whereIn('id', $this->selectedWorkerIds)->get();
+                $individualWorkers = User::workersInDivision()->whereIn('users.id', $this->selectedWorkerIds)->get();
                 $workersToAssign = $workersToAssign->merge($individualWorkers);
             }
 
@@ -185,6 +172,8 @@ class ManageTeams extends Component
 
     public function removeWorker($workerId)
     {
+        $this->authorize('edit-tasks');
+
         $this->task->workers()->detach($workerId);
         $this->loadAssignedWorkers();
         $this->loadAvailableWorkers();

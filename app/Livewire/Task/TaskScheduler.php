@@ -193,6 +193,8 @@ class TaskScheduler extends Component
 
     public function taskDateUpdated($taskId, $newDate)
     {
+        $this->authorize('edit-scheduler');
+
 
         try {
             $task = Task::find($taskId);
@@ -237,6 +239,11 @@ class TaskScheduler extends Component
 
     public function taskStatusUpdated(int $taskId, string $newStatus): void
     {
+        $this->authorize('edit-scheduler');
+        if (! \App\Support\EditableFields::allowsStatus(auth()->user(), $newStatus)) {
+            abort(403, 'Cancelling a task needs Full access.');
+        }
+
         try {
             // 1. Resolve the requested status
             $statusTypeId = StatusType::where('identifier', $newStatus)
@@ -541,6 +548,8 @@ class TaskScheduler extends Component
 
     public function assignTaskToTeam(int $taskId, $teamId): void
     {
+        $this->authorize('edit-scheduler');
+
         try {
             $task = Task::where('company_id', session('company_id'))->find($taskId);
             if (! $task) {
